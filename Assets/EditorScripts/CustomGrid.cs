@@ -10,17 +10,25 @@ public class CustomGrid : MonoBehaviour
 
     void OnDrawGizmos()
     {
+        if (gridSize < 0.0001f)
+            return;
         Camera camera = Camera.current;
         Vector3 camPos = GridToWorld(GetMouseGridPosition(new Vector2(camera.pixelWidth / 2f, camera.pixelHeight / 2f)));
         float camX = camPos.x;
         float camY = camPos.y;
         float actualGridRadius = drawnGridRadius * gridSize;
-        float startOffset = gridSize / 2f - actualGridRadius;
-        float stopOffset = -startOffset + 0.000001f; // for floating point errors
-        for (float x = origin.x + camX - startOffset; x <= origin.y + camX + stopOffset; x += gridSize)
-            Gizmos.DrawLine(new Vector3(x, camY - startOffset), new Vector3(x, camY + stopOffset));
-        for (float y = origin.y + camY - startOffset; y <= origin.y + camY + stopOffset; y += gridSize)
-            Gizmos.DrawLine(new Vector3(camX - startOffset, y), new Vector3(camX + stopOffset, y));
+        float startOffset = -(gridSize / 2f + actualGridRadius);
+        float stopOffset = -startOffset + 0.001f; // for floating point errors
+        for (float x = camX + startOffset; x <= camX + stopOffset; x += gridSize)
+            Gizmos.DrawLine(
+                new Vector3(x, camY + startOffset),
+                new Vector3(x, camY + stopOffset)
+            );
+        for (float y = camY + startOffset; y <= camY + stopOffset; y += gridSize)
+            Gizmos.DrawLine(
+                new Vector3(camX + startOffset, y),
+                new Vector3(camX + stopOffset, y)
+            );
     }
 
     public Vector2Int WorldToGrid(Vector3 worldPos)
