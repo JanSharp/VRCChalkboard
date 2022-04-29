@@ -5,12 +5,18 @@ using UnityEngine;
 
 public class CustomGrid : MonoBehaviour
 {
+    public bool showGrid = true;
     public int drawnGridRadius = 100;
     public float gridSize = 1f;
-    public Vector2 origin = new Vector2(0, 0); // i don't care enough to fix this right now
+    public GameObject prefab;
+    public GameObject outputParent;
+    public Vector2 gridOrigin = new Vector2(0, 0);
+    public char keybind = 'a';
 
+    [HideInInspector]
     [SerializeField]
     private List<Vector2Int> allObjectKeys;
+    [HideInInspector]
     [SerializeField]
     private List<GameObject> allObjectValues;
     // unity can't serialize dictionaries, so we have to use lists for the keys and values along side the dictionary
@@ -55,7 +61,7 @@ public class CustomGrid : MonoBehaviour
 
     void OnDrawGizmos()
     {
-        if (gridSize < 0.0001f)
+        if (!showGrid || gridSize < 0.0001f)
             return;
         Camera camera = Camera.current;
         Vector3 camPos = GridToWorld(GetMouseGridPosition(new Vector2(camera.pixelWidth / 2f, camera.pixelHeight / 2f)));
@@ -79,16 +85,16 @@ public class CustomGrid : MonoBehaviour
     public Vector2Int WorldToGrid(Vector3 worldPos)
     {
         return new Vector2Int( // the -1 in the negatives is needed because casting to int truncates
-            (int)((worldPos.x - origin.x) / gridSize) - (worldPos.x < 0 ? 1 : 0),
-            (int)((worldPos.y - origin.y) / gridSize) - (worldPos.y < 0 ? 1 : 0)
+            (int)((worldPos.x - gridOrigin.x) / gridSize) - (worldPos.x < 0 ? 1 : 0),
+            (int)((worldPos.y - gridOrigin.y) / gridSize) - (worldPos.y < 0 ? 1 : 0)
         );
     }
 
     public Vector3 GridToWorld(Vector2Int girdPos)
     {
         return new Vector3(
-            origin.x + girdPos.x * gridSize + gridSize / 2f,
-            origin.y + girdPos.y * gridSize + gridSize / 2f
+            gridOrigin.x + girdPos.x * gridSize + gridSize / 2f,
+            gridOrigin.y + girdPos.y * gridSize + gridSize / 2f
         );
     }
 
