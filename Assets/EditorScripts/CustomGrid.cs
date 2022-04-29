@@ -127,9 +127,11 @@ public class CustomGrid : MonoBehaviour
 
     public Vector2Int WorldToGrid(Vector3 worldPos)
     {
+        float x = worldPos.x - gridOrigin.x;
+        float y = worldPos.y - gridOrigin.y;
         return new Vector2Int( // the -1 in the negatives is needed because casting to int truncates
-            (int)((worldPos.x - gridOrigin.x) / gridSize) - (worldPos.x < 0 ? 1 : 0),
-            (int)((worldPos.y - gridOrigin.y) / gridSize) - (worldPos.y < 0 ? 1 : 0)
+            (int)(x / gridSize) - (x < 0 ? 1 : 0),
+            (int)(y / gridSize) - (y < 0 ? 1 : 0)
         );
     }
 
