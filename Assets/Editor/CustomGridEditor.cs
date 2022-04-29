@@ -51,6 +51,8 @@ public class GridEditor : Editor
                 GameObject obj = Instantiate(grid.prefab, grid.GridToWorld(gridPos), Quaternion.identity, grid.outputParent.transform);
                 obj.name = grid.prefab.name;
                 grid.AddObject(gridPos, obj);
+                Undo.RegisterCreatedObjectUndo(obj, "Create grid aligned object");
+                Undo.IncrementCurrentGroup();
                 e.Use(); // maybe don't? eh we'll see
             }
         }
