@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -7,6 +8,50 @@ public class CustomGrid : MonoBehaviour
     public int drawnGridRadius = 100;
     public float gridSize = 1f;
     public Vector2 origin = new Vector2(0, 0); // i don't care enough to fix this right now
+
+    [SerializeField]
+    private List<Vector2Int> allObjectKeys;
+    [SerializeField]
+    private List<GameObject> allObjectValues;
+    // unity can't serialize dictionaries, so we have to use lists for the keys and values along side the dictionary
+    public Dictionary<Vector2Int, GameObject> allObjects;
+
+    void Awake()
+    {
+        InitOrRestore();
+    }
+
+    public void InitOrRestore()
+    {
+        allObjects = new Dictionary<Vector2Int, GameObject>();
+        if (allObjectKeys != null && allObjectValues != null)
+        {
+            for (int i = Math.Min(allObjectKeys.Count, allObjectValues.Count) - 1; i >= 0; i--)
+            {
+                if (allObjectValues[i] == null)
+                {
+                    allObjectKeys.RemoveAt(i);
+                    allObjectValues.RemoveAt(i);
+                }
+                else
+                {
+                    allObjects[allObjectKeys[i]] = allObjectValues[i];
+                }
+            }
+        }
+        else
+        {
+            allObjectKeys = new List<Vector2Int>();
+            allObjectValues = new List<GameObject>();
+        }
+    }
+
+    public void AddObject(Vector2Int gridPos, GameObject obj)
+    {
+        allObjectKeys.Add(gridPos);
+        allObjectValues.Add(obj);
+        allObjects[gridPos] = obj;
+    }
 
     void OnDrawGizmos()
     {
