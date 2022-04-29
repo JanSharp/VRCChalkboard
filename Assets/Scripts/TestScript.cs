@@ -24,6 +24,15 @@ public class TestScript : UdonSharpBehaviour
     //     // Debug.Log(createdArray[1]);
     // }
 
+    // TODO: what exactly is a statement
+    // TODO: what exactly is an expression
+    // TODO: shortcut to raising custom events
+    // TODO: function calls with parameters and return values (new!!)
+    // TODO: while loops
+    // TODO: explain "custom events" with parameters and return values
+    // TODO: explain local variables
+    // TODO: if statements without {} - single statement bodies
+
 
 
     void Start()
@@ -82,55 +91,6 @@ public class TestScript : UdonSharpBehaviour
         pointTotalProxy = 400;
         Debug.Log("proxy: " + pointTotalProxy);
     }
-
-    // explain "custom events" with parameters and return values
-    // explain local variables
-    // optional:
-    // if statements without {} - single statement bodies
-    // same for else
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public GameObject target;
     void Event1()
@@ -248,9 +208,10 @@ public class TestScript : UdonSharpBehaviour
         Debug.Log("and again some more stuff"); // this is outside of the else block
     }
 
-    // stuff you might want to learn today:
-    // - arrays :check:
-    // - for loops :check:
-    // - function calls with parameters and return values (new!!)
-    // - while loops
+    public float Speed;
+    public Rigidbody RB;
+    public void Event12()
+    {
+        RB.velocity = new Vector3(Speed, RB.velocity.y);
+    }
 }
