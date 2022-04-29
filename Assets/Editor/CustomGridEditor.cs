@@ -48,7 +48,13 @@ public class GridEditor : Editor
             Vector2Int gridPos = grid.GetMouseGridPosition(e.mousePosition);
             if (!grid.allObjects.TryGetValue(gridPos, out var existingObj) || existingObj == null)
             {
-                GameObject obj = Instantiate(grid.prefab, grid.GridToWorld(gridPos), Quaternion.identity, grid.outputParent.transform);
+                // there doesn't appear to be a good way to check if a GameObject is a prefab so just go for it
+                GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab(grid.prefab, grid.outputParent.transform);
+                // and if it returns null try instantiate instead (this is bad code practice)
+                if (obj == null)
+                    obj = Instantiate(grid.prefab, grid.GridToWorld(gridPos), Quaternion.identity, grid.outputParent.transform);
+                else
+                    obj.transform.position = grid.GridToWorld(gridPos);
                 obj.name = grid.prefab.name;
                 grid.AddObject(gridPos, obj);
                 Undo.RegisterCreatedObjectUndo(obj, "Create grid aligned object");
