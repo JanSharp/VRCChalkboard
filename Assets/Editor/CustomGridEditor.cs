@@ -10,7 +10,7 @@ public class GridEditor : Editor
 {
     private CustomGrid grid;
 
-    public void OnEnable()
+    void OnEnable()
     {
         grid = (CustomGrid)target;
         grid.InitOrRestore();

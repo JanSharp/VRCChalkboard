@@ -50,6 +50,26 @@ public class CustomGrid : MonoBehaviour
             allObjectKeys = new List<Vector2Int>();
             allObjectValues = new List<GameObject>();
         }
+        UpdateAllObjectPositions();
+    }
+
+    void OnValidate()
+    {
+        UpdateAllObjectPositions();
+    }
+
+    public void UpdateAllObjectPositions()
+    {
+        if (allObjects != null)
+        {
+            foreach (var kvp in allObjects)
+            {
+                if (kvp.Value != null)
+                {
+                    kvp.Value.transform.position = GridToWorld(kvp.Key);
+                }
+            }
+        }
     }
 
     public void AddObject(Vector2Int gridPos, GameObject obj)
