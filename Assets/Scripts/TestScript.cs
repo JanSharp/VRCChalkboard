@@ -35,11 +35,11 @@ public class TestScript : UdonSharpBehaviour
 
 
 
-    void Start()
-    {
-        OnChangeTest();
-        TextMeshProTest();
-    }
+    // void Start()
+    // {
+    //     OnChangeTest();
+    //     TextMeshProTest();
+    // }
 
 
 
