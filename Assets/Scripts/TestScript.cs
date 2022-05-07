@@ -35,11 +35,12 @@ public class TestScript : UdonSharpBehaviour
 
 
 
-    // void Start()
-    // {
-    //     OnChangeTest();
-    //     TextMeshProTest();
-    // }
+    void Start()
+    {
+        // OnChangeTest();
+        // TextMeshProTest();
+        Event14();
+    }
 
 
 
@@ -213,5 +214,42 @@ public class TestScript : UdonSharpBehaviour
     public void Event12()
     {
         RB.velocity = new Vector3(Speed, RB.velocity.y);
+    }
+
+    public void Event13()
+    {
+        // we have to do it this way in Udon
+        Component[] components = gameObject.GetComponentsInChildren(typeof(Transform));
+        for (int i = 0; i < components.Length; i++)
+        {
+            components[i].gameObject.SetActive(true);
+        }
+
+        // unfortunately this is not exposed in Udon
+        Transform[] transforms = gameObject.GetComponentsInChildren<Transform>();
+
+        // technically using an enumerator get get all children
+        foreach (Transform foo in gameObject.transform)
+        {
+            Debug.Log(foo.name);
+        }
+
+        // UdonSharp generates this behind the scenes
+        for (int i = 0; i < gameObject.transform.childCount; i++)
+        {
+            Transform foo = gameObject.transform.GetChild(i);
+            Debug.Log(foo.name);
+        }
+    }
+
+    public void Event14()
+    {
+        // these are currently not implemented
+        // UdonBehaviour test = gameObject.GetComponent<UdonBehaviour>();
+        // Debug.Log(test.name);
+
+        // int[,] bar = new int[1, 2];
+        // use "jagged" arrays for this instead. TIL what jagged arrays are
+        // I just called them nested arrays, it's int[][]
     }
 }
