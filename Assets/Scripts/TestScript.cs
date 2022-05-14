@@ -252,4 +252,18 @@ public class TestScript : UdonSharpBehaviour
         // use "jagged" arrays for this instead. TIL what jagged arrays are
         // I just called them nested arrays, it's int[][]
     }
+
+    public void Event15()
+    {
+        int[] foo = new int[100];
+        foreach (int bar in foo)
+        {
+            Debug.Log(bar);
+        }
+    }
+
+    public void Event16()
+    {
+        
+    }
 }
