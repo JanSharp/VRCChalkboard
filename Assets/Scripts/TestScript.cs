@@ -1,9 +1,11 @@
-﻿using System.Net;
+﻿
+using System.Net;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UdonSharp;
 using TMPro;
+using VRC.SDKBase;
 using VRC.Udon;
 
 ///cSpell:ignore UGUI
@@ -264,6 +266,8 @@ public class TestScript : UdonSharpBehaviour
 
     public void Event16()
     {
-        
+        // VRCPlayerApi player = new VRCPlayerApi();
+        // var bone = player.GetBoneTransform(HumanBodyBones.LeftHand);
+        // var pickup = player.GetPickupInHand(VRC_Pickup.PickupHand.Left);
     }
 }
