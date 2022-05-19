@@ -35,7 +35,7 @@ public class JanItemSync : UdonSharpBehaviour
         var visualTransform = bonePositionVisualization.transform;
         visualTransform.SetPositionAndRotation(player.GetBonePosition(attachedBone), player.GetBoneRotation(attachedBone));
         attachedLocalOffset = visualTransform.InverseTransformDirection(thisPosition - bonePosition);
-        Debug.Log($"Initial attached offset {attachedLocalOffset}");
+        Debug.Log($"Initial attached offset {attachedLocalOffset}, length {attachedLocalOffset.magnitude}");
 
         // figure out local offset
         // unity can already do this, but I don't think I have a way to make the held item a child of the bone of the vrc model
@@ -43,16 +43,6 @@ public class JanItemSync : UdonSharpBehaviour
         // my brain is melting from this, I have not learned any of this before
         // rotations are... ridiculously difficult. Like I think I need matrix math for this, but I got no clue
         // nor have I ever used matrix math either
-    }
-
-    private float lastUpdate;
-    public void Update()
-    {
-        if (Time.time > lastUpdate + 2f)
-        {
-            lastUpdate = Time.time;
-            Debug.Log($"Parent object name: {this.transform.parent.name}");
-        }
     }
 
     public override void OnDrop()
@@ -72,7 +62,7 @@ public class JanItemSync : UdonSharpBehaviour
         var offsetDiff = newAttachedLocalOffset - attachedLocalOffset;
         if (offsetDiff.magnitude > 0.1f)
         {
-            Debug.Log($"Updating local pickup position, changed by {offsetDiff.magnitude}, set to {attachedLocalOffset}");
+            Debug.Log($"Updating local pickup position, changed by {offsetDiff.magnitude}, set to {attachedLocalOffset}, length {attachedLocalOffset.magnitude}");
             attachedLocalOffset = newAttachedLocalOffset;
         }
 
