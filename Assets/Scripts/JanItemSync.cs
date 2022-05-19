@@ -63,8 +63,9 @@ public class JanItemSync : UdonSharpBehaviour
     {
         var player = pickup.currentPlayer;
         var visualTransform = bonePositionVisualization.transform;
-        visualTransform.SetPositionAndRotation(player.GetBonePosition(attachedBone), player.GetBoneRotation(attachedBone));
-        visualTransform.position = visualTransform.TransformDirection(attachedLocalOffset);
+        var rotation = player.GetBoneRotation(attachedBone);
+        visualTransform.SetPositionAndRotation(player.GetBonePosition(attachedBone), rotation);
+        visualTransform.SetPositionAndRotation(visualTransform.TransformDirection(attachedLocalOffset), rotation);
         // bonePositionVisualization.transform.position = pickup.currentPlayer.GetBonePosition(attachedBone);
         // bonePositionVisualization.transform.rotation = pickup.currentPlayer.GetBoneRotation(attachedBone);
     }
