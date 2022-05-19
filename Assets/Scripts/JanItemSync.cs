@@ -12,6 +12,7 @@ public class JanItemSync : UdonSharpBehaviour
     public GameObject bonePositionVisualization;
 
     private HumanBodyBones attachedBone;
+    private Vector3 attachedLocalOffset;
 
     // for the update manager
     private int customUpdateInternalIndex;
@@ -29,6 +30,12 @@ public class JanItemSync : UdonSharpBehaviour
         Quaternion boneRotation = pickup.currentPlayer.GetBoneRotation(attachedBone);
         Vector3 thisPosition = transform.position;
         Quaternion thisRotation = transform.rotation;
+
+        var player = pickup.currentPlayer;
+        var visualTransform = bonePositionVisualization.transform;
+        visualTransform.SetPositionAndRotation(player.GetBonePosition(attachedBone), player.GetBoneRotation(attachedBone));
+        attachedLocalOffset = visualTransform.InverseTransformDirection(thisPosition - bonePosition);
+
         // figure out local offset
         // unity can already do this, but I don't think I have a way to make the held item a child of the bone of the vrc model
         // this.transform.RotateAround(bonePosition, Quaternion.FromToRotation(boneRotation.axis))
@@ -54,7 +61,11 @@ public class JanItemSync : UdonSharpBehaviour
 
     public void CustomUpdate()
     {
-        bonePositionVisualization.transform.position = pickup.currentPlayer.GetBonePosition(attachedBone);
-        bonePositionVisualization.transform.rotation = pickup.currentPlayer.GetBoneRotation(attachedBone);
+        var player = pickup.currentPlayer;
+        var visualTransform = bonePositionVisualization.transform;
+        visualTransform.SetPositionAndRotation(player.GetBonePosition(attachedBone), player.GetBoneRotation(attachedBone));
+        visualTransform.position = visualTransform.TransformDirection(attachedLocalOffset);
+        // bonePositionVisualization.transform.position = pickup.currentPlayer.GetBonePosition(attachedBone);
+        // bonePositionVisualization.transform.rotation = pickup.currentPlayer.GetBoneRotation(attachedBone);
     }
 }
