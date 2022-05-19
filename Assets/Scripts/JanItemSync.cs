@@ -35,6 +35,7 @@ public class JanItemSync : UdonSharpBehaviour
         var visualTransform = bonePositionVisualization.transform;
         visualTransform.SetPositionAndRotation(player.GetBonePosition(attachedBone), player.GetBoneRotation(attachedBone));
         attachedLocalOffset = visualTransform.InverseTransformDirection(thisPosition - bonePosition);
+        Debug.Log($"Initial attached offset {attachedLocalOffset}");
 
         // figure out local offset
         // unity can already do this, but I don't think I have a way to make the held item a child of the bone of the vrc model
@@ -71,7 +72,7 @@ public class JanItemSync : UdonSharpBehaviour
         var offsetDiff = newAttachedLocalOffset - attachedLocalOffset;
         if (offsetDiff.magnitude > 0.1f)
         {
-            Debug.Log($"Updating local pickup position, changed by {offsetDiff.magnitude}");
+            Debug.Log($"Updating local pickup position, changed by {offsetDiff.magnitude}, set to {attachedLocalOffset}");
             attachedLocalOffset = newAttachedLocalOffset;
         }
 
