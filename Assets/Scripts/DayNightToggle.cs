@@ -12,18 +12,18 @@ public class DayNightToggle : UdonSharpBehaviour
 
     [UdonSynced]
     [FieldChangeCallback(nameof(isNightStateOnChange))]
-    private bool isNightState;
+    private bool isNightStateInternal;
 
     private bool isNightStateOnChange
     {
         get
         {
-            return isNightState;
+            return isNightStateInternal;
         }
         set
         {
-            bool oldValue = isNightState;
-            isNightState = value;
+            bool oldValue = isNightStateInternal;
+            isNightStateInternal = value;
             if (oldValue != value)
             {
                 SkyChange();
@@ -47,7 +47,7 @@ public class DayNightToggle : UdonSharpBehaviour
 
     public void SkyChange()
     {
-        if (isNightState)
+        if (isNightStateInternal)
         {
             RenderSettings.fogDensity = dayStuff;
         }
