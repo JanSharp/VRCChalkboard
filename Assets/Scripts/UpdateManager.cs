@@ -18,7 +18,6 @@ public class UpdateManager : UdonSharpBehaviour
     {
         for (int i = 0; i < listenerCount; i++)
         {
-            Debug.Log("sending event");
             ((UdonSharpBehaviour)listeners[i]).SendCustomEvent(customUpdateMethodName);
         }
     }
