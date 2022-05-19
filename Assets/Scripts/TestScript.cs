@@ -270,4 +270,24 @@ public class TestScript : UdonSharpBehaviour
         // var bone = player.GetBoneTransform(HumanBodyBones.LeftHand);
         // var pickup = player.GetPickupInHand(VRC_Pickup.PickupHand.Left);
     }
+
+    // public float castTime;
+
+    // private float timeOfCast;
+    // [UdonSynced]
+    // private float castTimePassed;
+    // public override void OnPreSerialization()
+    // {
+    //     castTimePassed = Time.time - timeOfCast;
+    // }
+
+    // public void Cast()
+    // {
+    //     timeOfCast = Time.time;
+    // }
+
+    // public override void OnDeserialization()
+    // {
+    //     SendCustomEventDelayedSeconds("something", castTime - castTimePassed);
+    // }
 }
