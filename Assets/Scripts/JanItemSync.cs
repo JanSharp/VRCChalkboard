@@ -16,7 +16,7 @@ public class JanItemSync : UdonSharpBehaviour
     private Quaternion attachedRotationOffset;
 
     // state tracking to determine when the player and item held still for long enough to really determine the attached offset
-    private const float ExpectedStillFrameCount = 5;
+    private const float ExpectedStillFrameCount = 2;
     private const float MagnitudeTolerance = 0.075f;
     private const float IntolerableMagnitudeDiff = 0.15f;
     private float stillFrameCount;
