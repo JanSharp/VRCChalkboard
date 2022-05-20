@@ -109,6 +109,8 @@ public class JanItemSync : UdonSharpBehaviour
                     Debug.Log($"Updating local pickup position, changed by {magnitudeDiff}, set to {attachedLocalOffset}, length {attachedLocalOffset.magnitude}");
                 }
             }
+            prevItemPos = itemPos;
+            prevBonePos = bonePos;
         }
 
         // move the item to the bone using the current local offset
