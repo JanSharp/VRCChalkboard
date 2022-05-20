@@ -16,9 +16,10 @@ public class JanItemSync : UdonSharpBehaviour
     private Quaternion attachedRotationOffset;
 
     // state tracking to determine when the player and item held still for long enough to really determine the attached offset
-    private const float ExpectedStillFrameCount = 2;
+    private const float ExpectedStillFrameCount = 3;
     private const float MagnitudeTolerance = 0.075f;
     private const float IntolerableMagnitudeDiff = 0.15f;
+    private const float IntolerableAngleDiff = 30f;
     private float stillFrameCount;
     private Vector3 prevBonePos;
     private Quaternion prevBoneRotation;
@@ -110,17 +111,20 @@ public class JanItemSync : UdonSharpBehaviour
                 // check the offsets anyway because the item could still be very far away, so we have to start moving it closer to the hand
                 var currentOffset = visualTransform.InverseTransformDirection(itemPos - bonePos);
                 var magnitudeDiff = (currentOffset - attachedLocalOffset).magnitude;
-                if (magnitudeDiff >= IntolerableMagnitudeDiff)
-                {
-                    attachedLocalOffset = currentOffset;
-                    Debug.Log($"Updating local pickup position, changed by {magnitudeDiff}, set to {attachedLocalOffset}, length {attachedLocalOffset.magnitude}");
-                }
+
                 var currentRotationOffset = Quaternion.Inverse(boneRotation) * itemRotation;
                 var rotationDiff = Quaternion.Inverse(currentRotationOffset) * attachedRotationOffset;
                 float angle;
                 Vector3 axis;
                 rotationDiff.ToAngleAxis(out angle, out axis);
-                Debug.Log($"rotation diff angle: {angle}, axis: {axis}");
+
+                if (magnitudeDiff >= IntolerableMagnitudeDiff || angle >= IntolerableAngleDiff)
+                {
+                    attachedLocalOffset = currentOffset;
+                    attachedRotationOffset = currentRotationOffset;
+                    Debug.Log($"Updating local pickup position, changed by {magnitudeDiff}, set to {attachedLocalOffset}, length {attachedLocalOffset.magnitude}.");
+                    Debug.Log($"Updating local rotation, changed by {angle} degrees around the axis {axis}.");
+                }
             }
             prevBonePos = bonePos;
             prevBoneRotation = boneRotation;
