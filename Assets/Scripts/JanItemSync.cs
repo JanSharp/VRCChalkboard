@@ -51,14 +51,14 @@ public class JanItemSync : UdonSharpBehaviour
         // boneTransform = pickup.currentPlayer.GetBoneTransform(attachedBone); // not exposed
         // Debug.Assert(boneTransform != null, "Didn't get the bone's transform.");
 
-        prevBonePos = pickup.currentPlayer.GetBonePosition(attachedBone);
-        prevBoneRotation = pickup.currentPlayer.GetBoneRotation(attachedBone);
+        var player = pickup.currentPlayer;
+        prevBonePos = player.GetBonePosition(attachedBone);
+        prevBoneRotation = player.GetBoneRotation(attachedBone);
         prevItemPos = this.transform.position;
         prevItemRotation = this.transform.rotation;
 
-        var player = pickup.currentPlayer;
         var visualTransform = bonePositionVisualization.transform;
-        visualTransform.SetPositionAndRotation(player.GetBonePosition(attachedBone), player.GetBoneRotation(attachedBone));
+        visualTransform.SetPositionAndRotation(prevBonePos, prevBoneRotation);
         attachedLocalOffset = visualTransform.InverseTransformDirection(prevItemPos - prevBonePos);
         Debug.Log($"Initial attached offset {attachedLocalOffset} with length {attachedLocalOffset.magnitude}.");
 
@@ -175,7 +175,7 @@ public class JanItemSync : UdonSharpBehaviour
             return;
 
         // fetch values
-        var player = pickup.currentPlayer;
+        var player = Networking.GetOwner(this.gameObject);
         var bonePos = player.GetBonePosition(attachedBone);
         var boneRotation = player.GetBoneRotation(attachedBone);
 
