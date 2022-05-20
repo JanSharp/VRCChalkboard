@@ -19,7 +19,10 @@ MonoBehaviour:
   sourceCsScript: {fileID: 11500000, guid: b450a294f2515cb38ba5ab2ee6abb392, type: 3}
   behaviourSyncMode: 0
   behaviourIDHeapVarName: __refl_const_intnl_udonTypeID
-  compileErrors: []
+  compileErrors:
+  - 
+  - '[<color=#FF00FF>UdonSharp</color>] Assets\Scripts\JanItemSync.cs(120,45): System.NotSupportedException:
+    UdonSharp does not currently support node type DeclarationExpression'
   hasInteractEvent: 0
   serializationData:
     SerializedFormat: 2

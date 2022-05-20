@@ -115,6 +115,12 @@ public class JanItemSync : UdonSharpBehaviour
                     attachedLocalOffset = currentOffset;
                     Debug.Log($"Updating local pickup position, changed by {magnitudeDiff}, set to {attachedLocalOffset}, length {attachedLocalOffset.magnitude}");
                 }
+                var currentRotationOffset = Quaternion.Inverse(boneRotation) * itemRotation;
+                var rotationDiff = Quaternion.Inverse(currentRotationOffset) * attachedRotationOffset;
+                float angle;
+                Vector3 axis;
+                rotationDiff.ToAngleAxis(out angle, out axis);
+                Debug.Log($"rotation diff angle: {angle}, axis: {axis}");
             }
             prevBonePos = bonePos;
             prevBoneRotation = boneRotation;
