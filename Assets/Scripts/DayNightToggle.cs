@@ -11,10 +11,10 @@ public class DayNightToggle : UdonSharpBehaviour
     public float nightStuff;
 
     [UdonSynced]
-    [FieldChangeCallback(nameof(isNightStateOnChange))]
-    private bool isNightStateInternal;
+    [FieldChangeCallback(nameof(isNightState))]
+    private bool isNightStateInternal = false;
 
-    private bool isNightStateOnChange
+    private bool isNightState
     {
         get
         {
@@ -34,14 +34,14 @@ public class DayNightToggle : UdonSharpBehaviour
     public void ToggleDay()
     {
         Networking.SetOwner(Networking.LocalPlayer, this.gameObject);
-        isNightStateOnChange = true;
+        isNightState = false;
         RequestSerialization();
     }
 
     public void ToggleNight()
     {
         Networking.SetOwner(Networking.LocalPlayer, this.gameObject);
-        isNightStateOnChange = false;
+        isNightState = true;
         RequestSerialization();
     }
 
