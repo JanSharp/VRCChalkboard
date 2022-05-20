@@ -26,16 +26,18 @@ public class JanItemSync : UdonSharpBehaviour
     private Quaternion syncedRotation;
 
     // state tracking to determine when the player and item held still for long enough to really determine the attached offset
-    private const float ExpectedStillFrameCount = 3;
+    private const float ExpectedStillFrameCount = 4;
     private const float MagnitudeTolerance = 0.075f;
     private const float IntolerableMagnitudeDiff = 0.15f;
     private const float IntolerableAngleDiff = 30f;
+    private const float FadeInTime = 1f; // seconds of manual position syncing before attaching
     private float stillFrameCount;
     private Vector3 prevBonePos;
     private Quaternion prevBoneRotation;
     private Vector3 prevItemPos;
     private Quaternion prevItemRotation;
     private bool heldStillLongEnough;
+    private float pickupTime;
 
     // for the update manager
     private int customUpdateInternalIndex;
@@ -66,6 +68,8 @@ public class JanItemSync : UdonSharpBehaviour
 
         RegisterCustomUpdate();
         SendChanges();
+
+        pickupTime = Time.time;
     }
 
     public override void OnDrop()
@@ -79,10 +83,17 @@ public class JanItemSync : UdonSharpBehaviour
 
     public void CustomUpdate()
     {
-        if (Networking.IsOwner(this.gameObject))
-            UpdateSender();
+        if (Time.time < pickupTime + FadeInTime && pickup.IsHeld)
+        {
+            // TODO: manually sync position
+        }
         else
-            UpdateReceiver();
+        {
+            if (Networking.IsOwner(this.gameObject))
+                UpdateSender();
+            else
+                UpdateReceiver();
+        }
     }
 
     private void UpdateSender()
@@ -217,18 +228,20 @@ public class JanItemSync : UdonSharpBehaviour
             Debug.LogWarning($"Syncing request was dropped for {this.name}, trying again.");
             SendChanges(); // TODO: somehow test if this kind of retry even works or if the serialization request got reset right afterwards
         }
+        else
+            Debug.Log($"Sending {result.byteCount} bytes");
     }
 
     public override void OnDeserialization()
     {
-        if ((syncedSmallData & 1) != 0) // is held?
+        if ((syncedSmallData & 1) != 0) // is attached?
         {
             attachedBone = (syncedSmallData & 2) != 0 ? HumanBodyBones.LeftHand : HumanBodyBones.RightHand;
             attachedLocalOffset = syncedPosition;
             attachedRotationOffset = syncedRotation;
             RegisterCustomUpdate();
         }
-        else // not held
+        else // not attached
         {
             this.transform.SetPositionAndRotation(syncedPosition, syncedRotation);
             DeregisterCustomUpdate();
