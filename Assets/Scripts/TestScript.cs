@@ -264,11 +264,19 @@ public class TestScript : UdonSharpBehaviour
         }
     }
 
+    public Transform boat;
+    public Quaternion headRotation;
+
     public void Event16()
     {
-        // VRCPlayerApi player = new VRCPlayerApi();
-        // var bone = player.GetBoneTransform(HumanBodyBones.LeftHand);
-        // var pickup = player.GetPickupInHand(VRC_Pickup.PickupHand.Left);
+        float vertical = Input.GetAxis("vertical");
+
+        // nope, this also doesn't do it because looking down or up would increase the angle diff even though you're not looking further to the right nor left
+        Quaternion boatRotation = boat.transform.rotation;
+        float angleDiff = Quaternion.Angle(boatRotation, headRotation);
+        Quaternion rotationDiff = Quaternion.AngleAxis(angleDiff, Vector3.up);
+        Quaternion targetRotation = boatRotation * rotationDiff;
+        boat.transform.rotation = Quaternion.RotateTowards(boatRotation, targetRotation, 20f * Time.deltaTime * Mathf.Sign(vertical));
     }
 
     // public float castTime;
