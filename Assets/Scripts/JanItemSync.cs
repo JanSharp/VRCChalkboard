@@ -23,6 +23,17 @@ public class JanItemSync : UdonSharpBehaviour
     private const byte ReceivingState = 5;
     private byte state = IdleState;
 
+    private VRCPlayerApi attachedPlayer;
+    private VRCPlayerApi AttachedPlayer
+    {
+        get => attachedPlayer;
+        set
+        {
+            attachedPlayer = value;
+            attachedPlayerIsInVR = value.IsUserInVR();
+        }
+    }
+    private bool attachedPlayerIsInVR;
     private HumanBodyBones attachedBone;
     private Vector3 attachedLocalOffset;
     private Quaternion attachedRotationOffset;
@@ -67,6 +78,7 @@ public class JanItemSync : UdonSharpBehaviour
         prevBoneRotation = player.GetBoneRotation(attachedBone);
         prevItemPos = this.transform.position;
         prevItemRotation = this.transform.rotation;
+        AttachedPlayer = Networking.LocalPlayer;
 
         var visualTransform = dummyTransform.transform;
         visualTransform.SetPositionAndRotation(prevBonePos, prevBoneRotation);
@@ -77,7 +89,7 @@ public class JanItemSync : UdonSharpBehaviour
 
         RegisterCustomUpdate();
         // technically redundant because the VRCPickup script already does this, but I do not trust it nor do I trust order of operation
-        Networking.SetOwner(Networking.LocalPlayer, this.gameObject);
+        Networking.SetOwner(AttachedPlayer, this.gameObject);
         SendChanges();
 
         stillFrameCount = 0;
@@ -222,9 +234,8 @@ public class JanItemSync : UdonSharpBehaviour
             return;
 
         // fetch values
-        var player = Networking.GetOwner(this.gameObject); // TODO: cache
-        var bonePos = player.GetBonePosition(attachedBone);
-        var boneRotation = player.GetBoneRotation(attachedBone);
+        var bonePos = AttachedPlayer.GetBonePosition(attachedBone);
+        var boneRotation = AttachedPlayer.GetBoneRotation(attachedBone);
 
         // move some transform to match the bone, because the TransformDirection methods
         // require an instance of a Transform and we can't get the bone's Transform directly
@@ -280,6 +291,7 @@ public class JanItemSync : UdonSharpBehaviour
             attachedBone = (syncedFlags & 2) != 0 ? HumanBodyBones.LeftHand : HumanBodyBones.RightHand;
             attachedLocalOffset = syncedPosition;
             attachedRotationOffset = syncedRotation;
+            AttachedPlayer = Networking.GetOwner(this.gameObject);
             RegisterCustomUpdate();
             state = ReceivingState;
         }
