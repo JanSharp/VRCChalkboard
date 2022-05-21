@@ -5,6 +5,9 @@ using VRC.SDKBase;
 using VRC.Udon;
 using VRC.Udon.Common;
 
+// TODO: fixed positions
+// TODO: disallowed item theft support
+
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class JanItemSync : UdonSharpBehaviour
 {
@@ -105,6 +108,7 @@ public class JanItemSync : UdonSharpBehaviour
             UpdateSender();
     }
 
+    ///cSpell:ignore jank
     // alright, so I've decided. For now I'm going to ignore theft and simply declare it undefined
     // and even if/once I handle item theft I'm not going to use VRCPickup for it, I'm going to check if it's allowed
     // and the prevent theft myself, because I have no interest in quite literally telling every client that that player picked up an item
