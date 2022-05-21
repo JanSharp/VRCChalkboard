@@ -35,12 +35,12 @@ public class JanItemSync : UdonSharpBehaviour
     // 29 bytes (1 + 12 + 16) worth of data, and we get 84 bytes as the byte count in OnPostSerialization. I'll leave it at that
 
     // state tracking to determine when the player and item held still for long enough to really determine the attached offset
-    private const float ExpectedStillFrameCount = 4;
-    private const float ExpectedLongerStillFrameCount = 12;
+    private const float ExpectedStillFrameCount = 5;
+    private const float ExpectedLongerStillFrameCount = 20;
     private const float MagnitudeTolerance = 0.075f;
     private const float IntolerableMagnitudeDiff = 0.15f;
     private const float IntolerableAngleDiff = 30f;
-    private const float FadeInTime = 1f; // seconds of manual position syncing before attaching
+    private const float FadeInTime = 2f; // seconds of manual position syncing before attaching
     private float stillFrameCount;
     private Vector3 prevBonePos;
     private Quaternion prevBoneRotation;
@@ -133,7 +133,7 @@ public class JanItemSync : UdonSharpBehaviour
         
         if (state == FadeInState)
         {
-            if (Time.time < pickupTime + FadeInTime)
+            if (Time.time > pickupTime + FadeInTime)
                 state = WaitingForStillnessState;
             SendChanges(); // simply sending changes is going to send the current item position and rotation
         }
