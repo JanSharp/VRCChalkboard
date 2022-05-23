@@ -210,12 +210,15 @@ public class JanItemSync : UdonSharpBehaviour
         var posOffset = GetLocalPositionToBone(ItemPosition);
         var posOffsetMagnitude = posOffset.magnitude;
         var rotOffset = GetLocalRotationToBone(ItemRotation);
+        Debug.Log($"*WaitingForConsistentOffsetState: magnitude diff: {Mathf.Abs(posOffsetMagnitude - prevPositionOffsetMagnitude)}, angle diff: {Quaternion.Angle(rotOffset, prevRotationOffset)}.");
         if (Mathf.Abs(posOffsetMagnitude - prevPositionOffsetMagnitude) <= SmallMagnitudeDiff
             && Quaternion.Angle(rotOffset, prevRotationOffset) <= SmallAngleDiff)
         {
             stillFrameCount++;
+            Debug.Log($"stillFrameCount: {stillFrameCount}, Time.time: {Time.time}, stop time: {consistentOffsetStopTime}.");
             if (stillFrameCount >= ConsistentOffsetFrameCount && Time.time >= consistentOffsetStopTime)
             {
+                Debug.Log("Setting attached offset.");
                 attachedLocalOffset = posOffset;
                 attachedRotationOffset = rotOffset;
                 return true;
@@ -223,6 +226,7 @@ public class JanItemSync : UdonSharpBehaviour
         }
         else
         {
+            Debug.Log("Moved too much, resetting timer.");
             stillFrameCount = 0;
             consistentOffsetStopTime = Time.time + ConsistentOffsetDuration;
         }
