@@ -36,12 +36,38 @@ public class JanItemSync : UdonSharpBehaviour
         {
             if (state != value)
             {
+                if (IsDebug)
+                    Debug.Log($"Switching from {StateToString(state)} to {StateToString(value)}.");
                 if (value == IdleState)
                     updateManager.Deregister(this);
                 else if (state == IdleState)
                     updateManager.Register(this);
                 state = value;
             }
+        }
+    }
+    private string StateToString(byte state)
+    {
+        switch (state)
+        {
+            case IdleState:
+                return "IdleState";
+            case VRWaitingForSmallDiffState:
+                return "VRWaitingForSmallDiffState";
+            case VRSendingState:
+                return "VRSendingState";
+            case DesktopWaitingForHandToMoveState:
+                return "DesktopWaitingForHandToMoveState";
+            case DesktopWaitingForHandToStopMovingState:
+                return "DesktopWaitingForHandToStopMovingState";
+            case DesktopSendingState:
+                return "DesktopSendingState";
+            case ReceivingFloatingState:
+                return "ReceivingFloatingState";
+            case ReceivingAttachedState:
+                return "ReceivingAttachedState";
+            default:
+                return "InvalidState";
         }
     }
 
