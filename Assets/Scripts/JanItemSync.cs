@@ -154,6 +154,7 @@ public class JanItemSync : UdonSharpBehaviour
         {
             prevPositionOffsetMagnitude = GetLocalPositionToBone(ItemPosition).magnitude;
             prevRotationOffset = GetLocalRotationToBone(ItemRotation);
+            stillFrameCount = 0;
             State = VRWaitingForConsistentOffsetState;
             consistentOffsetStopTime = Time.time + ConsistentOffsetDuration;
         }
@@ -261,6 +262,7 @@ public class JanItemSync : UdonSharpBehaviour
                 {
                     prevPositionOffsetMagnitude = GetLocalPositionToBone(ItemPosition).magnitude;
                     prevRotationOffset = GetLocalRotationToBone(ItemRotation);
+                    stillFrameCount = 0;
                     State = DesktopWaitingForConsistentOffsetState;
                     consistentOffsetStopTime = Time.time + ConsistentOffsetDuration;
                 }
