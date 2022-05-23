@@ -87,7 +87,7 @@ public class JanItemSync : UdonSharpBehaviour
     private Quaternion attachedRotationOffset;
 
     // VRWaitingForSmallDiffState
-    private const float SmallMagnitudeDiff = 0.075f;
+    private const float SmallMagnitudeDiff = 0.02f;
     private const float SmallAngleDiff = 10f;
     private const float SmallDiffDuration = 0.1f;
     private float prevPositionOffsetMagnitude;
@@ -99,7 +99,7 @@ public class JanItemSync : UdonSharpBehaviour
     private Quaternion initialBoneRotation;
 
     // VRWaitingForSmallDiffState
-    private const float DesktopSmallMagnitudeDiff = 0.075f;
+    private const float DesktopSmallMagnitudeDiff = 0.02f;
     private const float DesktopSmallAngleDiff = 10f;
     private const float DesktopSmallDiffDuration = 0.1f;
     // reused from VRWaitingForSmallDiffState
