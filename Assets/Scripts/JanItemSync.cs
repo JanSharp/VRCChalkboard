@@ -8,6 +8,14 @@ using VRC.Udon.Common;
 // TODO: fixed positions
 // TODO: disallowed item theft support
 
+///cSpell:ignore jank
+// alright, so I've decided. For now I'm going to ignore theft and simply declare it undefined
+// and even if/once I handle item theft I'm not going to use VRCPickup for it, I'm going to check if it's allowed
+// and the prevent theft myself, because I have no interest in quite literally telling every client that that player picked up an item
+// because I can already see just how jank and hard it would be to synchronize local position and rotation. It would be pure pain
+// that means, however, we need to know if it is possible to disable a pickup script temporarily
+// I'll have to figure that out once this script has been fully refactored and tested
+
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class JanItemSync : UdonSharpBehaviour
 {
@@ -21,10 +29,10 @@ public class JanItemSync : UdonSharpBehaviour
     private Transform dummyTransform;
 
     private const byte IdleState = 0; // the only state with CustomUpdate deregistered
-    private const byte VRWaitingForSmallDiffState = 1;
+    private const byte VRWaitingForConsistentOffsetState = 1;
     private const byte VRSendingState = 2; // attached to hand
     private const byte DesktopWaitingForHandToMoveState = 3;
-    private const byte DesktopWaitingForHandToStopMovingState = 4;
+    private const byte DesktopWaitingForConsistentOffsetState = 4;
     private const byte DesktopSendingState = 5; // attached to hand
     private const byte ReceivingFloatingState = 6;
     private const byte ReceivingAttachedState = 7; // attached to hand
@@ -52,14 +60,14 @@ public class JanItemSync : UdonSharpBehaviour
         {
             case IdleState:
                 return "IdleState";
-            case VRWaitingForSmallDiffState:
-                return "VRWaitingForSmallDiffState";
+            case VRWaitingForConsistentOffsetState:
+                return "VRWaitingForConsistentOffsetState";
             case VRSendingState:
                 return "VRSendingState";
             case DesktopWaitingForHandToMoveState:
                 return "DesktopWaitingForHandToMoveState";
-            case DesktopWaitingForHandToStopMovingState:
-                return "DesktopWaitingForHandToStopMovingState";
+            case DesktopWaitingForConsistentOffsetState:
+                return "DesktopWaitingForConsistentOffsetState";
             case DesktopSendingState:
                 return "DesktopSendingState";
             case ReceivingFloatingState:
@@ -86,45 +94,25 @@ public class JanItemSync : UdonSharpBehaviour
     private Vector3 attachedLocalOffset;
     private Quaternion attachedRotationOffset;
 
-    // VRWaitingForSmallDiffState
+    // VRWaitingForConsistentOffsetState and DesktopWaitingForConsistentOffsetState
     private const float SmallMagnitudeDiff = 0.02f;
     private const float SmallAngleDiff = 10f;
-    private const float SmallDiffDuration = 0.1f;
+    private const float ConsistentOffsetDuration = 0.1f;
+    private const byte ConsistentOffsetFrameCount = 3;
     private float prevPositionOffsetMagnitude;
     private Quaternion prevRotationOffset;
-    private float smallDiffStopTime;
+    private float consistentOffsetStopTime;
+    private byte stillFrameCount; // to prevent super low framerate from causing false positives
 
     // DesktopWaitingForHandToMoveState
     private const float HandMovementAngleDiff = 20f;
     private Quaternion initialBoneRotation;
-
-    // VRWaitingForSmallDiffState
-    private const float DesktopSmallMagnitudeDiff = 0.02f;
-    private const float DesktopSmallAngleDiff = 10f;
-    private const float DesktopSmallDiffDuration = 0.1f;
-    // reused from VRWaitingForSmallDiffState
-    // private float prevPositionOffsetMagnitude;
-    // private Quaternion prevRotationOffset;
-    // private float smallDiffStartTime;
 
     // ReceivingFloatingState
     private const float InterpolationDuration = 0.2f;
     private Vector3 posInterpolationDiff;
     private Quaternion interpolationStartRotation;
     private float interpolationStartTime;
-
-    // // state tracking to determine when the player and item held still for long enough to really determine the attached offset
-    // private const float ExpectedStillFrameCount = 5;
-    // private const float ExpectedLongerStillFrameCount = 20;
-    // private const float MagnitudeTolerance = 0.075f;
-    // private const float IntolerableMagnitudeDiff = 0.15f;
-    // private const float IntolerableAngleDiff = 30f;
-    // private const float FadeInTime = 2f; // seconds of manual position syncing before attaching
-    // private float stillFrameCount;
-    // private Vector3 prevBonePos;
-    // private Quaternion prevBoneRotation;
-    // private Vector3 prevItemPos;
-    // private Quaternion prevItemRotation;
 
     // for the update manager
     private int customUpdateInternalIndex;
@@ -166,8 +154,8 @@ public class JanItemSync : UdonSharpBehaviour
         {
             prevPositionOffsetMagnitude = GetLocalPositionToBone(ItemPosition).magnitude;
             prevRotationOffset = GetLocalRotationToBone(ItemRotation);
-            State = VRWaitingForSmallDiffState;
-            smallDiffStopTime = Time.time + SmallDiffDuration;
+            State = VRWaitingForConsistentOffsetState;
+            consistentOffsetStopTime = Time.time + ConsistentOffsetDuration;
         }
         else
         {
@@ -215,13 +203,32 @@ public class JanItemSync : UdonSharpBehaviour
         }
     }
 
-    ///cSpell:ignore jank
-    // alright, so I've decided. For now I'm going to ignore theft and simply declare it undefined
-    // and even if/once I handle item theft I'm not going to use VRCPickup for it, I'm going to check if it's allowed
-    // and the prevent theft myself, because I have no interest in quite literally telling every client that that player picked up an item
-    // because I can already see just how jank and hard it would be to synchronize local position and rotation. It would be pure pain
-    // that means, however, we need to know if it is possible to disable a pickup script temporarily
-    // I'll have to figure that out once this script has been fully refactored and tested
+    private bool ItemOffsetWasConsistent()
+    {
+        var posOffset = GetLocalPositionToBone(ItemPosition);
+        var posOffsetMagnitude = posOffset.magnitude;
+        var rotOffset = GetLocalRotationToBone(ItemRotation);
+        if (Mathf.Abs(posOffsetMagnitude - prevPositionOffsetMagnitude) <= SmallMagnitudeDiff
+            && Quaternion.Angle(rotOffset, prevRotationOffset) <= SmallAngleDiff)
+        {
+            stillFrameCount++;
+            if (stillFrameCount >= ConsistentOffsetFrameCount && Time.time >= consistentOffsetStopTime)
+            {
+                attachedLocalOffset = posOffset;
+                attachedRotationOffset = rotOffset;
+                return true;
+            }
+        }
+        else
+        {
+            stillFrameCount = 0;
+            consistentOffsetStopTime = Time.time + ConsistentOffsetDuration;
+        }
+
+        prevPositionOffsetMagnitude = posOffsetMagnitude;
+        prevRotationOffset = rotOffset;
+        return false;
+    }
 
     private void UpdateSender()
     {
@@ -229,44 +236,15 @@ public class JanItemSync : UdonSharpBehaviour
         {
             // I think this part still has to make sure the offset is about right, but we'll see
             // it'll definitely have to sync rotation in desktop mode, not sure if that's possible in VR
-            // if (IsDebug)
-            // {
-            //     // fetch values
-            //     var bonePos2 = attachedPlayer.GetBonePosition(attachedBone);
-            //     var boneRotation2 = attachedPlayer.GetBoneRotation(attachedBone);
-
-            //     // move some transform to match the bone, because the TransformDirection methods require an instance of a Transform
-            //     dummyTransform.SetPositionAndRotation(bonePos2, boneRotation2);
-            //     dummyTransform.SetPositionAndRotation(
-            //         bonePos2 + dummyTransform.TransformDirection(attachedLocalOffset),
-            //         boneRotation2 * attachedRotationOffset
-            //     );
-            // }
             return;
         }
 
         MoveDummyToBone();
 
-        if (State == VRWaitingForSmallDiffState)
+        if (State == VRWaitingForConsistentOffsetState)
         {
-            var posOffset = GetLocalPositionToBone(ItemPosition);
-            var posOffsetMagnitude = posOffset.magnitude;
-            var rotOffset = GetLocalRotationToBone(ItemRotation);
-            if (Mathf.Abs(posOffsetMagnitude - prevPositionOffsetMagnitude) <= SmallMagnitudeDiff
-                && Quaternion.Angle(rotOffset, prevRotationOffset) <= SmallAngleDiff)
-            {
-                    if (Time.time >= smallDiffStopTime)
-                {
-                    attachedLocalOffset = posOffset;
-                    attachedRotationOffset = rotOffset;
-                    State = VRSendingState;
-                }
-            }
-            else
-                smallDiffStopTime = Time.time + SmallDiffDuration;
-
-            prevPositionOffsetMagnitude = posOffsetMagnitude;
-            prevRotationOffset = rotOffset;
+            if (ItemOffsetWasConsistent())
+                State = VRSendingState;
         }
         else
         {
@@ -277,32 +255,14 @@ public class JanItemSync : UdonSharpBehaviour
                 {
                     prevPositionOffsetMagnitude = GetLocalPositionToBone(ItemPosition).magnitude;
                     prevRotationOffset = GetLocalRotationToBone(ItemRotation);
-                    State = DesktopWaitingForHandToStopMovingState;
-                    smallDiffStopTime = Time.time + DesktopSmallDiffDuration;
+                    State = DesktopWaitingForConsistentOffsetState;
+                    consistentOffsetStopTime = Time.time + ConsistentOffsetDuration;
                 }
             }
             else
             {
-                var posOffset = GetLocalPositionToBone(ItemPosition);
-                var posOffsetMagnitude = posOffset.magnitude;
-                var rotOffset = GetLocalRotationToBone(ItemRotation);
-                Debug.Log($"DesktopWaitingForHandToStopMovingState: magnitude diff: {Mathf.Abs(posOffsetMagnitude - prevPositionOffsetMagnitude)}, angle diff: {Quaternion.Angle(rotOffset, prevRotationOffset)}.");
-                if (Mathf.Abs(posOffsetMagnitude - prevPositionOffsetMagnitude) <= DesktopSmallMagnitudeDiff
-                    && Quaternion.Angle(rotOffset, prevRotationOffset) <= DesktopSmallAngleDiff)
-                {
-                    Debug.Log($"Time: {Time.time}, stop time: {smallDiffStopTime}.");
-                    if (Time.time >= smallDiffStopTime)
-                    {
-                        attachedLocalOffset = posOffset;
-                        attachedRotationOffset = rotOffset;
-                        State = DesktopSendingState;
-                    }
-                }
-                else
-                    smallDiffStopTime = Time.time + DesktopSmallDiffDuration;
-
-                prevPositionOffsetMagnitude = posOffsetMagnitude;
-                prevRotationOffset = rotOffset;
+                if (ItemOffsetWasConsistent())
+                    State = DesktopSendingState;
             }
         }
         SendChanges(); // regardless of what happened, it has to sync
