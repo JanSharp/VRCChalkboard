@@ -92,7 +92,7 @@ public class JanItemSync : UdonSharpBehaviour
     private const float SmallDiffDuration = 0.1f;
     private float prevPositionOffsetMagnitude;
     private Quaternion prevRotationOffset;
-    private float smallDiffStartTime;
+    private float smallDiffStopTime;
 
     // DesktopWaitingForHandToMoveState
     private const float HandMovementAngleDiff = 20f;
@@ -167,7 +167,7 @@ public class JanItemSync : UdonSharpBehaviour
             prevPositionOffsetMagnitude = GetLocalPositionToBone(ItemPosition).magnitude;
             prevRotationOffset = GetLocalRotationToBone(ItemRotation);
             State = VRWaitingForSmallDiffState;
-            smallDiffStartTime = Time.time;
+            smallDiffStopTime = Time.time + SmallDiffDuration;
         }
         else
         {
@@ -255,7 +255,7 @@ public class JanItemSync : UdonSharpBehaviour
             if (Mathf.Abs(posOffsetMagnitude - prevPositionOffsetMagnitude) <= SmallMagnitudeDiff
                 && Quaternion.Angle(rotOffset, prevRotationOffset) <= SmallAngleDiff)
             {
-                if (smallDiffStartTime <= SmallDiffDuration)
+                    if (Time.time >= smallDiffStopTime)
                 {
                     attachedLocalOffset = posOffset;
                     attachedRotationOffset = rotOffset;
@@ -263,7 +263,7 @@ public class JanItemSync : UdonSharpBehaviour
                 }
             }
             else
-                smallDiffStartTime = Time.time;
+                smallDiffStopTime = Time.time + SmallDiffDuration;
 
             prevPositionOffsetMagnitude = posOffsetMagnitude;
             prevRotationOffset = rotOffset;
@@ -272,12 +272,13 @@ public class JanItemSync : UdonSharpBehaviour
         {
             if (State == DesktopWaitingForHandToMoveState)
             {
+                Debug.Log($"DesktopWaitingForHandToMoveState: angle diff: {Quaternion.Angle(AttachedBoneRotation, initialBoneRotation)}");
                 if (Quaternion.Angle(AttachedBoneRotation, initialBoneRotation) > HandMovementAngleDiff)
                 {
                     prevPositionOffsetMagnitude = GetLocalPositionToBone(ItemPosition).magnitude;
                     prevRotationOffset = GetLocalRotationToBone(ItemRotation);
                     State = DesktopWaitingForHandToStopMovingState;
-                    smallDiffStartTime = Time.time;
+                    smallDiffStopTime = Time.time + DesktopSmallDiffDuration;
                 }
             }
             else
@@ -285,10 +286,12 @@ public class JanItemSync : UdonSharpBehaviour
                 var posOffset = GetLocalPositionToBone(ItemPosition);
                 var posOffsetMagnitude = posOffset.magnitude;
                 var rotOffset = GetLocalRotationToBone(ItemRotation);
+                Debug.Log($"DesktopWaitingForHandToStopMovingState: magnitude diff: {Mathf.Abs(posOffsetMagnitude - prevPositionOffsetMagnitude)}, angle diff: {Quaternion.Angle(rotOffset, prevRotationOffset)}.");
                 if (Mathf.Abs(posOffsetMagnitude - prevPositionOffsetMagnitude) <= DesktopSmallMagnitudeDiff
                     && Quaternion.Angle(rotOffset, prevRotationOffset) <= DesktopSmallAngleDiff)
                 {
-                    if (smallDiffStartTime <= DesktopSmallDiffDuration)
+                    Debug.Log($"Time: {Time.time}, stop time: {smallDiffStopTime}.");
+                    if (Time.time >= smallDiffStopTime)
                     {
                         attachedLocalOffset = posOffset;
                         attachedRotationOffset = rotOffset;
@@ -296,7 +299,7 @@ public class JanItemSync : UdonSharpBehaviour
                     }
                 }
                 else
-                    smallDiffStartTime = Time.time;
+                    smallDiffStopTime = Time.time + DesktopSmallDiffDuration;
 
                 prevPositionOffsetMagnitude = posOffsetMagnitude;
                 prevRotationOffset = rotOffset;
