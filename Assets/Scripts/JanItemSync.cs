@@ -171,6 +171,8 @@ public class JanItemSync : UdonSharpBehaviour
             return;
         State = IdleState;
         SendChanges();
+        if (IsDebug)
+            dummyTransform.SetPositionAndRotation(this.transform.position, this.transform.rotation);
     }
 
     public void CustomUpdate()
@@ -308,9 +310,7 @@ public class JanItemSync : UdonSharpBehaviour
         }
 
         if (IsDebug)
-        {
             dummyTransform.SetPositionAndRotation(this.transform.position, this.transform.rotation);
-        }
     }
 
     private void SendChanges()
