@@ -38,7 +38,7 @@ public class JanItemSync : UdonSharpBehaviour
     private const byte DesktopWaitingForConsistentOffsetState = 4;
     private const byte DesktopSendingState = 5; // attached to hand
     private const byte ReceivingFloatingState = 6;
-    private const byte ReceivingMovingToBoneState = 7; // attached to hand, but interpolating offset
+    private const byte ReceivingMovingToBoneState = 7; // attached to hand, but interpolating offset towards the actual attached position
     private const byte ReceivingAttachedState = 8; // attached to hand
     private byte state = IdleState;
     private byte State
@@ -218,15 +218,18 @@ public class JanItemSync : UdonSharpBehaviour
         var posOffset = GetLocalPositionToBone(ItemPosition);
         var posOffsetMagnitude = posOffset.magnitude;
         var rotOffset = GetLocalRotationToBone(ItemRotation);
-        Debug.Log($"*WaitingForConsistentOffsetState: magnitude diff: {Mathf.Abs(posOffsetMagnitude - prevPositionOffsetMagnitude)}, angle diff: {Quaternion.Angle(rotOffset, prevRotationOffset)}.");
+        if (IsDebug)
+            Debug.Log($"*WaitingForConsistentOffsetState: magnitude diff: {Mathf.Abs(posOffsetMagnitude - prevPositionOffsetMagnitude)}, angle diff: {Quaternion.Angle(rotOffset, prevRotationOffset)}.");
         if (Mathf.Abs(posOffsetMagnitude - prevPositionOffsetMagnitude) <= SmallMagnitudeDiff
             && Quaternion.Angle(rotOffset, prevRotationOffset) <= SmallAngleDiff)
         {
             stillFrameCount++;
-            Debug.Log($"stillFrameCount: {stillFrameCount}, Time.time: {Time.time}, stop time: {consistentOffsetStopTime}.");
+            if (IsDebug)
+                Debug.Log($"stillFrameCount: {stillFrameCount}, Time.time: {Time.time}, stop time: {consistentOffsetStopTime}.");
             if (stillFrameCount >= ConsistentOffsetFrameCount && Time.time >= consistentOffsetStopTime)
             {
-                Debug.Log("Setting attached offset.");
+                if (IsDebug)
+                    Debug.Log("Setting attached offset.");
                 attachedLocalOffset = posOffset;
                 attachedRotationOffset = rotOffset;
                 return true;
@@ -234,7 +237,8 @@ public class JanItemSync : UdonSharpBehaviour
         }
         else
         {
-            Debug.Log("Moved too much, resetting timer.");
+            if (IsDebug)
+                Debug.Log("Moved too much, resetting timer.");
             stillFrameCount = 0;
             consistentOffsetStopTime = Time.time + ConsistentOffsetDuration;
         }
@@ -264,7 +268,8 @@ public class JanItemSync : UdonSharpBehaviour
         {
             if (State == DesktopWaitingForHandToMoveState)
             {
-                Debug.Log($"DesktopWaitingForHandToMoveState: angle diff: {Quaternion.Angle(AttachedBoneRotation, initialBoneRotation)}");
+                if (IsDebug)
+                    Debug.Log($"DesktopWaitingForHandToMoveState: angle diff: {Quaternion.Angle(AttachedBoneRotation, initialBoneRotation)}");
                 if (Quaternion.Angle(AttachedBoneRotation, initialBoneRotation) > HandMovementAngleDiff)
                 {
                     prevPositionOffsetMagnitude = GetLocalPositionToBone(ItemPosition).magnitude;
@@ -386,9 +391,9 @@ public class JanItemSync : UdonSharpBehaviour
             attachedBone = (syncedFlags & 2) != 0 ? HumanBodyBones.LeftHand : HumanBodyBones.RightHand;
             attachedLocalOffset = syncedPosition;
             attachedRotationOffset = syncedRotation;
+            attachedPlayer = Networking.GetOwner(this.gameObject); // ensure it is up to date
             if (State != ReceivingAttachedState)
             {
-                attachedPlayer = Networking.GetOwner(this.gameObject);
                 MoveDummyToBone();
                 posInterpolationDiff = attachedLocalOffset - GetLocalPositionToBone(ItemPosition);
                 interpolationStartRotation = GetLocalRotationToBone(ItemRotation);
