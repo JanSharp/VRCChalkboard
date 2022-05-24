@@ -144,7 +144,7 @@ public class JanItemSync : UdonSharpBehaviour
     private void MoveDummyToBone() => dummyTransform.SetPositionAndRotation(AttachedBonePosition, AttachedBoneRotation);
     private Vector3 GetLocalPositionToBone(Vector3 worldPosition) => dummyTransform.InverseTransformDirection(worldPosition - dummyTransform.position);
     private Quaternion GetLocalRotationToBone(Quaternion worldRotation) => Quaternion.Inverse(dummyTransform.rotation) * worldRotation;
-    private bool IsReceivingState() => State >= ReceivingMovingToBoneState;
+    private bool IsReceivingState() => State >= ReceivingFloatingState;
 
     public override void OnPickup()
     {
