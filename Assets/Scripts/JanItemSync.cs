@@ -104,11 +104,11 @@ public class JanItemSync : UdonSharpBehaviour
     private const float SmallMagnitudeDiff = 0.02f;
     private const float SmallAngleDiff = 10f;
     private const float ConsistentOffsetDuration = 0.1f;
-    private const byte ConsistentOffsetFrameCount = 3;
+    private const int ConsistentOffsetFrameCount = 3;
     private float prevPositionOffsetMagnitude;
     private Quaternion prevRotationOffset;
     private float consistentOffsetStopTime;
-    private byte stillFrameCount; // to prevent super low framerate from causing false positives
+    private int stillFrameCount; // to prevent super low framerate from causing false positives
 
     // DesktopWaitingForHandToMoveState
     private const float HandMovementAngleDiff = 20f;
