@@ -9,7 +9,6 @@ using VRC.Udon.Common;
 
 // TODO: fixed positions
 // TODO: disallowed item theft support
-// TODO: track offset magnitude diff
 
 ///cSpell:ignore jank
 // alright, so I've decided. For now I'm going to ignore theft and simply declare it undefined
@@ -105,7 +104,7 @@ public class JanItemSync : UdonSharpBehaviour
     private const float SmallAngleDiff = 10f;
     private const float ConsistentOffsetDuration = 0.1f;
     private const int ConsistentOffsetFrameCount = 3;
-    private float prevPositionOffsetMagnitude;
+    private Vector3 prevPositionOffset;
     private Quaternion prevRotationOffset;
     private float consistentOffsetStopTime;
     private int stillFrameCount; // to prevent super low framerate from causing false positives
@@ -159,7 +158,7 @@ public class JanItemSync : UdonSharpBehaviour
 
         if (attachedPlayer.IsUserInVR())
         {
-            prevPositionOffsetMagnitude = GetLocalPositionToBone(ItemPosition).magnitude;
+            prevPositionOffset = GetLocalPositionToBone(ItemPosition);
             prevRotationOffset = GetLocalRotationToBone(ItemRotation);
             stillFrameCount = 0;
             State = VRWaitingForConsistentOffsetState;
@@ -216,11 +215,10 @@ public class JanItemSync : UdonSharpBehaviour
     private bool ItemOffsetWasConsistent()
     {
         var posOffset = GetLocalPositionToBone(ItemPosition);
-        var posOffsetMagnitude = posOffset.magnitude;
         var rotOffset = GetLocalRotationToBone(ItemRotation);
         if (IsDebug)
-            Debug.Log($"*WaitingForConsistentOffsetState: magnitude diff: {Mathf.Abs(posOffsetMagnitude - prevPositionOffsetMagnitude)}, angle diff: {Quaternion.Angle(rotOffset, prevRotationOffset)}.");
-        if (Mathf.Abs(posOffsetMagnitude - prevPositionOffsetMagnitude) <= SmallMagnitudeDiff
+            Debug.Log($"*WaitingForConsistentOffsetState: offset diff: {posOffset - prevPositionOffset}, offset diff magnitude {(posOffset - prevPositionOffset).magnitude}, angle diff: {Quaternion.Angle(rotOffset, prevRotationOffset)}.");
+        if ((posOffset - prevPositionOffset).magnitude <= SmallMagnitudeDiff
             && Quaternion.Angle(rotOffset, prevRotationOffset) <= SmallAngleDiff)
         {
             stillFrameCount++;
@@ -243,7 +241,7 @@ public class JanItemSync : UdonSharpBehaviour
             consistentOffsetStopTime = Time.time + ConsistentOffsetDuration;
         }
 
-        prevPositionOffsetMagnitude = posOffsetMagnitude;
+        prevPositionOffset = posOffset;
         prevRotationOffset = rotOffset;
         return false;
     }
@@ -272,7 +270,7 @@ public class JanItemSync : UdonSharpBehaviour
                     Debug.Log($"DesktopWaitingForHandToMoveState: angle diff: {Quaternion.Angle(AttachedBoneRotation, initialBoneRotation)}");
                 if (Quaternion.Angle(AttachedBoneRotation, initialBoneRotation) > HandMovementAngleDiff)
                 {
-                    prevPositionOffsetMagnitude = GetLocalPositionToBone(ItemPosition).magnitude;
+                    prevPositionOffset = GetLocalPositionToBone(ItemPosition);
                     prevRotationOffset = GetLocalRotationToBone(ItemRotation);
                     stillFrameCount = 0;
                     State = DesktopWaitingForConsistentOffsetState;
