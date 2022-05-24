@@ -100,10 +100,10 @@ public class JanItemSync : UdonSharpBehaviour
     private Quaternion attachedRotationOffset;
 
     // VRWaitingForConsistentOffsetState and DesktopWaitingForConsistentOffsetState
-    private const float SmallMagnitudeDiff = 0.02f;
+    private const float SmallMagnitudeDiff = 0.01f;
     private const float SmallAngleDiff = 5f;
-    private const float ConsistentOffsetDuration = 0.2f;
-    private const int ConsistentOffsetFrameCount = 5;
+    private const float ConsistentOffsetDuration = 0.15f;
+    private const int ConsistentOffsetFrameCount = 4;
     private Vector3 prevPositionOffset;
     private Quaternion prevRotationOffset;
     private float consistentOffsetStopTime;
