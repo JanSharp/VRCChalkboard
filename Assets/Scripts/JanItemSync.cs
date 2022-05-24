@@ -9,6 +9,7 @@ using VRC.Udon.Common;
 
 // TODO: fixed positions
 // TODO: disallowed item theft support
+// TODO: enable disable support/testing
 
 ///cSpell:ignore jank
 // alright, so I've decided. For now I'm going to ignore theft and simply declare it undefined
@@ -102,7 +103,7 @@ public class JanItemSync : UdonSharpBehaviour
     // VRWaitingForConsistentOffsetState and DesktopWaitingForConsistentOffsetState
     private const float SmallMagnitudeDiff = 0.005f;
     private const float SmallAngleDiff = 5f;
-    private const float ConsistentOffsetDuration = 0.1f;
+    private const float ConsistentOffsetDuration = 0.3f;
     private const int ConsistentOffsetFrameCount = 4;
     private Vector3 prevPositionOffset;
     private Quaternion prevRotationOffset;
