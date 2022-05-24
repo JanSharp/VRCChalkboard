@@ -44,7 +44,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 12
-      Data: 35
+      Data: 36
     - Name: 
       Entry: 7
       Data: 
@@ -707,7 +707,7 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: ReceivingAttachedState
+      Data: ReceivingMovingToBoneState
     - Name: $v
       Entry: 7
       Data: 40|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
@@ -728,10 +728,10 @@ MonoBehaviour:
       Data: SystemByte
     - Name: symbolOriginalName
       Entry: 1
-      Data: ReceivingAttachedState
+      Data: ReceivingMovingToBoneState
     - Name: symbolUniqueName
       Entry: 1
-      Data: ReceivingAttachedState
+      Data: ReceivingMovingToBoneState
     - Name: symbolDefaultValue
       Entry: 6
       Data: 
@@ -764,7 +764,7 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: state
+      Data: ReceivingAttachedState
     - Name: $v
       Entry: 7
       Data: 43|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
@@ -776,7 +776,7 @@ MonoBehaviour:
       Data: 20
     - Name: declarationType
       Entry: 3
-      Data: 2
+      Data: 258
     - Name: syncMode
       Entry: 3
       Data: 0
@@ -785,10 +785,10 @@ MonoBehaviour:
       Data: SystemByte
     - Name: symbolOriginalName
       Entry: 1
-      Data: state
+      Data: ReceivingAttachedState
     - Name: symbolUniqueName
       Entry: 1
-      Data: state
+      Data: ReceivingAttachedState
     - Name: symbolDefaultValue
       Entry: 6
       Data: 
@@ -821,13 +821,70 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: syncedFlags
+      Data: state
     - Name: $v
       Entry: 7
       Data: 46|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
     - Name: fieldSymbol
       Entry: 7
       Data: 47|UdonSharp.Compiler.SymbolDefinition, UdonSharp.Editor
+    - Name: internalType
+      Entry: 9
+      Data: 20
+    - Name: declarationType
+      Entry: 3
+      Data: 2
+    - Name: syncMode
+      Entry: 3
+      Data: 0
+    - Name: symbolResolvedTypeName
+      Entry: 1
+      Data: SystemByte
+    - Name: symbolOriginalName
+      Entry: 1
+      Data: state
+    - Name: symbolUniqueName
+      Entry: 1
+      Data: state
+    - Name: symbolDefaultValue
+      Entry: 6
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: fieldAttributes
+      Entry: 7
+      Data: 48|System.Collections.Generic.List`1[[System.Attribute, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 0
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: userBehaviourSource
+      Entry: 6
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: syncedFlags
+    - Name: $v
+      Entry: 7
+      Data: 49|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
+    - Name: fieldSymbol
+      Entry: 7
+      Data: 50|UdonSharp.Compiler.SymbolDefinition, UdonSharp.Editor
     - Name: internalType
       Entry: 9
       Data: 20
@@ -854,13 +911,13 @@ MonoBehaviour:
       Data: 
     - Name: fieldAttributes
       Entry: 7
-      Data: 48|System.Collections.Generic.List`1[[System.Attribute, mscorlib]], mscorlib
+      Data: 51|System.Collections.Generic.List`1[[System.Attribute, mscorlib]], mscorlib
     - Name: 
       Entry: 12
       Data: 1
     - Name: 
       Entry: 7
-      Data: 49|UdonSharp.UdonSyncedAttribute, UdonSharp.Runtime
+      Data: 52|UdonSharp.UdonSyncedAttribute, UdonSharp.Runtime
     - Name: 
       Entry: 8
       Data: 
@@ -887,13 +944,13 @@ MonoBehaviour:
       Data: syncedPosition
     - Name: $v
       Entry: 7
-      Data: 50|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
+      Data: 53|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
     - Name: fieldSymbol
       Entry: 7
-      Data: 51|UdonSharp.Compiler.SymbolDefinition, UdonSharp.Editor
+      Data: 54|UdonSharp.Compiler.SymbolDefinition, UdonSharp.Editor
     - Name: internalType
       Entry: 7
-      Data: 52|System.RuntimeType, mscorlib
+      Data: 55|System.RuntimeType, mscorlib
     - Name: 
       Entry: 1
       Data: UnityEngine.Vector3, UnityEngine.CoreModule
@@ -923,13 +980,13 @@ MonoBehaviour:
       Data: 
     - Name: fieldAttributes
       Entry: 7
-      Data: 53|System.Collections.Generic.List`1[[System.Attribute, mscorlib]], mscorlib
+      Data: 56|System.Collections.Generic.List`1[[System.Attribute, mscorlib]], mscorlib
     - Name: 
       Entry: 12
       Data: 1
     - Name: 
       Entry: 7
-      Data: 54|UdonSharp.UdonSyncedAttribute, UdonSharp.Runtime
+      Data: 57|UdonSharp.UdonSyncedAttribute, UdonSharp.Runtime
     - Name: 
       Entry: 8
       Data: 
@@ -956,13 +1013,13 @@ MonoBehaviour:
       Data: syncedRotation
     - Name: $v
       Entry: 7
-      Data: 55|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
+      Data: 58|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
     - Name: fieldSymbol
       Entry: 7
-      Data: 56|UdonSharp.Compiler.SymbolDefinition, UdonSharp.Editor
+      Data: 59|UdonSharp.Compiler.SymbolDefinition, UdonSharp.Editor
     - Name: internalType
       Entry: 7
-      Data: 57|System.RuntimeType, mscorlib
+      Data: 60|System.RuntimeType, mscorlib
     - Name: 
       Entry: 1
       Data: UnityEngine.Quaternion, UnityEngine.CoreModule
@@ -992,13 +1049,13 @@ MonoBehaviour:
       Data: 
     - Name: fieldAttributes
       Entry: 7
-      Data: 58|System.Collections.Generic.List`1[[System.Attribute, mscorlib]], mscorlib
+      Data: 61|System.Collections.Generic.List`1[[System.Attribute, mscorlib]], mscorlib
     - Name: 
       Entry: 12
       Data: 1
     - Name: 
       Entry: 7
-      Data: 59|UdonSharp.UdonSyncedAttribute, UdonSharp.Runtime
+      Data: 62|UdonSharp.UdonSyncedAttribute, UdonSharp.Runtime
     - Name: 
       Entry: 8
       Data: 
@@ -1025,13 +1082,13 @@ MonoBehaviour:
       Data: attachedPlayer
     - Name: $v
       Entry: 7
-      Data: 60|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
+      Data: 63|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
     - Name: fieldSymbol
       Entry: 7
-      Data: 61|UdonSharp.Compiler.SymbolDefinition, UdonSharp.Editor
+      Data: 64|UdonSharp.Compiler.SymbolDefinition, UdonSharp.Editor
     - Name: internalType
       Entry: 7
-      Data: 62|System.RuntimeType, mscorlib
+      Data: 65|System.RuntimeType, mscorlib
     - Name: 
       Entry: 1
       Data: VRC.SDKBase.VRCPlayerApi, VRCSDKBase
@@ -1061,7 +1118,7 @@ MonoBehaviour:
       Data: 
     - Name: fieldAttributes
       Entry: 7
-      Data: 63|System.Collections.Generic.List`1[[System.Attribute, mscorlib]], mscorlib
+      Data: 66|System.Collections.Generic.List`1[[System.Attribute, mscorlib]], mscorlib
     - Name: 
       Entry: 12
       Data: 0
@@ -1088,13 +1145,13 @@ MonoBehaviour:
       Data: attachedBone
     - Name: $v
       Entry: 7
-      Data: 64|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
+      Data: 67|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
     - Name: fieldSymbol
       Entry: 7
-      Data: 65|UdonSharp.Compiler.SymbolDefinition, UdonSharp.Editor
+      Data: 68|UdonSharp.Compiler.SymbolDefinition, UdonSharp.Editor
     - Name: internalType
       Entry: 7
-      Data: 66|System.RuntimeType, mscorlib
+      Data: 69|System.RuntimeType, mscorlib
     - Name: 
       Entry: 1
       Data: UnityEngine.HumanBodyBones, UnityEngine.AnimationModule
@@ -1116,63 +1173,6 @@ MonoBehaviour:
     - Name: symbolUniqueName
       Entry: 1
       Data: attachedBone
-    - Name: symbolDefaultValue
-      Entry: 6
-      Data: 
-    - Name: 
-      Entry: 8
-      Data: 
-    - Name: fieldAttributes
-      Entry: 7
-      Data: 67|System.Collections.Generic.List`1[[System.Attribute, mscorlib]], mscorlib
-    - Name: 
-      Entry: 12
-      Data: 0
-    - Name: 
-      Entry: 13
-      Data: 
-    - Name: 
-      Entry: 8
-      Data: 
-    - Name: userBehaviourSource
-      Entry: 6
-      Data: 
-    - Name: 
-      Entry: 8
-      Data: 
-    - Name: 
-      Entry: 8
-      Data: 
-    - Name: 
-      Entry: 7
-      Data: 
-    - Name: $k
-      Entry: 1
-      Data: attachedLocalOffset
-    - Name: $v
-      Entry: 7
-      Data: 68|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
-    - Name: fieldSymbol
-      Entry: 7
-      Data: 69|UdonSharp.Compiler.SymbolDefinition, UdonSharp.Editor
-    - Name: internalType
-      Entry: 9
-      Data: 52
-    - Name: declarationType
-      Entry: 3
-      Data: 2
-    - Name: syncMode
-      Entry: 3
-      Data: 0
-    - Name: symbolResolvedTypeName
-      Entry: 1
-      Data: UnityEngineVector3
-    - Name: symbolOriginalName
-      Entry: 1
-      Data: attachedLocalOffset
-    - Name: symbolUniqueName
-      Entry: 1
-      Data: attachedLocalOffset
     - Name: symbolDefaultValue
       Entry: 6
       Data: 
@@ -1205,7 +1205,7 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: attachedRotationOffset
+      Data: attachedLocalOffset
     - Name: $v
       Entry: 7
       Data: 71|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
@@ -1214,7 +1214,7 @@ MonoBehaviour:
       Data: 72|UdonSharp.Compiler.SymbolDefinition, UdonSharp.Editor
     - Name: internalType
       Entry: 9
-      Data: 57
+      Data: 55
     - Name: declarationType
       Entry: 3
       Data: 2
@@ -1223,13 +1223,13 @@ MonoBehaviour:
       Data: 0
     - Name: symbolResolvedTypeName
       Entry: 1
-      Data: UnityEngineQuaternion
+      Data: UnityEngineVector3
     - Name: symbolOriginalName
       Entry: 1
-      Data: attachedRotationOffset
+      Data: attachedLocalOffset
     - Name: symbolUniqueName
       Entry: 1
-      Data: attachedRotationOffset
+      Data: attachedLocalOffset
     - Name: symbolDefaultValue
       Entry: 6
       Data: 
@@ -1262,7 +1262,7 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: SmallMagnitudeDiff
+      Data: attachedRotationOffset
     - Name: $v
       Entry: 7
       Data: 74|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
@@ -1270,29 +1270,23 @@ MonoBehaviour:
       Entry: 7
       Data: 75|UdonSharp.Compiler.SymbolDefinition, UdonSharp.Editor
     - Name: internalType
-      Entry: 7
-      Data: 76|System.RuntimeType, mscorlib
-    - Name: 
-      Entry: 1
-      Data: System.Single, mscorlib
-    - Name: 
-      Entry: 8
-      Data: 
+      Entry: 9
+      Data: 60
     - Name: declarationType
       Entry: 3
-      Data: 258
+      Data: 2
     - Name: syncMode
       Entry: 3
       Data: 0
     - Name: symbolResolvedTypeName
       Entry: 1
-      Data: SystemSingle
+      Data: UnityEngineQuaternion
     - Name: symbolOriginalName
       Entry: 1
-      Data: SmallMagnitudeDiff
+      Data: attachedRotationOffset
     - Name: symbolUniqueName
       Entry: 1
-      Data: SmallMagnitudeDiff
+      Data: attachedRotationOffset
     - Name: symbolDefaultValue
       Entry: 6
       Data: 
@@ -1301,7 +1295,7 @@ MonoBehaviour:
       Data: 
     - Name: fieldAttributes
       Entry: 7
-      Data: 77|System.Collections.Generic.List`1[[System.Attribute, mscorlib]], mscorlib
+      Data: 76|System.Collections.Generic.List`1[[System.Attribute, mscorlib]], mscorlib
     - Name: 
       Entry: 12
       Data: 0
@@ -1325,16 +1319,22 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: SmallAngleDiff
+      Data: SmallMagnitudeDiff
     - Name: $v
       Entry: 7
-      Data: 78|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
+      Data: 77|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
     - Name: fieldSymbol
       Entry: 7
-      Data: 79|UdonSharp.Compiler.SymbolDefinition, UdonSharp.Editor
+      Data: 78|UdonSharp.Compiler.SymbolDefinition, UdonSharp.Editor
     - Name: internalType
-      Entry: 9
-      Data: 76
+      Entry: 7
+      Data: 79|System.RuntimeType, mscorlib
+    - Name: 
+      Entry: 1
+      Data: System.Single, mscorlib
+    - Name: 
+      Entry: 8
+      Data: 
     - Name: declarationType
       Entry: 3
       Data: 258
@@ -1346,10 +1346,10 @@ MonoBehaviour:
       Data: SystemSingle
     - Name: symbolOriginalName
       Entry: 1
-      Data: SmallAngleDiff
+      Data: SmallMagnitudeDiff
     - Name: symbolUniqueName
       Entry: 1
-      Data: SmallAngleDiff
+      Data: SmallMagnitudeDiff
     - Name: symbolDefaultValue
       Entry: 6
       Data: 
@@ -1382,7 +1382,7 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: ConsistentOffsetDuration
+      Data: SmallAngleDiff
     - Name: $v
       Entry: 7
       Data: 81|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
@@ -1391,7 +1391,7 @@ MonoBehaviour:
       Data: 82|UdonSharp.Compiler.SymbolDefinition, UdonSharp.Editor
     - Name: internalType
       Entry: 9
-      Data: 76
+      Data: 79
     - Name: declarationType
       Entry: 3
       Data: 258
@@ -1403,10 +1403,10 @@ MonoBehaviour:
       Data: SystemSingle
     - Name: symbolOriginalName
       Entry: 1
-      Data: ConsistentOffsetDuration
+      Data: SmallAngleDiff
     - Name: symbolUniqueName
       Entry: 1
-      Data: ConsistentOffsetDuration
+      Data: SmallAngleDiff
     - Name: symbolDefaultValue
       Entry: 6
       Data: 
@@ -1439,7 +1439,7 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: ConsistentOffsetFrameCount
+      Data: ConsistentOffsetDuration
     - Name: $v
       Entry: 7
       Data: 84|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
@@ -1448,7 +1448,7 @@ MonoBehaviour:
       Data: 85|UdonSharp.Compiler.SymbolDefinition, UdonSharp.Editor
     - Name: internalType
       Entry: 9
-      Data: 20
+      Data: 79
     - Name: declarationType
       Entry: 3
       Data: 258
@@ -1457,13 +1457,13 @@ MonoBehaviour:
       Data: 0
     - Name: symbolResolvedTypeName
       Entry: 1
-      Data: SystemByte
+      Data: SystemSingle
     - Name: symbolOriginalName
       Entry: 1
-      Data: ConsistentOffsetFrameCount
+      Data: ConsistentOffsetDuration
     - Name: symbolUniqueName
       Entry: 1
-      Data: ConsistentOffsetFrameCount
+      Data: ConsistentOffsetDuration
     - Name: symbolDefaultValue
       Entry: 6
       Data: 
@@ -1496,7 +1496,7 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: prevPositionOffsetMagnitude
+      Data: ConsistentOffsetFrameCount
     - Name: $v
       Entry: 7
       Data: 87|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
@@ -1505,22 +1505,22 @@ MonoBehaviour:
       Data: 88|UdonSharp.Compiler.SymbolDefinition, UdonSharp.Editor
     - Name: internalType
       Entry: 9
-      Data: 76
+      Data: 20
     - Name: declarationType
       Entry: 3
-      Data: 2
+      Data: 258
     - Name: syncMode
       Entry: 3
       Data: 0
     - Name: symbolResolvedTypeName
       Entry: 1
-      Data: SystemSingle
+      Data: SystemByte
     - Name: symbolOriginalName
       Entry: 1
-      Data: prevPositionOffsetMagnitude
+      Data: ConsistentOffsetFrameCount
     - Name: symbolUniqueName
       Entry: 1
-      Data: prevPositionOffsetMagnitude
+      Data: ConsistentOffsetFrameCount
     - Name: symbolDefaultValue
       Entry: 6
       Data: 
@@ -1553,7 +1553,7 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: prevRotationOffset
+      Data: prevPositionOffsetMagnitude
     - Name: $v
       Entry: 7
       Data: 90|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
@@ -1562,7 +1562,7 @@ MonoBehaviour:
       Data: 91|UdonSharp.Compiler.SymbolDefinition, UdonSharp.Editor
     - Name: internalType
       Entry: 9
-      Data: 57
+      Data: 79
     - Name: declarationType
       Entry: 3
       Data: 2
@@ -1571,13 +1571,13 @@ MonoBehaviour:
       Data: 0
     - Name: symbolResolvedTypeName
       Entry: 1
-      Data: UnityEngineQuaternion
+      Data: SystemSingle
     - Name: symbolOriginalName
       Entry: 1
-      Data: prevRotationOffset
+      Data: prevPositionOffsetMagnitude
     - Name: symbolUniqueName
       Entry: 1
-      Data: prevRotationOffset
+      Data: prevPositionOffsetMagnitude
     - Name: symbolDefaultValue
       Entry: 6
       Data: 
@@ -1610,7 +1610,7 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: consistentOffsetStopTime
+      Data: prevRotationOffset
     - Name: $v
       Entry: 7
       Data: 93|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
@@ -1619,7 +1619,7 @@ MonoBehaviour:
       Data: 94|UdonSharp.Compiler.SymbolDefinition, UdonSharp.Editor
     - Name: internalType
       Entry: 9
-      Data: 76
+      Data: 60
     - Name: declarationType
       Entry: 3
       Data: 2
@@ -1628,13 +1628,13 @@ MonoBehaviour:
       Data: 0
     - Name: symbolResolvedTypeName
       Entry: 1
-      Data: SystemSingle
+      Data: UnityEngineQuaternion
     - Name: symbolOriginalName
       Entry: 1
-      Data: consistentOffsetStopTime
+      Data: prevRotationOffset
     - Name: symbolUniqueName
       Entry: 1
-      Data: consistentOffsetStopTime
+      Data: prevRotationOffset
     - Name: symbolDefaultValue
       Entry: 6
       Data: 
@@ -1667,7 +1667,7 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: stillFrameCount
+      Data: consistentOffsetStopTime
     - Name: $v
       Entry: 7
       Data: 96|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
@@ -1676,7 +1676,7 @@ MonoBehaviour:
       Data: 97|UdonSharp.Compiler.SymbolDefinition, UdonSharp.Editor
     - Name: internalType
       Entry: 9
-      Data: 20
+      Data: 79
     - Name: declarationType
       Entry: 3
       Data: 2
@@ -1685,13 +1685,13 @@ MonoBehaviour:
       Data: 0
     - Name: symbolResolvedTypeName
       Entry: 1
-      Data: SystemByte
+      Data: SystemSingle
     - Name: symbolOriginalName
       Entry: 1
-      Data: stillFrameCount
+      Data: consistentOffsetStopTime
     - Name: symbolUniqueName
       Entry: 1
-      Data: stillFrameCount
+      Data: consistentOffsetStopTime
     - Name: symbolDefaultValue
       Entry: 6
       Data: 
@@ -1724,7 +1724,7 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: HandMovementAngleDiff
+      Data: stillFrameCount
     - Name: $v
       Entry: 7
       Data: 99|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
@@ -1733,22 +1733,22 @@ MonoBehaviour:
       Data: 100|UdonSharp.Compiler.SymbolDefinition, UdonSharp.Editor
     - Name: internalType
       Entry: 9
-      Data: 76
+      Data: 20
     - Name: declarationType
       Entry: 3
-      Data: 258
+      Data: 2
     - Name: syncMode
       Entry: 3
       Data: 0
     - Name: symbolResolvedTypeName
       Entry: 1
-      Data: SystemSingle
+      Data: SystemByte
     - Name: symbolOriginalName
       Entry: 1
-      Data: HandMovementAngleDiff
+      Data: stillFrameCount
     - Name: symbolUniqueName
       Entry: 1
-      Data: HandMovementAngleDiff
+      Data: stillFrameCount
     - Name: symbolDefaultValue
       Entry: 6
       Data: 
@@ -1782,7 +1782,7 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: initialBoneRotation
+      Data: HandMovementAngleDiff
     - Name: $v
       Entry: 7
       Data: 102|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
@@ -1791,22 +1791,22 @@ MonoBehaviour:
       Data: 103|UdonSharp.Compiler.SymbolDefinition, UdonSharp.Editor
     - Name: internalType
       Entry: 9
-      Data: 57
+      Data: 79
     - Name: declarationType
       Entry: 3
-      Data: 2
+      Data: 258
     - Name: syncMode
       Entry: 3
       Data: 0
     - Name: symbolResolvedTypeName
       Entry: 1
-      Data: UnityEngineQuaternion
+      Data: SystemSingle
     - Name: symbolOriginalName
       Entry: 1
-      Data: initialBoneRotation
+      Data: HandMovementAngleDiff
     - Name: symbolUniqueName
       Entry: 1
-      Data: initialBoneRotation
+      Data: HandMovementAngleDiff
     - Name: symbolDefaultValue
       Entry: 6
       Data: 
@@ -1840,7 +1840,7 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: InterpolationDuration
+      Data: initialBoneRotation
     - Name: $v
       Entry: 7
       Data: 105|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
@@ -1849,22 +1849,22 @@ MonoBehaviour:
       Data: 106|UdonSharp.Compiler.SymbolDefinition, UdonSharp.Editor
     - Name: internalType
       Entry: 9
-      Data: 76
+      Data: 60
     - Name: declarationType
       Entry: 3
-      Data: 258
+      Data: 2
     - Name: syncMode
       Entry: 3
       Data: 0
     - Name: symbolResolvedTypeName
       Entry: 1
-      Data: SystemSingle
+      Data: UnityEngineQuaternion
     - Name: symbolOriginalName
       Entry: 1
-      Data: InterpolationDuration
+      Data: initialBoneRotation
     - Name: symbolUniqueName
       Entry: 1
-      Data: InterpolationDuration
+      Data: initialBoneRotation
     - Name: symbolDefaultValue
       Entry: 6
       Data: 
@@ -1898,7 +1898,7 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: posInterpolationDiff
+      Data: InterpolationDuration
     - Name: $v
       Entry: 7
       Data: 108|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
@@ -1907,22 +1907,22 @@ MonoBehaviour:
       Data: 109|UdonSharp.Compiler.SymbolDefinition, UdonSharp.Editor
     - Name: internalType
       Entry: 9
-      Data: 52
+      Data: 79
     - Name: declarationType
       Entry: 3
-      Data: 2
+      Data: 258
     - Name: syncMode
       Entry: 3
       Data: 0
     - Name: symbolResolvedTypeName
       Entry: 1
-      Data: UnityEngineVector3
+      Data: SystemSingle
     - Name: symbolOriginalName
       Entry: 1
-      Data: posInterpolationDiff
+      Data: InterpolationDuration
     - Name: symbolUniqueName
       Entry: 1
-      Data: posInterpolationDiff
+      Data: InterpolationDuration
     - Name: symbolDefaultValue
       Entry: 6
       Data: 
@@ -1956,7 +1956,7 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: interpolationStartRotation
+      Data: posInterpolationDiff
     - Name: $v
       Entry: 7
       Data: 111|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
@@ -1965,7 +1965,7 @@ MonoBehaviour:
       Data: 112|UdonSharp.Compiler.SymbolDefinition, UdonSharp.Editor
     - Name: internalType
       Entry: 9
-      Data: 57
+      Data: 55
     - Name: declarationType
       Entry: 3
       Data: 2
@@ -1974,13 +1974,13 @@ MonoBehaviour:
       Data: 0
     - Name: symbolResolvedTypeName
       Entry: 1
-      Data: UnityEngineQuaternion
+      Data: UnityEngineVector3
     - Name: symbolOriginalName
       Entry: 1
-      Data: interpolationStartRotation
+      Data: posInterpolationDiff
     - Name: symbolUniqueName
       Entry: 1
-      Data: interpolationStartRotation
+      Data: posInterpolationDiff
     - Name: symbolDefaultValue
       Entry: 6
       Data: 
@@ -2014,7 +2014,7 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: interpolationStartTime
+      Data: interpolationStartRotation
     - Name: $v
       Entry: 7
       Data: 114|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
@@ -2023,7 +2023,7 @@ MonoBehaviour:
       Data: 115|UdonSharp.Compiler.SymbolDefinition, UdonSharp.Editor
     - Name: internalType
       Entry: 9
-      Data: 76
+      Data: 60
     - Name: declarationType
       Entry: 3
       Data: 2
@@ -2032,13 +2032,13 @@ MonoBehaviour:
       Data: 0
     - Name: symbolResolvedTypeName
       Entry: 1
-      Data: SystemSingle
+      Data: UnityEngineQuaternion
     - Name: symbolOriginalName
       Entry: 1
-      Data: interpolationStartTime
+      Data: interpolationStartRotation
     - Name: symbolUniqueName
       Entry: 1
-      Data: interpolationStartTime
+      Data: interpolationStartRotation
     - Name: symbolDefaultValue
       Entry: 6
       Data: 
@@ -2072,7 +2072,7 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: customUpdateInternalIndex
+      Data: interpolationStartTime
     - Name: $v
       Entry: 7
       Data: 117|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
@@ -2080,8 +2080,66 @@ MonoBehaviour:
       Entry: 7
       Data: 118|UdonSharp.Compiler.SymbolDefinition, UdonSharp.Editor
     - Name: internalType
+      Entry: 9
+      Data: 79
+    - Name: declarationType
+      Entry: 3
+      Data: 2
+    - Name: syncMode
+      Entry: 3
+      Data: 0
+    - Name: symbolResolvedTypeName
+      Entry: 1
+      Data: SystemSingle
+    - Name: symbolOriginalName
+      Entry: 1
+      Data: interpolationStartTime
+    - Name: symbolUniqueName
+      Entry: 1
+      Data: interpolationStartTime
+    - Name: symbolDefaultValue
+      Entry: 6
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: fieldAttributes
       Entry: 7
-      Data: 119|System.RuntimeType, mscorlib
+      Data: 119|System.Collections.Generic.List`1[[System.Attribute, mscorlib]],
+        mscorlib
+    - Name: 
+      Entry: 12
+      Data: 0
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: userBehaviourSource
+      Entry: 6
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: customUpdateInternalIndex
+    - Name: $v
+      Entry: 7
+      Data: 120|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
+    - Name: fieldSymbol
+      Entry: 7
+      Data: 121|UdonSharp.Compiler.SymbolDefinition, UdonSharp.Editor
+    - Name: internalType
+      Entry: 7
+      Data: 122|System.RuntimeType, mscorlib
     - Name: 
       Entry: 1
       Data: System.Int32, mscorlib
@@ -2111,7 +2169,7 @@ MonoBehaviour:
       Data: 
     - Name: fieldAttributes
       Entry: 7
-      Data: 120|System.Collections.Generic.List`1[[System.Attribute, mscorlib]],
+      Data: 123|System.Collections.Generic.List`1[[System.Attribute, mscorlib]],
         mscorlib
     - Name: 
       Entry: 12

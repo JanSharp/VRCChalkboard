@@ -5,8 +5,11 @@ using VRC.SDKBase;
 using VRC.Udon;
 using VRC.Udon.Common;
 
+///cSpell:ignore lerp
+
 // TODO: fixed positions
 // TODO: disallowed item theft support
+// TODO: track offset magnitude diff
 
 ///cSpell:ignore jank
 // alright, so I've decided. For now I'm going to ignore theft and simply declare it undefined
@@ -35,7 +38,8 @@ public class JanItemSync : UdonSharpBehaviour
     private const byte DesktopWaitingForConsistentOffsetState = 4;
     private const byte DesktopSendingState = 5; // attached to hand
     private const byte ReceivingFloatingState = 6;
-    private const byte ReceivingAttachedState = 7; // attached to hand
+    private const byte ReceivingMovingToBoneState = 7; // attached to hand, but interpolating offset
+    private const byte ReceivingAttachedState = 8; // attached to hand
     private byte state = IdleState;
     private byte State
     {
@@ -72,6 +76,8 @@ public class JanItemSync : UdonSharpBehaviour
                 return "DesktopSendingState";
             case ReceivingFloatingState:
                 return "ReceivingFloatingState";
+            case ReceivingMovingToBoneState:
+                return "ReceivingMovingToHandState";
             case ReceivingAttachedState:
                 return "ReceivingAttachedState";
             default:
@@ -108,7 +114,7 @@ public class JanItemSync : UdonSharpBehaviour
     private const float HandMovementAngleDiff = 20f;
     private Quaternion initialBoneRotation;
 
-    // ReceivingFloatingState
+    // ReceivingFloatingState and AttachedInterpolationState
     private const float InterpolationDuration = 0.2f;
     private Vector3 posInterpolationDiff;
     private Quaternion interpolationStartRotation;
@@ -138,6 +144,7 @@ public class JanItemSync : UdonSharpBehaviour
     private void MoveDummyToBone() => dummyTransform.SetPositionAndRotation(AttachedBonePosition, AttachedBoneRotation);
     private Vector3 GetLocalPositionToBone(Vector3 worldPosition) => dummyTransform.InverseTransformDirection(worldPosition - dummyTransform.position);
     private Quaternion GetLocalRotationToBone(Quaternion worldRotation) => Quaternion.Inverse(dummyTransform.rotation) * worldRotation;
+    private bool IsReceivingState() => State >= ReceivingMovingToBoneState;
 
     public override void OnPickup()
     {
@@ -168,12 +175,12 @@ public class JanItemSync : UdonSharpBehaviour
     public override void OnDrop()
     {
         // if we already switched to receiving state before this player dropped this item don't do anything
-        if (State == ReceivingAttachedState || State == ReceivingFloatingState)
+        if (IsReceivingState())
             return;
         State = IdleState;
         SendChanges();
         if (IsDebug)
-            dummyTransform.SetPositionAndRotation(this.transform.position, this.transform.rotation);
+            dummyTransform.SetPositionAndRotation(ItemPosition, ItemRotation);
     }
 
     public void CustomUpdate()
@@ -183,7 +190,7 @@ public class JanItemSync : UdonSharpBehaviour
             Debug.LogError($"It should truly be impossible for CustomUpdate to run when an item is in IdleState. Item name: ${this.name}.");
             return;
         }
-        if (State == ReceivingAttachedState || State == ReceivingFloatingState)
+        if (IsReceivingState())
             UpdateReceiver();
         else
         {
@@ -276,6 +283,17 @@ public class JanItemSync : UdonSharpBehaviour
         SendChanges(); // regardless of what happened, it has to sync
     }
 
+    private void MoveItemToBoneWithOffset(Vector3 offset, Quaternion rotationOffset)
+    {
+        var bonePos = AttachedBonePosition;
+        var boneRotation = AttachedBoneRotation;
+        this.transform.SetPositionAndRotation(bonePos, boneRotation);
+        this.transform.SetPositionAndRotation(
+            bonePos + this.transform.TransformDirection(offset),
+            boneRotation * rotationOffset
+        );
+    }
+
     private void UpdateReceiver()
     {
         // prevent this object from being moved by this logic if the local player is holding it
@@ -285,38 +303,41 @@ public class JanItemSync : UdonSharpBehaviour
             return;
 
         if (State == ReceivingAttachedState)
-        {
-            // fetch values
-            var bonePos = AttachedBonePosition;
-            var boneRotation = AttachedBoneRotation;
-
-            // move some transform to match the bone, because the TransformDirection methods
-            // require an instance of a Transform and we can't get the bone's Transform directly
-            this.transform.SetPositionAndRotation(bonePos, boneRotation);
-            this.transform.SetPositionAndRotation(
-                bonePos + this.transform.TransformDirection(attachedLocalOffset),
-                boneRotation * attachedRotationOffset
-            );
-        }
+            MoveItemToBoneWithOffset(attachedLocalOffset, attachedRotationOffset);
         else
         {
             var percent = (Time.time - interpolationStartTime) / InterpolationDuration;
-            if (percent >= 1f)
+            if (State == ReceivingFloatingState)
             {
-                this.transform.SetPositionAndRotation(syncedPosition, syncedRotation);
-                State = IdleState;
+                if (percent >= 1f)
+                {
+                    this.transform.SetPositionAndRotation(syncedPosition, syncedRotation);
+                    State = IdleState;
+                }
+                else
+                {
+                    this.transform.SetPositionAndRotation(
+                        syncedPosition - posInterpolationDiff * (1f - percent),
+                        Quaternion.Lerp(interpolationStartRotation, syncedRotation, percent)
+                    );
+                }
             }
             else
             {
-                this.transform.SetPositionAndRotation(
-                    syncedPosition - posInterpolationDiff * (1f - percent),
-                    Quaternion.Lerp(interpolationStartRotation, syncedRotation, percent)
-                );
+                if (percent >= 1f)
+                {
+                    MoveItemToBoneWithOffset(attachedLocalOffset, attachedRotationOffset);
+                    State = ReceivingAttachedState;
+                }
+                else
+                {
+                    MoveItemToBoneWithOffset(
+                        attachedLocalOffset - posInterpolationDiff * (1f - percent),
+                        Quaternion.Lerp(interpolationStartRotation, attachedRotationOffset, percent)
+                    );
+                }
             }
         }
-
-        if (IsDebug)
-            dummyTransform.SetPositionAndRotation(this.transform.position, this.transform.rotation);
     }
 
     private void SendChanges()
@@ -326,7 +347,7 @@ public class JanItemSync : UdonSharpBehaviour
 
     public override void OnPreSerialization()
     {
-        if (State == ReceivingAttachedState || State == ReceivingFloatingState)
+        if (IsReceivingState())
         {
             Debug.LogWarning("// TODO: uh idk what to do, shouldn't this be impossible?");
         }
@@ -342,8 +363,8 @@ public class JanItemSync : UdonSharpBehaviour
         else
         {
             // not attached, don't set the attached flag and just sync current position and rotation
-            syncedPosition = this.transform.position;
-            syncedRotation = this.transform.rotation;
+            syncedPosition = ItemPosition;
+            syncedRotation = ItemRotation;
         }
     }
 
@@ -365,13 +386,20 @@ public class JanItemSync : UdonSharpBehaviour
             attachedBone = (syncedFlags & 2) != 0 ? HumanBodyBones.LeftHand : HumanBodyBones.RightHand;
             attachedLocalOffset = syncedPosition;
             attachedRotationOffset = syncedRotation;
-            attachedPlayer = Networking.GetOwner(this.gameObject);
-            State = ReceivingAttachedState;
+            if (State != ReceivingAttachedState)
+            {
+                attachedPlayer = Networking.GetOwner(this.gameObject);
+                MoveDummyToBone();
+                posInterpolationDiff = attachedLocalOffset - GetLocalPositionToBone(ItemPosition);
+                interpolationStartRotation = GetLocalRotationToBone(ItemRotation);
+                interpolationStartTime = Time.time;
+                State = ReceivingMovingToBoneState;
+            }
         }
         else // not attached
         {
-            posInterpolationDiff = syncedPosition - this.transform.position;
-            interpolationStartRotation = this.transform.rotation;
+            posInterpolationDiff = syncedPosition - ItemPosition;
+            interpolationStartRotation = ItemRotation;
             interpolationStartTime = Time.time;
             State = ReceivingFloatingState;
         }
