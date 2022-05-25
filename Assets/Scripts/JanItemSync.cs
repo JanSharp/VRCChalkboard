@@ -7,7 +7,6 @@ using VRC.Udon.Common;
 
 ///cSpell:ignore lerp
 
-// TODO: fixed positions
 // TODO: disallowed item theft support
 // TODO: enable disable support/testing
 
@@ -37,9 +36,10 @@ public class JanItemSync : UdonSharpBehaviour
     private const byte DesktopWaitingForHandToMoveState = 3;
     private const byte DesktopWaitingForConsistentOffsetState = 4;
     private const byte DesktopSendingState = 5; // attached to hand
-    private const byte ReceivingFloatingState = 6;
-    private const byte ReceivingMovingToBoneState = 7; // attached to hand, but interpolating offset towards the actual attached position
-    private const byte ReceivingAttachedState = 8; // attached to hand
+    private const byte ExactSendingState = 6; // attached to hand
+    private const byte ReceivingFloatingState = 7;
+    private const byte ReceivingMovingToBoneState = 8; // attached to hand, but interpolating offset towards the actual attached position
+    private const byte ReceivingAttachedState = 9; // attached to hand
     private byte state = IdleState;
     private byte State
     {
@@ -74,6 +74,8 @@ public class JanItemSync : UdonSharpBehaviour
                 return "DesktopWaitingForConsistentOffsetState";
             case DesktopSendingState:
                 return "DesktopSendingState";
+            case ExactSendingState:
+                return "ExactSendingState";
             case ReceivingFloatingState:
                 return "ReceivingFloatingState";
             case ReceivingMovingToBoneState:
@@ -114,6 +116,11 @@ public class JanItemSync : UdonSharpBehaviour
     private const float HandMovementAngleDiff = 20f;
     private Quaternion initialBoneRotation;
 
+    // ExactSendingState
+    // NOTE: these really should be static fields, but UdonSharp 0.20.3 does not support them
+    private Quaternion gripRotationOffset = Quaternion.Euler(0, 35, 0);
+    private Quaternion gunRotationOffset = Quaternion.Euler(0, 305, 0);
+
     // ReceivingFloatingState and AttachedInterpolationState
     private const float InterpolationDuration = 0.2f;
     private Vector3 posInterpolationDiff;
@@ -142,9 +149,12 @@ public class JanItemSync : UdonSharpBehaviour
     }
 
     private void MoveDummyToBone() => dummyTransform.SetPositionAndRotation(AttachedBonePosition, AttachedBoneRotation);
-    private Vector3 GetLocalPositionToBone(Vector3 worldPosition) => dummyTransform.InverseTransformDirection(worldPosition - dummyTransform.position);
-    private Quaternion GetLocalRotationToBone(Quaternion worldRotation) => Quaternion.Inverse(dummyTransform.rotation) * worldRotation;
+    private Vector3 GetLocalPositionToTransform(Transform transform, Vector3 worldPosition) => transform.InverseTransformDirection(worldPosition - transform.position);
+    private Vector3 GetLocalPositionToBone(Vector3 worldPosition) => GetLocalPositionToTransform(dummyTransform, worldPosition);
+    private Quaternion GetLocalRotationToTransform(Transform transform, Quaternion worldRotation) => Quaternion.Inverse(transform.rotation) * worldRotation;
+    private Quaternion GetLocalRotationToBone(Quaternion worldRotation) => GetLocalRotationToTransform(dummyTransform, worldRotation);
     private bool IsReceivingState() => State >= ReceivingFloatingState;
+    private bool IsAttachedSendingState() => State == VRSendingState || State == DesktopSendingState || State == ExactSendingState;
 
     public override void OnPickup()
     {
@@ -156,6 +166,17 @@ public class JanItemSync : UdonSharpBehaviour
 
         // technically redundant because the VRCPickup script already does this, but I do not trust it nor do I trust order of operation
         Networking.SetOwner(attachedPlayer, this.gameObject);
+
+        if (pickup.orientation == VRC_Pickup.PickupOrientation.Gun)
+        {
+            if (HandleExactOffset(pickup.ExactGun, gunRotationOffset))
+                return;
+        }
+        else if (pickup.orientation == VRC_Pickup.PickupOrientation.Grip)
+        {
+            if (HandleExactOffset(pickup.ExactGrip, gripRotationOffset))
+                return;
+        }
 
         if (attachedPlayer.IsUserInVR())
         {
@@ -170,6 +191,22 @@ public class JanItemSync : UdonSharpBehaviour
             initialBoneRotation = AttachedBoneRotation;
             State = DesktopWaitingForHandToMoveState;
         }
+    }
+
+    private bool HandleExactOffset(Transform exact, Quaternion rotationOffset)
+    {
+        if (exact == null)
+            return false;
+        // figure out offset from exact transform to center of object
+        // this is pretty much copied from CyanEmu, except it doesn't work
+        // either I'm stupid and too tired to see it or - what I actually believe - I have to do it differently
+        // what's great is that there is basically zero documentation about manipulation of quaternions. Yay!
+        // TODO: fix exact offsets
+        attachedRotationOffset = rotationOffset * Quaternion.Inverse(GetLocalRotationToTransform(exact, ItemRotation));
+        attachedLocalOffset = attachedRotationOffset * GetLocalPositionToTransform(exact, ItemPosition);
+        SendChanges();
+        State = ExactSendingState;
+        return true;
     }
 
     public override void OnDrop()
@@ -197,7 +234,7 @@ public class JanItemSync : UdonSharpBehaviour
             UpdateSender();
             if (IsDebug)
             {
-                if (State == VRSendingState || State == DesktopSendingState)
+                if (IsAttachedSendingState())
                 {
                     MoveDummyToBone();
                     dummyTransform.SetPositionAndRotation(
@@ -249,10 +286,11 @@ public class JanItemSync : UdonSharpBehaviour
 
     private void UpdateSender()
     {
-        if (State == VRSendingState || State == DesktopSendingState)
+        if (IsAttachedSendingState())
         {
             // I think this part still has to make sure the offset is about right, but we'll see
             // it'll definitely have to sync rotation in desktop mode, not sure if that's possible in VR
+            // definitely nothing to do for ExactSendingState, it should probably not even be registered to Update anymore
             return;
         }
 
@@ -356,7 +394,7 @@ public class JanItemSync : UdonSharpBehaviour
             Debug.LogWarning("// TODO: uh idk what to do, shouldn't this be impossible?");
         }
         syncedFlags = 0;
-        if (State == VRSendingState || State == DesktopSendingState)
+        if (IsAttachedSendingState())
         {
             syncedFlags += 1; // set attached flag
             syncedPosition = attachedLocalOffset;
