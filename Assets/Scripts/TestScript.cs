@@ -298,4 +298,12 @@ public class TestScript : UdonSharpBehaviour
     // {
     //     SendCustomEventDelayedSeconds("something", castTime - castTimePassed);
     // }
+
+    public Material otherMat;
+
+    public void Event17()
+    {
+        ((Renderer)GetComponent(typeof(Renderer))).material = otherMat;
+        GetComponent<Renderer>().material = otherMat;
+    }
 }
