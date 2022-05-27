@@ -8,9 +8,9 @@ public class SimpleObjectPoolSpawner : UdonSharpBehaviour
 {
     public SimpleObjectPool objectPool;
 
-    public override void Interact()
-    {
-        Networking.SetOwner(Networking.LocalPlayer, objectPool.gameObject);
-        objectPool.TryToSpawn();
-    }
+    // public override void Interact()
+    // {
+    //     Networking.SetOwner(Networking.LocalPlayer, objectPool.gameObject);
+    //     objectPool.TryToSpawn();
+    // }
 }
