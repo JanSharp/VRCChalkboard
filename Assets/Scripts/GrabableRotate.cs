@@ -50,6 +50,7 @@ public class GrabableRotate : UdonSharpBehaviour
     public override void OnPickup()
     {
         Networking.SetOwner(Networking.LocalPlayer, this.gameObject);
+        isReceiving = false;
         currentlyHeld = true;
         RequestSerialization();
         Register();
@@ -104,6 +105,7 @@ public class GrabableRotate : UdonSharpBehaviour
         pickup.pickupable = !currentlyHeld;
         if (currentlyHeld)
         {
+            isReceiving = true;
             lerpStartRotation = toRotate.rotation;
             prevRotation = toRotate.rotation;
             Register();
