@@ -4,6 +4,8 @@ using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
 
+///cSpell:ignore grabable, lerp
+
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class GrabableRotate : UdonSharpBehaviour
 {
@@ -15,6 +17,11 @@ public class GrabableRotate : UdonSharpBehaviour
     private float initialDistance;
     private float nextSyncTime;
     private const float SyncInterval = 0.2f;
+    private bool isRegistered;
+    private bool isReceiving;
+    private float lerpStartTime;
+    private Quaternion lerpStartRotation;
+    private Quaternion prevRotation;
 
     [UdonSynced] private bool currentlyHeld;
     [UdonSynced] private Quaternion syncedRotation;
@@ -45,7 +52,7 @@ public class GrabableRotate : UdonSharpBehaviour
         Networking.SetOwner(Networking.LocalPlayer, this.gameObject);
         currentlyHeld = true;
         RequestSerialization();
-        updateManager.Register(this);
+        Register();
         nextSyncTime = Time.time + SyncInterval;
     }
 
@@ -54,16 +61,28 @@ public class GrabableRotate : UdonSharpBehaviour
         currentlyHeld = false;
         RequestSerialization();
         SnapBack();
-        updateManager.Deregister(this);
+        Deregister();
     }
 
     public void CustomUpdate()
     {
-        toRotate.LookAt(toRotate.position - (this.transform.position - toRotate.position));
-        if (Time.time >= nextSyncTime)
+        if (isReceiving)
         {
-            RequestSerialization();
-            nextSyncTime = Time.time + SyncInterval;
+            var percent = (Time.time - lerpStartTime) / (SyncInterval + 0.05f);
+            Quaternion extraRotationSinceLastFrame = Quaternion.Inverse(prevRotation) * toRotate.rotation;
+            toRotate.rotation = Quaternion.Lerp(lerpStartRotation, syncedRotation, percent) * extraRotationSinceLastFrame;
+            if (percent >= 1f)
+                Deregister();
+            prevRotation = toRotate.rotation;
+        }
+        else
+        {
+            toRotate.LookAt(toRotate.position - (this.transform.position - toRotate.position));
+            if (Time.time >= nextSyncTime)
+            {
+                RequestSerialization();
+                nextSyncTime = Time.time + SyncInterval;
+            }
         }
     }
 
@@ -82,7 +101,29 @@ public class GrabableRotate : UdonSharpBehaviour
 
     public override void OnDeserialization()
     {
-        toRotate.rotation = syncedRotation;
         pickup.pickupable = !currentlyHeld;
+        if (currentlyHeld)
+        {
+            lerpStartRotation = toRotate.rotation;
+            prevRotation = toRotate.rotation;
+            Register();
+            lerpStartTime = Time.time;
+        }
+    }
+
+    public void Register()
+    {
+        if (isRegistered)
+            return;
+        isRegistered = true;
+        updateManager.Register(this);
+    }
+
+    public void Deregister()
+    {
+        if (!isRegistered)
+            return;
+        isRegistered = false;
+        updateManager.Deregister(this);
     }
 }
