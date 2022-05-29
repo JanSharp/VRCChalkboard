@@ -178,7 +178,7 @@ public class GrabableRotate : UdonSharpBehaviour
     public override void OnPreSerialization()
     {
         syncedData = (byte)((currentlyHeld ? IsHeldFlag : 0) + ToHeldHandFlag(currentHandBone));
-        if (holdingPlayerIsInVR)
+        if (holdingPlayerIsInVR && currentlyHeld)
         {
             Vector3 bonePosition = holdingPlayer.GetBonePosition(currentHandBone);
             Quaternion boneRotation = holdingPlayer.GetBoneRotation(currentHandBone);
