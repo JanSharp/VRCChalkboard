@@ -9,6 +9,11 @@ using UdonSharpEditor;
 
 ///cSpell:ignore grabable, lerp
 
+// TODO: use hand position in VR to effectively attach the pickup to the hand when syncing, instead of lerping rotations
+// TODO: restrict rotation in some way
+// TODO: allow the pickup to be offset from the origin of the object to rotate. some math wizardry [...]
+// if not possible (or I give up) add a button in the inspector to snap the pickup into position inline with the object to rotate
+
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class GrabableRotate : UdonSharpBehaviour
 {
