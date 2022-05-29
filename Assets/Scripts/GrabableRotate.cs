@@ -9,7 +9,6 @@ using UdonSharpEditor;
 
 ///cSpell:ignore grabable, lerp
 
-// TODO: use hand position in VR to effectively attach the pickup to the hand when syncing, instead of lerping rotations
 // TODO: restrict rotation in some way
 // TODO: allow the pickup to be offset from the origin of the object to rotate. some math wizardry [...]
 // if not possible (or I give up) add a button in the inspector to snap the pickup into position inline with the object to rotate
@@ -21,6 +20,7 @@ public class GrabableRotate : UdonSharpBehaviour
     public string interactionText = "Rotate";
 
     private UpdateManager updateManager;
+    private Transform dummyTransform;
     private VRC_Pickup pickup;
     private float initialDistance;
     private float nextSyncTime;
@@ -30,9 +30,51 @@ public class GrabableRotate : UdonSharpBehaviour
     private float lerpStartTime;
     private Quaternion lerpStartRotation;
     private Quaternion prevRotation;
+    private VRCPlayerApi holdingPlayer;
+    private VRCPlayerApi HoldingPlayer
+    {
+        get => holdingPlayer;
+        set
+        {
+            holdingPlayer = value;
+            holdingPlayerIsInVR = value.IsUserInVR();
+        }
+    }
+    private bool holdingPlayerIsInVR;
 
-    [UdonSynced] private bool currentlyHeld;
+    /// <summary>
+    /// <para>bit 0: is held</para>
+    /// <para>bit 1: 0 means left hand, 1 means right hand (only used when the holding player is in VR)</para>
+    /// </summary>
+    [UdonSynced] private byte syncedData;
+    private const byte IsHeldFlag = 1 << 0;
+    private const byte HeldHandFlag = 1 << 1;
+    private bool currentlyHeld; // synced through syncedData
+    private HumanBodyBones currentHandBone; // synced through syncedData
+    /// <summary>
+    /// Used as the target rotation for interpolation when the holding user is in VR.
+    /// Otherwise used as the rotation offset between the held hand rotation and the pickup rotation.
+    /// </summary>
     [UdonSynced] private Quaternion syncedRotation;
+    /// <summary>
+    /// The offset from the held hand position and the pickup position;
+    /// Only used when the holding user is in VR.
+    /// </summary>
+    [UdonSynced] private Vector3 syncedPosition;
+
+    private byte ToHeldHandFlag(HumanBodyBones bone)
+    {
+        if (bone == HumanBodyBones.RightHand)
+            return HeldHandFlag;
+        return 0;
+    }
+
+    private HumanBodyBones ToHeldHandBone(byte flags)
+    {
+        if ((flags & HeldHandFlag) != 0)
+            return HumanBodyBones.RightHand;
+        return HumanBodyBones.LeftHand;
+    }
 
     // for UpdateManager
     private int customUpdateInternalIndex;
@@ -46,6 +88,7 @@ public class GrabableRotate : UdonSharpBehaviour
             Debug.LogError("GrabableRotate requires a GameObject that must be at the root of the scene with the exact name 'UpdateManager' which has the 'UpdateManager' UdonBehaviour.");
         // initialOffset = this.transform.position - toRotate.position;
         // initialRotation = toRotate.rotation;
+        dummyTransform = updateManager.transform;
         initialDistance = (this.transform.position - toRotate.position).magnitude;
         SnapBack();
     }
@@ -58,12 +101,15 @@ public class GrabableRotate : UdonSharpBehaviour
 
     public override void OnPickup()
     {
-        Networking.SetOwner(Networking.LocalPlayer, this.gameObject);
+        HoldingPlayer = Networking.LocalPlayer;
+        Networking.SetOwner(HoldingPlayer, this.gameObject);
         isReceiving = false;
         currentlyHeld = true;
+        currentHandBone = pickup.currentHand == VRC_Pickup.PickupHand.Right ? HumanBodyBones.RightHand : HumanBodyBones.LeftHand;
         RequestSerialization();
         Register();
-        nextSyncTime = Time.time + SyncInterval;
+        if (holdingPlayerIsInVR)
+            nextSyncTime = Time.time + SyncInterval;
     }
 
     public override void OnDrop()
@@ -78,22 +124,45 @@ public class GrabableRotate : UdonSharpBehaviour
     {
         if (isReceiving)
         {
-            var percent = (Time.time - lerpStartTime) / (SyncInterval + 0.05f);
-            Quaternion extraRotationSinceLastFrame = Quaternion.Inverse(prevRotation) * toRotate.rotation;
-            toRotate.rotation = Quaternion.Lerp(lerpStartRotation, syncedRotation, percent) * extraRotationSinceLastFrame;
-            if (percent >= 1f)
-                Deregister();
-            prevRotation = toRotate.rotation;
+            if (holdingPlayerIsInVR && currentlyHeld) // when not currentlyHeld interpolate instead
+            {
+                // figure out the position of the pickup based on the current bone position
+                this.transform.SetPositionAndRotation(
+                    holdingPlayer.GetBonePosition(currentHandBone),
+                    holdingPlayer.GetBoneRotation(currentHandBone)
+                );
+                this.transform.position += this.transform.TransformDirection(syncedPosition);
+                this.transform.rotation *= syncedRotation;
+                LookAtThisTransform();
+            }
+            else
+            {
+                var percent = (Time.time - lerpStartTime) / (SyncInterval + 0.05f);
+                Quaternion extraRotationSinceLastFrame = Quaternion.Inverse(prevRotation) * toRotate.rotation;
+                toRotate.rotation = Quaternion.Lerp(lerpStartRotation, syncedRotation, percent) * extraRotationSinceLastFrame;
+                if (percent >= 1f)
+                {
+                    SnapBack();
+                    pickup.pickupable = true;
+                    Deregister();
+                }
+                prevRotation = toRotate.rotation;
+            }
         }
         else
         {
-            toRotate.LookAt(toRotate.position - (this.transform.position - toRotate.position));
-            if (Time.time >= nextSyncTime)
+            LookAtThisTransform();
+            if (!holdingPlayerIsInVR && Time.time >= nextSyncTime)
             {
                 RequestSerialization();
                 nextSyncTime = Time.time + SyncInterval;
             }
         }
+    }
+
+    private void LookAtThisTransform()
+    {
+        toRotate.LookAt(toRotate.position - (this.transform.position - toRotate.position));
     }
 
     public override void OnOwnershipTransferred(VRCPlayerApi player)
@@ -102,22 +171,51 @@ public class GrabableRotate : UdonSharpBehaviour
         // would be hilarious if this ended up running after OnDeserialization
         // causing the entire logic to be pointless/broken. Funny indeed
         pickup.pickupable = true;
+        SnapBack();
     }
 
     public override void OnPreSerialization()
     {
-        syncedRotation = toRotate.rotation;
+        syncedData = (byte)((currentlyHeld ? IsHeldFlag : 0) + ToHeldHandFlag(currentHandBone));
+        if (holdingPlayerIsInVR)
+        {
+            Vector3 bonePosition = holdingPlayer.GetBonePosition(currentHandBone);
+            Quaternion boneRotation = holdingPlayer.GetBoneRotation(currentHandBone);
+            syncedRotation = Quaternion.Inverse(boneRotation) * this.transform.rotation;
+            dummyTransform.SetPositionAndRotation(bonePosition, boneRotation);
+            syncedPosition = dummyTransform.InverseTransformDirection(this.transform.position - bonePosition);
+        }
+        else
+            syncedRotation = toRotate.rotation;
     }
 
     public override void OnDeserialization()
     {
-        pickup.pickupable = !currentlyHeld;
+        currentlyHeld = (syncedData & IsHeldFlag) != 0;
+        currentHandBone = ToHeldHandBone(syncedData);
+        if (currentlyHeld)
+            pickup.pickupable = false;
         if (currentlyHeld)
         {
             isReceiving = true;
+            HoldingPlayer = Networking.GetOwner(this.gameObject);
+            if (holdingPlayerIsInVR)
+            {
+                Register();
+            }
+            else
+            {
+                lerpStartRotation = toRotate.rotation;
+                prevRotation = toRotate.rotation;
+                Register();
+                lerpStartTime = Time.time;
+            }
+        }
+        else if (holdingPlayerIsInVR && isRegistered)
+        {
+            // start interpolation when a player in VR dropped the pickup
             lerpStartRotation = toRotate.rotation;
             prevRotation = toRotate.rotation;
-            Register();
             lerpStartTime = Time.time;
         }
     }
