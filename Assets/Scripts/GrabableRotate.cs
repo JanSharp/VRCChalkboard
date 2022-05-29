@@ -9,7 +9,6 @@ using UdonSharpEditor;
 
 ///cSpell:ignore grabable, lerp
 
-// TODO: restrict rotation in some way
 // TODO: allow the pickup to be offset from the origin of the object to rotate. some math wizardry [...]
 // if not possible (or I give up) add a button in the inspector to snap the pickup into position inline with the object to rotate
 
@@ -18,10 +17,13 @@ public class GrabableRotate : UdonSharpBehaviour
 {
     [SerializeField] private Transform toRotate;
     public string interactionText = "Rotate";
+    [Tooltip("Maximum amount of degrees the object to rotate is allowed to deviate from the original local rotation. 360 and above means unlimited, 0 or below means not at all.")]
+    public float maximumRotationDeviation = 360f;
 
     private UpdateManager updateManager;
     private Transform dummyTransform;
     private VRC_Pickup pickup;
+    private Quaternion initialLocalRotation;
     private float initialDistance;
     private float nextSyncTime;
     private const float SyncInterval = 0.2f;
@@ -86,8 +88,7 @@ public class GrabableRotate : UdonSharpBehaviour
         updateManager = updateManagerObj == null ? null : (UpdateManager)updateManagerObj.GetComponent(typeof(UdonBehaviour));
         if (updateManager == null)
             Debug.LogError("GrabableRotate requires a GameObject that must be at the root of the scene with the exact name 'UpdateManager' which has the 'UpdateManager' UdonBehaviour.");
-        // initialOffset = this.transform.position - toRotate.position;
-        // initialRotation = toRotate.rotation;
+        initialLocalRotation = toRotate.localRotation;
         dummyTransform = updateManager.transform;
         initialDistance = (this.transform.position - toRotate.position).magnitude;
         SnapBack();
@@ -163,6 +164,15 @@ public class GrabableRotate : UdonSharpBehaviour
     private void LookAtThisTransform()
     {
         toRotate.LookAt(toRotate.position - (this.transform.position - toRotate.position));
+        Quaternion deviation = Quaternion.Inverse(initialLocalRotation) * toRotate.localRotation;
+        float angle;
+        Vector3 axis;
+        deviation.ToAngleAxis(out angle, out axis);
+        if (angle > maximumRotationDeviation)
+        {
+            deviation = Quaternion.AngleAxis(Mathf.Max(0f, maximumRotationDeviation), axis);
+            toRotate.localRotation = initialLocalRotation * deviation;
+        }
     }
 
     public override void OnOwnershipTransferred(VRCPlayerApi player)
