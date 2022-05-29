@@ -9,14 +9,10 @@ using UdonSharpEditor;
 
 ///cSpell:ignore grabable, lerp
 
-// TODO: allow the pickup to be offset from the origin of the object to rotate. some math wizardry [...]
-// if not possible (or I give up) add a button in the inspector to snap the pickup into position inline with the object to rotate
-
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class GrabableRotate : UdonSharpBehaviour
 {
-    [SerializeField] private Transform toRotate;
-    public string interactionText = "Rotate";
+    public Transform toRotate;
     [Tooltip("Maximum amount of degrees the object to rotate is allowed to deviate from the original local rotation. 360 and above means unlimited, 0 or below means not at all.")]
     public float maximumRotationDeviation = 360f;
 
@@ -94,11 +90,13 @@ public class GrabableRotate : UdonSharpBehaviour
         SnapBack();
     }
 
-    private void SnapBack()
+    public void Snap(float distance)
     {
-        this.transform.position = toRotate.position + (toRotate.rotation * (Vector3.back * initialDistance));
+        this.transform.position = toRotate.position + (toRotate.rotation * (Vector3.back * distance));
         this.transform.rotation = toRotate.rotation;
     }
+
+    private void SnapBack() => Snap(initialDistance);
 
     public override void OnPickup()
     {
@@ -260,16 +258,35 @@ public class GrabableRotateEditor : Editor
         base.OnInspectorGUI(); // draws public/serializable fields
 
         EditorGUILayout.Space();
+        if (GUILayout.Button(new GUIContent("Snap in line", "Snap to the back of the Transform 'To Rotate'. "
+            + "This script relies on this pickup object being perfectly in line with the Transform it is rotating, "
+            + "so this button allows you to snap it in place before entering play mode.")))
+        {
+            target.Snap((target.transform.position - target.toRotate.position).magnitude);
+        }
+
+        EditorGUILayout.Space();
         var pickup = target.GetComponent<VRC.SDK3.Components.VRCPickup>();
         if (pickup == null)
         {
-            if (GUILayout.Button(new GUIContent("Add VRC Pickup", "Adds VRC Pickup component and configures it and the necessary Rigidbody.")))
+            if (GUILayout.Button(new GUIContent("Add VRC Pickup", "Adds VRC Pickup component and configures it "
+                + "and the necessary Rigidbody. Sets: useGravity = false; isKinematic = true; ExactGrip = null; orientation = Grip;\n"
+                + "Setting orientation to grip and ExactGrip to null makes the pickup stay where it is while being picked up => "
+                + "it doesn't move to the hand.\n"
+                + "Unlike configuring it afterwards, this also initializes interactionText to 'Rotate' and sets AutoHold to 'no'.")))
+            {
                 AddAndConfigureComponents(target);
+            }
         }
         else
         {
-            if (GUILayout.Button(new GUIContent("Configure VRC Pickup", "Configures the attached VRC Pickup and Rigidbody components.")))
+            if (GUILayout.Button(new GUIContent("Configure VRC Pickup", "Configures the attached VRC Pickup "
+                + "and Rigidbody components. Sets: useGravity = false; isKinematic = true; ExactGrip = null; orientation = Grip;\n"
+                + "Setting orientation to grip and ExactGrip to null makes the pickup stay where it is while being picked up => "
+                + "it doesn't move to the hand.")))
+            {
                 ConfigureComponents(target, pickup, target.GetComponent<Rigidbody>());
+            }
         }
     }
 
@@ -278,7 +295,12 @@ public class GrabableRotateEditor : Editor
         var rigidbody = target.GetComponent<Rigidbody>();
         rigidbody = rigidbody != null ? rigidbody : target.gameObject.AddComponent<Rigidbody>();
         var pickup = target.GetComponent<VRC.SDK3.Components.VRCPickup>();
-        pickup = pickup != null ? pickup : target.gameObject.AddComponent<VRC.SDK3.Components.VRCPickup>();
+        if (pickup == null)
+        {
+            pickup = target.gameObject.AddComponent<VRC.SDK3.Components.VRCPickup>();
+            pickup.InteractionText = "Rotate";
+            pickup.AutoHold = VRC_Pickup.AutoHoldMode.No;
+        }
         ConfigureComponents(target, pickup, rigidbody);
     }
 
@@ -286,11 +308,8 @@ public class GrabableRotateEditor : Editor
     {
         rigidbody.useGravity = false;
         rigidbody.isKinematic = true;
-        pickup.AutoHold = VRC_Pickup.AutoHoldMode.No;
         pickup.ExactGrip = null;
-        pickup.InteractionText = target.interactionText;
         pickup.orientation = VRC_Pickup.PickupOrientation.Grip;
-        pickup.pickupable = true;
     }
 }
 
