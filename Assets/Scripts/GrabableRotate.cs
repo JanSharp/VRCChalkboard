@@ -49,6 +49,7 @@ public class GrabableRotate : UdonSharpBehaviour
     private void SnapBack()
     {
         this.transform.position = toRotate.position + (toRotate.rotation * (Vector3.back * initialDistance));
+        this.transform.rotation = toRotate.rotation;
     }
 
     public override void OnPickup()
