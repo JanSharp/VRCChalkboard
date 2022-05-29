@@ -2,7 +2,6 @@
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
-using UnityEditor.Build.Reporting;
 #if UNITY_EDITOR
 using UnityEditor;
 using UdonSharpEditor;
