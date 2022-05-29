@@ -37,7 +37,8 @@ public class GrabableRotate : UdonSharpBehaviour
         set
         {
             holdingPlayer = value;
-            holdingPlayerIsInVR = value.IsUserInVR();
+            holdingPlayerIsInVR = true;
+            // holdingPlayerIsInVR = value.IsUserInVR();
         }
     }
     private bool holdingPlayerIsInVR;
