@@ -306,4 +306,20 @@ public class TestScript : UdonSharpBehaviour
         ((Renderer)GetComponent(typeof(Renderer))).material = otherMat;
         GetComponent<Renderer>().material = otherMat;
     }
+
+    // foreach (var assembly in System.AppDomain.CurrentDomain.GetAssemblies())
+    // {
+    //     foreach (var module in assembly.Modules)
+    //     {
+    //         foreach (var type in module.GetTypes())
+    //         {
+    //             Debug.Log(type);
+    //             if (type.BaseType == typeof(VRC_Pickup))
+    //             {
+    //                 Debug.Log(type);
+    //             }
+    //         }
+    //     }
+    // }
+    // return;
 }

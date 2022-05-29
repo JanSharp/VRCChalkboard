@@ -6,8 +6,10 @@
     "pickupable",
     "Raycast",
     "Respawn",
+    "Rigidbody",
     "Scriptable",
     "superbstingray",
-    "Udon"
+    "Udon",
+    "UDONSHARP"
   ],
 }

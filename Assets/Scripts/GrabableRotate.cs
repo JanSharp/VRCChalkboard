@@ -1,16 +1,20 @@
-﻿
-using UdonSharp;
+﻿using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
+using UnityEditor.Build.Reporting;
+#if UNITY_EDITOR
+using UnityEditor;
+using UdonSharpEditor;
+#endif
 
 ///cSpell:ignore grabable, lerp
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class GrabableRotate : UdonSharpBehaviour
 {
-    [SerializeField]
-    private Transform toRotate;
+    [SerializeField] private Transform toRotate;
+    public string interactionText = "Rotate";
 
     private UpdateManager updateManager;
     private VRC_Pickup pickup;
@@ -129,3 +133,64 @@ public class GrabableRotate : UdonSharpBehaviour
         updateManager.Deregister(this);
     }
 }
+
+#if !COMPILER_UDONSHARP && UNITY_EDITOR
+[CustomEditor(typeof(GrabableRotate))]
+public class GrabableRotateEditor : Editor
+{
+    public override void OnInspectorGUI()
+    {
+        GrabableRotate target = this.target as GrabableRotate;
+        if (UdonSharpGUI.DrawDefaultUdonSharpBehaviourHeader(target))
+            return;
+        EditorGUILayout.Space();
+        base.OnInspectorGUI(); // draws public/serializable fields
+
+        EditorGUILayout.Space();
+        var pickup = target.GetComponent<VRC.SDK3.Components.VRCPickup>();
+        if (pickup == null)
+        {
+            if (GUILayout.Button(new GUIContent("Add VRC Pickup", "Adds VRC Pickup component and configures it and the necessary Rigidbody.")))
+                AddAndConfigureComponents(target);
+        }
+        else
+        {
+            if (GUILayout.Button(new GUIContent("Configure VRC Pickup", "Configures the attached VRC Pickup and Rigidbody components.")))
+                ConfigureComponents(target, pickup, target.GetComponent<Rigidbody>());
+        }
+    }
+
+    public static void AddAndConfigureComponents(GrabableRotate target)
+    {
+        var rigidbody = target.GetComponent<Rigidbody>();
+        rigidbody = rigidbody != null ? rigidbody : target.gameObject.AddComponent<Rigidbody>();
+        var pickup = target.GetComponent<VRC.SDK3.Components.VRCPickup>();
+        pickup = pickup != null ? pickup : target.gameObject.AddComponent<VRC.SDK3.Components.VRCPickup>();
+        ConfigureComponents(target, pickup, rigidbody);
+    }
+
+    public static void ConfigureComponents(GrabableRotate target, VRC.SDK3.Components.VRCPickup pickup, Rigidbody rigidbody)
+    {
+        rigidbody.useGravity = false;
+        rigidbody.isKinematic = true;
+        pickup.AutoHold = VRC_Pickup.AutoHoldMode.No;
+        pickup.ExactGrip = null;
+        pickup.InteractionText = target.interactionText;
+        pickup.orientation = VRC_Pickup.PickupOrientation.Grip;
+        pickup.pickupable = true;
+    }
+}
+
+// didn't work for vrc builds unfortunately
+// nor does it do anything on play, but that was expected
+// public class GrabableRotateOnBuild : UnityEditor.Build.IPreprocessBuildWithReport
+// {
+//     public int callbackOrder => 0;
+//     public void OnPreprocessBuild(BuildReport report)
+//     {
+//         foreach (var obj in GameObject.FindObjectsOfType<UdonBehaviour>())
+//             foreach (var grabableRotate in obj.GetUdonSharpComponents<GrabableRotate>())
+//                 GrabableRotateEditor.AddAndConfigureComponents(grabableRotate);
+//     }
+// }
+#endif
