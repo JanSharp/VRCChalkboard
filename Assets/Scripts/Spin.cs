@@ -8,6 +8,6 @@ public class Spin : UdonSharpBehaviour
 {
     void Update()
     {
-        transform.Rotate(Vector3.up, Time.deltaTime * 90f);
+        transform.Rotate(Vector3.up, Time.deltaTime * 50f);
     }
 }
