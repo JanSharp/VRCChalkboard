@@ -10,7 +10,7 @@ using UdonSharpEditor;
 ///cSpell:ignore grabable, lerp
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
-public class GrabableRotate : UdonSharpBehaviour
+public class RotationGrip : UdonSharpBehaviour
 {
     public Transform toRotate;
     [Tooltip("Maximum amount of degrees the object to rotate is allowed to deviate from the original local rotation. 360 and above means unlimited, 0 or below means not at all.")]
@@ -83,7 +83,7 @@ public class GrabableRotate : UdonSharpBehaviour
         var updateManagerObj = GameObject.Find("/UpdateManager");
         updateManager = updateManagerObj == null ? null : (UpdateManager)updateManagerObj.GetComponent(typeof(UdonBehaviour));
         if (updateManager == null)
-            Debug.LogError("GrabableRotate requires a GameObject that must be at the root of the scene with the exact name 'UpdateManager' which has the 'UpdateManager' UdonBehaviour.");
+            Debug.LogError("RotationGrip requires a GameObject that must be at the root of the scene with the exact name 'UpdateManager' which has the 'UpdateManager' UdonBehaviour.");
         initialLocalRotation = toRotate.localRotation;
         dummyTransform = updateManager.transform;
         initialDistance = (this.transform.position - toRotate.position).magnitude;
@@ -246,26 +246,25 @@ public class GrabableRotate : UdonSharpBehaviour
 }
 
 #if !COMPILER_UDONSHARP && UNITY_EDITOR
-[CustomEditor(typeof(GrabableRotate))]
-public class GrabableRotateEditor : Editor
+[CustomEditor(typeof(RotationGrip))]
+public class RotationGripEditor : Editor
 {
     public override void OnInspectorGUI()
     {
-        GrabableRotate target = this.target as GrabableRotate;
+        RotationGrip target = this.target as RotationGrip;
         if (UdonSharpGUI.DrawDefaultUdonSharpBehaviourHeader(target))
             return;
         EditorGUILayout.Space();
         base.OnInspectorGUI(); // draws public/serializable fields
-
         EditorGUILayout.Space();
-        if (GUILayout.Button(new GUIContent("Snap in line", "Snap to the back of the Transform 'To Rotate'. "
+
+        if (GUILayout.Button(new GUIContent("Snap in Line", "Snap to the back of the Transform 'To Rotate'. "
             + "This script relies on this pickup object being perfectly in line with the Transform it is rotating, "
             + "so this button allows you to snap it in place before entering play mode.")))
         {
             target.Snap((target.transform.position - target.toRotate.position).magnitude);
         }
 
-        EditorGUILayout.Space();
         var pickup = target.GetComponent<VRC.SDK3.Components.VRCPickup>();
         if (pickup == null)
         {
@@ -290,7 +289,7 @@ public class GrabableRotateEditor : Editor
         }
     }
 
-    public static void AddAndConfigureComponents(GrabableRotate target)
+    public static void AddAndConfigureComponents(RotationGrip target)
     {
         var rigidbody = target.GetComponent<Rigidbody>();
         rigidbody = rigidbody != null ? rigidbody : target.gameObject.AddComponent<Rigidbody>();
@@ -304,7 +303,7 @@ public class GrabableRotateEditor : Editor
         ConfigureComponents(target, pickup, rigidbody);
     }
 
-    public static void ConfigureComponents(GrabableRotate target, VRC.SDK3.Components.VRCPickup pickup, Rigidbody rigidbody)
+    public static void ConfigureComponents(RotationGrip target, VRC.SDK3.Components.VRCPickup pickup, Rigidbody rigidbody)
     {
         rigidbody.useGravity = false;
         rigidbody.isKinematic = true;
@@ -315,14 +314,14 @@ public class GrabableRotateEditor : Editor
 
 // didn't work for vrc builds unfortunately
 // nor does it do anything on play, but that was expected
-// public class GrabableRotateOnBuild : UnityEditor.Build.IPreprocessBuildWithReport
+// public class RotationGripOnBuild : UnityEditor.Build.IPreprocessBuildWithReport
 // {
 //     public int callbackOrder => 0;
 //     public void OnPreprocessBuild(BuildReport report)
 //     {
 //         foreach (var obj in GameObject.FindObjectsOfType<UdonBehaviour>())
-//             foreach (var grabableRotate in obj.GetUdonSharpComponents<GrabableRotate>())
-//                 GrabableRotateEditor.AddAndConfigureComponents(grabableRotate);
+//             foreach (var RotationGrip in obj.GetUdonSharpComponents<RotationGrip>())
+//                 RotationGripEditor.AddAndConfigureComponents(RotationGrip);
 //     }
 // }
 #endif
