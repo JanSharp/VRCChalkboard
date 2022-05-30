@@ -2,6 +2,8 @@
   "omnisharp.useGlobalMono": "always",
   "cSpell.words": [
     "Behaviour",
+    "lerp",
+    "lerping",
     "Mathf",
     "Mischak",
     "pickupable",
@@ -10,6 +12,7 @@
     "Rigidbody",
     "Scriptable",
     "superbstingray",
+    "teleporting",
     "Udon",
     "UDONSHARP"
   ],
