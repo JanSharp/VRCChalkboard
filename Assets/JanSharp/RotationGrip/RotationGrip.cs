@@ -86,13 +86,13 @@ public class RotationGrip : UdonSharpBehaviour
             Debug.LogError("RotationGrip requires a GameObject that must be at the root of the scene with the exact name 'UpdateManager' which has the 'UpdateManager' UdonBehaviour.");
         initialLocalRotation = toRotate.localRotation;
         dummyTransform = updateManager.transform;
-        initialDistance = (this.transform.position - toRotate.position).magnitude;
+        initialDistance = toRotate.InverseTransformDirection(this.transform.position - toRotate.position).magnitude;
         SnapBack();
     }
 
     public void Snap(float distance)
     {
-        this.transform.position = toRotate.position + (toRotate.rotation * (Vector3.back * distance));
+        this.transform.position = toRotate.position + toRotate.TransformDirection(Vector3.back * distance);
         this.transform.rotation = toRotate.rotation;
     }
 
@@ -262,7 +262,7 @@ public class RotationGripEditor : Editor
             + "This script relies on this pickup object being perfectly in line with the Transform it is rotating, "
             + "so this button allows you to snap it in place before entering play mode.")))
         {
-            target.Snap((target.transform.position - target.toRotate.position).magnitude);
+            target.Snap(target.toRotate.TransformDirection(target.transform.position - target.toRotate.position).magnitude);
         }
 
         var pickup = target.GetComponent<VRC.SDK3.Components.VRCPickup>();
