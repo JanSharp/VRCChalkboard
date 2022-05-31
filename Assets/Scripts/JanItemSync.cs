@@ -156,8 +156,10 @@ public class JanItemSync : UdonSharpBehaviour
 
     public override void OnPickup()
     {
-        Debug.Assert(pickup.IsHeld, "Picked up but not held?!");
-        Debug.Assert(pickup.currentHand != VRC_Pickup.PickupHand.None, "Held but not in either hand?!");
+        if (!pickup.IsHeld)
+            Debug.LogError("Picked up but not held?!");
+        if (pickup.currentHand == VRC_Pickup.PickupHand.None)
+            Debug.LogError("Held but not in either hand?!");
 
         attachedPlayer = pickup.currentPlayer;
         attachedBone = pickup.currentHand == VRC_Pickup.PickupHand.Left ? HumanBodyBones.LeftHand : HumanBodyBones.RightHand;
