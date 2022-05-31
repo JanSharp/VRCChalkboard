@@ -5,8 +5,6 @@ using VRC.SDKBase;
 using VRC.Udon;
 using VRC.Udon.Common;
 
-///cSpell:ignore lerp
-
 // TODO: disallowed item theft support
 // TODO: enable disable support/testing
 
