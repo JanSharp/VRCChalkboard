@@ -5,8 +5,6 @@ using VRC.SDKBase;
 using VRC.Udon;
 using VRC.Udon.Common;
 
-// TODO: enable disable support/testing
-
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class JanItemSync : UdonSharpBehaviour
 {
