@@ -5,16 +5,7 @@ using VRC.SDKBase;
 using VRC.Udon;
 using VRC.Udon.Common;
 
-// TODO: disallowed item theft support
 // TODO: enable disable support/testing
-
-///cSpell:ignore jank
-// alright, so I've decided. For now I'm going to ignore theft and simply declare it undefined
-// and even if/once I handle item theft I'm not going to use VRCPickup for it, I'm going to check if it's allowed
-// and the prevent theft myself, because I have no interest in quite literally telling every client that that player picked up an item
-// because I can already see just how jank and hard it would be to synchronize local position and rotation. It would be pure pain
-// that means, however, we need to know if it is possible to disable a pickup script temporarily
-// I'll have to figure that out once this script has been fully refactored and tested
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class JanItemSync : UdonSharpBehaviour
@@ -423,7 +414,14 @@ public class JanItemSync : UdonSharpBehaviour
 
     public override void OnDeserialization()
     {
-        if ((syncedFlags & 1) != 0) // is attached?
+        if (State != IdleState && pickup.IsHeld) // did someone steal the item?
+            pickup.Drop(); // drop it
+
+        bool isAttached = (syncedFlags & 1) != 0;
+        if (pickup.DisallowTheft)
+            pickup.pickupable = !isAttached;
+
+        if (isAttached)
         {
             attachedBone = (syncedFlags & 2) != 0 ? HumanBodyBones.LeftHand : HumanBodyBones.RightHand;
             attachedLocalOffset = syncedPosition;
