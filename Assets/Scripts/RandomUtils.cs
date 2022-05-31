@@ -1,17 +1,19 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEditor;
 
 public class RandomUtils : MonoBehaviour
 {
+    [Header("Spawn 1000 Objects")]
     public GameObject objectToSpawn;
     public string objectToSpawnName;
 
-    [Header("Material Switcher")]
-    [Tooltip("This will replace all materials on a mesh renderer where their shader name matches the given name.")]
+    [Header("Switch Materials")]
+    [Tooltip("This will replace all references to the Old Material on the provided GameObjects and all nested children on a mesh with the New Material.")]
     public GameObject[] mainParents;
-    public string oldShaderName;
+    public Material oldMaterial;
     public Material newMaterial;
 }
 
@@ -24,7 +26,8 @@ public class RandomUtilsEditor : Editor
         var target = (RandomUtils)base.target;
         base.OnInspectorGUI();
         EditorGUILayout.Space();
-        if (GUILayout.Button(new GUIContent("Spawn 1000 objects")))
+
+        if (GUILayout.Button(new GUIContent("Spawn 1000 Objects")))
         {
             for (int y = 0; y < 10; y++)
                 for (int x = 0; x < 100; x++)
@@ -43,12 +46,13 @@ public class RandomUtilsEditor : Editor
         if (GUILayout.Button(new GUIContent("Switch Materials")))
         {
             if (target.mainParents == null
-                || target.oldShaderName == null
+                || target.mainParents.Length == 0
+                || target.mainParents.Any(o => o == null)
+                || target.oldMaterial == null
                 || target.newMaterial == null)
             {
-                Debug.LogError("In order to change materials you must provide the 'Main Parent', "
-                    + "the 'Old Shader Name' and the 'New Material' which should replace the old material. "
-                    + "This will replace all materials on a mesh renderer where their shader name matches the given name."
+                Debug.LogError("In order to change materials you must provide 'Main Parents' (at least 1 and no nulls), "
+                    + "the 'Old Material' and the 'New Material' which should replace said old material."
                 );
             }
             else
@@ -68,10 +72,8 @@ public class RandomUtilsEditor : Editor
             Material[] materials = renderer.sharedMaterials;
             for (int i = 0; i < materials.Length; i++)
             {
-                var shader = materials[i].shader;
-                if (materials[i].shader.name == utils.oldShaderName)
+                if (materials[i] == utils.oldMaterial)
                     materials[i] = utils.newMaterial;
-                // FIXME: find a way to compare shared materials with a provided material
             }
             renderer.sharedMaterials = materials;
         }
