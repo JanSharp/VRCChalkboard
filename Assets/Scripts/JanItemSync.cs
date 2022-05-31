@@ -167,16 +167,16 @@ public class JanItemSync : UdonSharpBehaviour
         // technically redundant because the VRCPickup script already does this, but I do not trust it nor do I trust order of operation
         Networking.SetOwner(attachedPlayer, this.gameObject);
 
-        if (pickup.orientation == VRC_Pickup.PickupOrientation.Gun)
-        {
-            if (HandleExactOffset(pickup.ExactGun, gunRotationOffset))
-                return;
-        }
-        else if (pickup.orientation == VRC_Pickup.PickupOrientation.Grip)
-        {
-            if (HandleExactOffset(pickup.ExactGrip, gripRotationOffset))
-                return;
-        }
+        // if (pickup.orientation == VRC_Pickup.PickupOrientation.Gun)
+        // {
+        //     if (HandleExactOffset(pickup.ExactGun, gunRotationOffset))
+        //         return;
+        // }
+        // else if (pickup.orientation == VRC_Pickup.PickupOrientation.Grip)
+        // {
+        //     if (HandleExactOffset(pickup.ExactGrip, gripRotationOffset))
+        //         return;
+        // }
 
         if (attachedPlayer.IsUserInVR())
         {
