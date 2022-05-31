@@ -7,8 +7,6 @@ using UnityEditor;
 using UdonSharpEditor;
 #endif
 
-///cSpell:ignore grabable, lerp
-
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class RotationGrip : UdonSharpBehaviour
 {
