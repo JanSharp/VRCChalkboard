@@ -20,6 +20,7 @@ public class RotationGrip : UdonSharpBehaviour
     private Transform dummyTransform;
     private VRC_Pickup pickup;
     private Quaternion initialLocalRotation;
+    private Vector3 upwardsVector;
     private float initialDistance;
     private float nextSyncTime;
     private const float SyncInterval = 0.2f;
@@ -87,6 +88,7 @@ public class RotationGrip : UdonSharpBehaviour
         initialLocalRotation = toRotate.localRotation;
         dummyTransform = updateManager.transform;
         initialDistance = toRotate.InverseTransformDirection(this.transform.position - toRotate.position).magnitude;
+        upwardsVector = toRotate.rotation * Vector3.up;
         SnapBack();
     }
 
@@ -161,7 +163,7 @@ public class RotationGrip : UdonSharpBehaviour
 
     private void LookAtThisTransform()
     {
-        toRotate.LookAt(toRotate.position - (this.transform.position - toRotate.position));
+        toRotate.LookAt(toRotate.position * 2 - this.transform.position, upwardsVector);
         Quaternion deviation = Quaternion.Inverse(initialLocalRotation) * toRotate.localRotation;
         float angle;
         Vector3 axis;
