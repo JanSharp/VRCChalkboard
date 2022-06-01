@@ -17,6 +17,10 @@ public class DebugController : UdonSharpBehaviour
     [UdonSynced] private int consistentOffsetFrameCount = 4;
     [UdonSynced] private float handMovementAngleDiff = 20f;
     [UdonSynced] private float interpolationDuration = 0.2f;
+    [UdonSynced] private float desktopRotationCheckInterval = 1f;
+    [UdonSynced] private float desktopRotationCheckFastInterval = 0.15f;
+    [UdonSynced] private float desktopRotationTolerance = 5f;
+    [UdonSynced] private int desktopRotationFastFalloff = 10;
     [UdonSynced] private bool vRLocalAttachment = true;
     [UdonSynced] private bool desktopLocalAttachment = true;
 
@@ -26,6 +30,10 @@ public class DebugController : UdonSharpBehaviour
     public InputField consistentOffsetFrameCountGUI;
     public InputField handMovementAngleDiffGUI;
     public InputField interpolationDurationGUI;
+    public InputField desktopRotationCheckIntervalGUI;
+    public InputField desktopRotationCheckFastIntervalGUI;
+    public InputField desktopRotationToleranceGUI;
+    public InputField desktopRotationFastFalloffGUI;
     public Toggle vRLocalAttachmentGUI;
     public Toggle desktopLocalAttachmentGUI;
     [Space]
@@ -53,6 +61,10 @@ public class DebugController : UdonSharpBehaviour
         consistentOffsetFrameCountGUI.text = consistentOffsetFrameCount.ToString();
         handMovementAngleDiffGUI.text = handMovementAngleDiff.ToString();
         interpolationDurationGUI.text = interpolationDuration.ToString();
+        desktopRotationCheckIntervalGUI.text = desktopRotationCheckInterval.ToString();
+        desktopRotationCheckFastIntervalGUI.text = desktopRotationCheckFastInterval.ToString();
+        desktopRotationToleranceGUI.text = desktopRotationTolerance.ToString();
+        desktopRotationFastFalloffGUI.text = desktopRotationFastFalloff.ToString();
         vRLocalAttachmentGUI.SetIsOnWithoutNotify(vRLocalAttachment);
         desktopLocalAttachmentGUI.SetIsOnWithoutNotify(desktopLocalAttachment);
     }
@@ -139,6 +151,10 @@ public class DebugController : UdonSharpBehaviour
             item.ConsistentOffsetFrameCount = consistentOffsetFrameCount;
             item.HandMovementAngleDiff = handMovementAngleDiff;
             item.InterpolationDuration = interpolationDuration;
+            item.DesktopRotationCheckInterval = desktopRotationCheckInterval;
+            item.DesktopRotationCheckFastInterval = desktopRotationCheckFastInterval;
+            item.DesktopRotationTolerance = desktopRotationTolerance;
+            item.DesktopRotationFastFalloff = desktopRotationFastFalloff;
             item.VRLocalAttachment = vRLocalAttachment;
             item.DesktopLocalAttachment = desktopLocalAttachment;
         }
@@ -200,6 +216,42 @@ public class DebugController : UdonSharpBehaviour
         float value;
         if (float.TryParse(interpolationDurationGUI.text, out value))
             interpolationDuration = value;
+        UpdateItems();
+        RequestSerialization();
+    }
+
+    public void OnDesktopRotationCheckIntervalEndText()
+    {
+        float value;
+        if (float.TryParse(desktopRotationCheckIntervalGUI.text, out value))
+            desktopRotationCheckInterval = value;
+        UpdateItems();
+        RequestSerialization();
+    }
+
+    public void OnDesktopRotationCheckFastIntervalEndText()
+    {
+        float value;
+        if (float.TryParse(desktopRotationCheckFastIntervalGUI.text, out value))
+            desktopRotationCheckFastInterval = value;
+        UpdateItems();
+        RequestSerialization();
+    }
+
+    public void OnDesktopRotationToleranceEndText()
+    {
+        float value;
+        if (float.TryParse(desktopRotationToleranceGUI.text, out value))
+            desktopRotationTolerance = value;
+        UpdateItems();
+        RequestSerialization();
+    }
+
+    public void OnDesktopRotationFastFalloffEndText()
+    {
+        int value;
+        if (int.TryParse(desktopRotationFastFalloffGUI.text, out value))
+            desktopRotationFastFalloff = value;
         UpdateItems();
         RequestSerialization();
     }

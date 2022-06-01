@@ -7,7 +7,6 @@ using VRC.SDKBase;
 using VRC.Udon;
 using VRC.Udon.Common;
 
-// TODO: desktop item rotation support (much easier said than done)
 // TODO: remove waiting for hand to move state
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
@@ -32,10 +31,11 @@ public class JanItemSync : UdonSharpBehaviour
     private const byte DesktopWaitingForHandToMoveState = 3;
     private const byte DesktopWaitingForConsistentOffsetState = 4;
     private const byte DesktopAttachedSendingState = 5; // attached to hand
-    private const byte ExactAttachedSendingState = 6; // attached to hand
-    private const byte ReceivingFloatingState = 7;
-    private const byte ReceivingMovingToBoneState = 8; // attached to hand, but interpolating offset towards the actual attached position
-    private const byte ReceivingAttachedState = 9; // attached to hand
+    private const byte DesktopAttachedRotatingState = 6; // attached to hand
+    private const byte ExactAttachedSendingState = 7; // attached to hand
+    private const byte ReceivingFloatingState = 8;
+    private const byte ReceivingMovingToBoneState = 9; // attached to hand, but interpolating offset towards the actual attached position
+    private const byte ReceivingAttachedState = 10; // attached to hand
     private byte state = IdleState;
     #if ItemSyncDebug
     public
@@ -91,6 +91,8 @@ public class JanItemSync : UdonSharpBehaviour
                 return "DesktopWaitingForConsistentOffsetState";
             case DesktopAttachedSendingState:
                 return "DesktopAttachedSendingState";
+            case DesktopAttachedRotatingState:
+                return "DesktopAttachedRotatingState";
             case ExactAttachedSendingState:
                 return "ExactAttachedSendingState";
             case ReceivingFloatingState:
@@ -124,8 +126,8 @@ public class JanItemSync : UdonSharpBehaviour
     // this ultimately solves the issue that the offset determination will never be perfect, but
     // by locally attaching it will still look the same for everyone including the person holding the item
     #if ItemSyncDebug
-    [HideInInspector] public bool VRLocalAttachment = true;
-    [HideInInspector] public bool DesktopLocalAttachment = true;
+    [HideInInspector] public bool VRLocalAttachment = true; // asdf
+    [HideInInspector] public bool DesktopLocalAttachment = true; // asdf
     #else
     private const bool VRLocalAttachment = true;
     private const bool DesktopLocalAttachment = true;
@@ -155,6 +157,24 @@ public class JanItemSync : UdonSharpBehaviour
     private const float HandMovementAngleDiff = 20f;
     #endif
     private Quaternion initialBoneRotation;
+
+    // DesktopAttachedSendingState and DesktopAttachedRotatingState
+    #if ItemSyncDebug
+    [HideInInspector] public float DesktopRotationCheckInterval = 1f; // asdf
+    [HideInInspector] public float DesktopRotationCheckFastInterval = 0.15f; // asdf
+    [HideInInspector] public float DesktopRotationTolerance = 5f; // asdf
+    /// <summary>
+    /// Amount of fast checks where the rotation didn't change before going back to the slower interval
+    /// </summary>
+    [HideInInspector] public int DesktopRotationFastFalloff = 10; // asdf
+    #else
+    private const float DesktopRotationCheckInterval = 1f;
+    private const float DesktopRotationCheckFastInterval = 0.15f;
+    private const float DesktopRotationTolerance = 5f;
+    private const int DesktopRotationFastFalloff = 10;
+    #endif
+    private float nextRotationCheckTime;
+    private float slowDownTime;
 
     // ExactAttachedSendingState
     // NOTE: these really should be static fields, but UdonSharp 0.20.3 does not support them
@@ -213,7 +233,11 @@ public class JanItemSync : UdonSharpBehaviour
     private Quaternion GetLocalRotationToBone(Quaternion worldRotation)
         => GetLocalRotationToTransform(dummyTransform, worldRotation);
     private bool IsReceivingState() => State >= ReceivingFloatingState;
-    private bool IsAttachedSendingState() => State == VRAttachedSendingState || State == DesktopAttachedSendingState || State == ExactAttachedSendingState;
+    private bool IsAttachedSendingState()
+        => State == VRAttachedSendingState
+        || State == DesktopAttachedSendingState
+        || State == DesktopAttachedRotatingState
+        || State == ExactAttachedSendingState;
 
     public override void OnPickup()
     {
@@ -359,7 +383,7 @@ public class JanItemSync : UdonSharpBehaviour
                 MoveItemToBoneWithOffset(attachedLocalOffset, attachedRotationOffset);
             return;
         }
-        if (State == DesktopAttachedSendingState)
+        if (State == DesktopAttachedSendingState || State == DesktopAttachedRotatingState)
         {
             if (DesktopLocalAttachment)
             {
@@ -367,7 +391,25 @@ public class JanItemSync : UdonSharpBehaviour
                 MoveDummyToBone();
                 this.transform.position = AttachedBonePosition + dummyTransform.TransformDirection(attachedLocalOffset);
             }
-            // TODO: sync item rotation
+            // sync item rotation
+            float time = Time.time;
+            if (time >= nextRotationCheckTime)
+            {
+                MoveDummyToBone();
+                var rotOffset = GetLocalRotationToBone(ItemRotation);
+                if (Quaternion.Angle(attachedRotationOffset, rotOffset) > DesktopRotationTolerance)
+                {
+                    State = DesktopAttachedRotatingState;
+                    slowDownTime = nextRotationCheckTime + DesktopRotationCheckFastInterval * DesktopRotationFastFalloff;
+                    attachedRotationOffset = rotOffset;
+                    SendChanges();
+                }
+                else if (time >= slowDownTime)
+                {
+                    State = DesktopAttachedSendingState;
+                }
+                nextRotationCheckTime += State == DesktopAttachedRotatingState ? DesktopRotationCheckFastInterval : DesktopRotationCheckInterval;
+            }
             return;
         }
         if (State == ExactAttachedSendingState)
@@ -399,7 +441,10 @@ public class JanItemSync : UdonSharpBehaviour
             else
             {
                 if (ItemOffsetWasConsistent())
+                {
                     State = DesktopAttachedSendingState;
+                    nextRotationCheckTime = Time.time + DesktopRotationCheckInterval;
+                }
             }
         }
         SendChanges(); // regardless of what happened, it has to sync
@@ -513,17 +558,22 @@ public class JanItemSync : UdonSharpBehaviour
         if (isAttached)
         {
             attachedBone = (syncedFlags & 2) != 0 ? HumanBodyBones.LeftHand : HumanBodyBones.RightHand;
+            if (State == ReceivingAttachedState) // interpolate from old to new offset
+            {
+                posInterpolationDiff = syncedPosition - attachedLocalOffset;
+                interpolationStartRotation = attachedRotationOffset;
+            }
+            else // figure out current local offset and interpolate starting from there
+            {
+                MoveDummyToBone();
+                posInterpolationDiff = syncedPosition - GetLocalPositionToBone(ItemPosition);
+                interpolationStartRotation = GetLocalRotationToBone(ItemRotation);
+            }
             attachedLocalOffset = syncedPosition;
             attachedRotationOffset = syncedRotation;
             attachedPlayer = Networking.GetOwner(this.gameObject); // ensure it is up to date
-            if (State != ReceivingAttachedState)
-            {
-                MoveDummyToBone();
-                posInterpolationDiff = attachedLocalOffset - GetLocalPositionToBone(ItemPosition);
-                interpolationStartRotation = GetLocalRotationToBone(ItemRotation);
-                interpolationStartTime = Time.time;
-                State = ReceivingMovingToBoneState;
-            }
+            interpolationStartTime = Time.time;
+            State = ReceivingMovingToBoneState;
         }
         else // not attached
         {
