@@ -17,6 +17,8 @@ public class DebugController : UdonSharpBehaviour
     [UdonSynced] private int consistentOffsetFrameCount = 4;
     [UdonSynced] private float handMovementAngleDiff = 20f;
     [UdonSynced] private float interpolationDuration = 0.2f;
+    [UdonSynced] private bool vRLocalAttachment = true;
+    [UdonSynced] private bool desktopLocalAttachment = true;
 
     public InputField smallMagnitudeDiffGUI;
     public InputField smallAngleDiffGUI;
@@ -24,6 +26,8 @@ public class DebugController : UdonSharpBehaviour
     public InputField consistentOffsetFrameCountGUI;
     public InputField handMovementAngleDiffGUI;
     public InputField interpolationDurationGUI;
+    public Toggle vRLocalAttachmentGUI;
+    public Toggle desktopLocalAttachmentGUI;
     [Space]
     public TextMeshPro itemStatesText;
 
@@ -49,6 +53,8 @@ public class DebugController : UdonSharpBehaviour
         consistentOffsetFrameCountGUI.text = consistentOffsetFrameCount.ToString();
         handMovementAngleDiffGUI.text = handMovementAngleDiff.ToString();
         interpolationDurationGUI.text = interpolationDuration.ToString();
+        vRLocalAttachmentGUI.SetIsOnWithoutNotify(vRLocalAttachment);
+        desktopLocalAttachmentGUI.SetIsOnWithoutNotify(desktopLocalAttachment);
     }
 
     #if ItemSyncDebug
@@ -133,6 +139,8 @@ public class DebugController : UdonSharpBehaviour
             item.ConsistentOffsetFrameCount = consistentOffsetFrameCount;
             item.HandMovementAngleDiff = handMovementAngleDiff;
             item.InterpolationDuration = interpolationDuration;
+            item.VRLocalAttachment = vRLocalAttachment;
+            item.DesktopLocalAttachment = desktopLocalAttachment;
         }
     }
 
@@ -192,6 +200,20 @@ public class DebugController : UdonSharpBehaviour
         float value;
         if (float.TryParse(interpolationDurationGUI.text, out value))
             interpolationDuration = value;
+        UpdateItems();
+        RequestSerialization();
+    }
+
+    public void OnVRLocalAttachmentValueChanged()
+    {
+        vRLocalAttachment = vRLocalAttachmentGUI.isOn;
+        UpdateItems();
+        RequestSerialization();
+    }
+
+    public void OnDesktopLocalAttachmentValueChanged()
+    {
+        desktopLocalAttachment = desktopLocalAttachmentGUI.isOn;
         UpdateItems();
         RequestSerialization();
     }

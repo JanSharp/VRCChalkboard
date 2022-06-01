@@ -9,7 +9,6 @@ using VRC.Udon.Common;
 
 // TODO: desktop item rotation support (much easier said than done)
 // TODO: remove waiting for hand to move state
-// TODO: add local item attachment
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class JanItemSync : UdonSharpBehaviour
@@ -29,11 +28,11 @@ public class JanItemSync : UdonSharpBehaviour
 
     private const byte IdleState = 0; // the only state with CustomUpdate deregistered
     private const byte VRWaitingForConsistentOffsetState = 1;
-    private const byte VRSendingState = 2; // attached to hand
+    private const byte VRAttachedSendingState = 2; // attached to hand
     private const byte DesktopWaitingForHandToMoveState = 3;
     private const byte DesktopWaitingForConsistentOffsetState = 4;
-    private const byte DesktopSendingState = 5; // attached to hand
-    private const byte ExactSendingState = 6; // attached to hand
+    private const byte DesktopAttachedSendingState = 5; // attached to hand
+    private const byte ExactAttachedSendingState = 6; // attached to hand
     private const byte ReceivingFloatingState = 7;
     private const byte ReceivingMovingToBoneState = 8; // attached to hand, but interpolating offset towards the actual attached position
     private const byte ReceivingAttachedState = 9; // attached to hand
@@ -84,16 +83,16 @@ public class JanItemSync : UdonSharpBehaviour
                 return "IdleState";
             case VRWaitingForConsistentOffsetState:
                 return "VRWaitingForConsistentOffsetState";
-            case VRSendingState:
-                return "VRSendingState";
+            case VRAttachedSendingState:
+                return "VRAttachedSendingState";
             case DesktopWaitingForHandToMoveState:
                 return "DesktopWaitingForHandToMoveState";
             case DesktopWaitingForConsistentOffsetState:
                 return "DesktopWaitingForConsistentOffsetState";
-            case DesktopSendingState:
-                return "DesktopSendingState";
-            case ExactSendingState:
-                return "ExactSendingState";
+            case DesktopAttachedSendingState:
+                return "DesktopAttachedSendingState";
+            case ExactAttachedSendingState:
+                return "ExactAttachedSendingState";
             case ReceivingFloatingState:
                 return "ReceivingFloatingState";
             case ReceivingMovingToBoneState:
@@ -120,6 +119,18 @@ public class JanItemSync : UdonSharpBehaviour
     private Vector3 attachedLocalOffset;
     private Quaternion attachedRotationOffset;
 
+    // local attachment means that the item will also be attached to the hand for the player holding the item
+    // once the local position and rotation offset has been determined.
+    // this ultimately solves the issue that the offset determination will never be perfect, but
+    // by locally attaching it will still look the same for everyone including the person holding the item
+    #if ItemSyncDebug
+    [HideInInspector] public bool VRLocalAttachment = true;
+    [HideInInspector] public bool DesktopLocalAttachment = true;
+    #else
+    private const bool VRLocalAttachment = true;
+    private const bool DesktopLocalAttachment = true;
+    #endif
+
     // VRWaitingForConsistentOffsetState and DesktopWaitingForConsistentOffsetState
     #if ItemSyncDebug
     [HideInInspector] public float SmallMagnitudeDiff = 0.005f; // asdf
@@ -145,7 +156,7 @@ public class JanItemSync : UdonSharpBehaviour
     #endif
     private Quaternion initialBoneRotation;
 
-    // ExactSendingState
+    // ExactAttachedSendingState
     // NOTE: these really should be static fields, but UdonSharp 0.20.3 does not support them
     private Quaternion gripRotationOffset = Quaternion.Euler(0, 35, 0);
     private Quaternion gunRotationOffset = Quaternion.Euler(0, 305, 0);
@@ -202,7 +213,7 @@ public class JanItemSync : UdonSharpBehaviour
     private Quaternion GetLocalRotationToBone(Quaternion worldRotation)
         => GetLocalRotationToTransform(dummyTransform, worldRotation);
     private bool IsReceivingState() => State >= ReceivingFloatingState;
-    private bool IsAttachedSendingState() => State == VRSendingState || State == DesktopSendingState || State == ExactSendingState;
+    private bool IsAttachedSendingState() => State == VRAttachedSendingState || State == DesktopAttachedSendingState || State == ExactAttachedSendingState;
 
     public override void OnPickup()
     {
@@ -255,7 +266,7 @@ public class JanItemSync : UdonSharpBehaviour
         attachedRotationOffset = rotationOffset * Quaternion.Inverse(GetLocalRotationToTransform(exact, ItemRotation));
         attachedLocalOffset = attachedRotationOffset * GetLocalPositionToTransform(exact, ItemPosition);
         SendChanges();
-        State = ExactSendingState;
+        State = ExactAttachedSendingState;
         return true;
     }
 
@@ -342,20 +353,32 @@ public class JanItemSync : UdonSharpBehaviour
 
     private void UpdateSender()
     {
-        if (IsAttachedSendingState())
+        if (State == VRAttachedSendingState)
         {
-            // I think this part still has to make sure the offset is about right, but we'll see
-            // it'll definitely have to sync rotation in desktop mode, not sure if that's possible in VR
-            // definitely nothing to do for ExactSendingState, it should probably not even be registered to Update anymore
+            if (VRLocalAttachment)
+                MoveItemToBoneWithOffset(attachedLocalOffset, attachedRotationOffset);
             return;
         }
+        if (State == DesktopAttachedSendingState)
+        {
+            if (DesktopLocalAttachment)
+            {
+                // only set position, because you can rotate items on desktop
+                MoveDummyToBone();
+                this.transform.position = AttachedBonePosition + dummyTransform.TransformDirection(attachedLocalOffset);
+            }
+            // TODO: sync item rotation
+            return;
+        }
+        if (State == ExactAttachedSendingState)
+            return;
 
         MoveDummyToBone();
 
         if (State == VRWaitingForConsistentOffsetState)
         {
             if (ItemOffsetWasConsistent())
-                State = VRSendingState;
+                State = VRAttachedSendingState;
         }
         else
         {
@@ -376,7 +399,7 @@ public class JanItemSync : UdonSharpBehaviour
             else
             {
                 if (ItemOffsetWasConsistent())
-                    State = DesktopSendingState;
+                    State = DesktopAttachedSendingState;
             }
         }
         SendChanges(); // regardless of what happened, it has to sync
