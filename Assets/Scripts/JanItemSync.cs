@@ -362,7 +362,7 @@ public class JanItemSync : UdonSharpBehaviour
                 #if ItemSyncDebug
                 Debug.Log($"DesktopWaitingForHandToMoveState: angle diff: {Quaternion.Angle(AttachedBoneRotation, initialBoneRotation)}");
                 #endif
-                if (Quaternion.Angle(AttachedBoneRotation, initialBoneRotation) > HandMovementAngleDiff)
+                if (Quaternion.Angle(AttachedBoneRotation, initialBoneRotation) >= HandMovementAngleDiff)
                 {
                     prevPositionOffset = GetLocalPositionToBone(ItemPosition);
                     prevRotationOffset = GetLocalRotationToBone(ItemRotation);
