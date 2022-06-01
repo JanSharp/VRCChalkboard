@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using VRC.SDKBase;
 using VRC.Udon;
+using TMPro;
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class DebugController : UdonSharpBehaviour
@@ -23,14 +24,20 @@ public class DebugController : UdonSharpBehaviour
     public InputField consistentOffsetFrameCountGUI;
     public InputField handMovementAngleDiffGUI;
     public InputField interpolationDurationGUI;
+    [Space]
+    public TextMeshPro itemStatesText;
 
     private JanItemSync[] items;
+    private JanItemSync[] nonIdleItems;
     private int itemCount = 0;
+    private int nonIdleCount = 0;
 
     public void Start()
     {
         if (items == null)
             items = new JanItemSync[128];
+        if (nonIdleItems == null)
+            nonIdleItems = new JanItemSync[128];
         UpdateGUI();
     }
 
@@ -52,7 +59,7 @@ public class DebugController : UdonSharpBehaviour
         if (itemCount == items.Length)
             GrowItems();
         items[itemCount] = item;
-        item.debugControllerIndex = itemCount;
+        item.debugIndex = itemCount;
         itemCount++;
     }
 
@@ -60,11 +67,11 @@ public class DebugController : UdonSharpBehaviour
     {
         if (items == null)
             items = new JanItemSync[128];
-        int index = item.debugControllerIndex;
+        int index = item.debugIndex;
         // move current top into the gap
         itemCount--;
         items[index] = items[itemCount];
-        items[index].debugControllerIndex = index;
+        items[index].debugIndex = index;
         items[itemCount] = null;
     }
 
@@ -74,6 +81,44 @@ public class DebugController : UdonSharpBehaviour
         for (int i = 0; i < items.Length; i++)
             grownItems[i] = items[i];
         items = grownItems;
+
+        JanItemSync[] grownNonIdleItems = new JanItemSync[nonIdleItems.Length * 2];
+        for (int i = 0; i < nonIdleItems.Length; i++)
+            grownNonIdleItems[i] = nonIdleItems[i];
+        nonIdleItems = grownNonIdleItems;
+    }
+
+    public void RegisterNonIdle(JanItemSync item)
+    {
+        if (nonIdleItems == null)
+            nonIdleItems = new JanItemSync[128];
+        nonIdleItems[nonIdleCount] = item;
+        item.debugNonIdleIndex = nonIdleCount;
+        nonIdleCount++;
+    }
+
+    public void DeregisterNonIdle(JanItemSync item)
+    {
+        if (nonIdleItems == null)
+            nonIdleItems = new JanItemSync[128];
+        int index = item.debugNonIdleIndex;
+        // move current top into the gap
+        nonIdleCount--;
+        nonIdleItems[index] = nonIdleItems[nonIdleCount];
+        nonIdleItems[index].debugNonIdleIndex = index;
+        nonIdleItems[nonIdleCount] = null;
+    }
+
+    public void UpdateItemStatesText()
+    {
+        string str = null;
+        for (int i = 0; i < System.Math.Min(100, nonIdleCount); i++)
+        {
+            str = str == null ? "" : str + "\n";
+            var item = nonIdleItems[i];
+            str += $"{Networking.GetOwner(item.gameObject).displayName}: '{item.name}':   {item.StateToString(item.State)}";
+        }
+        itemStatesText.text = str;
     }
     #endif
 

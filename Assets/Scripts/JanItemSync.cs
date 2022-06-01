@@ -8,14 +8,14 @@ using VRC.Udon;
 using VRC.Udon.Common;
 
 // TODO: desktop item rotation support (much easier said than done)
-// TODO: more debug info
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class JanItemSync : UdonSharpBehaviour
 {
     #if ItemSyncDebug
-    [HideInInspector]
-    public int debugControllerIndex;
+    [HideInInspector] public int debugIndex;
+    [HideInInspector] public int debugNonIdleIndex;
+    private DebugController debugController;
     #endif
 
     // set on Start
@@ -36,7 +36,12 @@ public class JanItemSync : UdonSharpBehaviour
     private const byte ReceivingMovingToBoneState = 8; // attached to hand, but interpolating offset towards the actual attached position
     private const byte ReceivingAttachedState = 9; // attached to hand
     private byte state = IdleState;
-    private byte State
+    #if ItemSyncDebug
+    public
+    #else
+    private
+    #endif
+    byte State
     {
         get => state;
         set
@@ -45,16 +50,31 @@ public class JanItemSync : UdonSharpBehaviour
             {
                 #if ItemSyncDebug
                 Debug.Log($"Switching from {StateToString(state)} to {StateToString(value)}.");
+                if (debugController != null)
+                {
+                    if (state == IdleState)
+                        debugController.RegisterNonIdle(this);
+                    else if (value == IdleState)
+                        debugController.DeregisterNonIdle(this);
+                }
                 #endif
                 if (value == IdleState)
                     updateManager.Deregister(this);
                 else if (state == IdleState)
                     updateManager.Register(this);
                 state = value;
+                #if ItemSyncDebug
+                debugController.UpdateItemStatesText();
+                #endif
             }
         }
     }
-    private string StateToString(byte state)
+    #if ItemSyncDebug
+    public
+    #else
+    private
+    #endif
+    string StateToString(byte state)
     {
         switch (state)
         {
@@ -162,7 +182,6 @@ public class JanItemSync : UdonSharpBehaviour
         #if ItemSyncDebug
         dummyTransform.GetComponent<MeshRenderer>().enabled = true;
         var debugControllerObj = GameObject.Find("/DebugController");
-        DebugController debugController = null;
         if (debugControllerObj != null)
             debugController = (DebugController)debugControllerObj.GetComponent(typeof(UdonBehaviour));
         if (debugController != null)
