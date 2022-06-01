@@ -1,4 +1,7 @@
-﻿using UdonSharp;
+﻿
+#define ItemSyncDebug
+
+using UdonSharp;
 using UnityEngine;
 using UnityEngine.UI;
 using VRC.SDKBase;
@@ -41,6 +44,7 @@ public class DebugController : UdonSharpBehaviour
         interpolationDurationGUI.text = interpolationDuration.ToString();
     }
 
+    #if ItemSyncDebug
     public void Register(JanItemSync item)
     {
         if (items == null)
@@ -71,6 +75,7 @@ public class DebugController : UdonSharpBehaviour
             grownItems[i] = items[i];
         items = grownItems;
     }
+    #endif
 
     private void UpdateItems()
     {

@@ -1,4 +1,6 @@
 ﻿
+#define ItemSyncDebug
+
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
@@ -11,9 +13,10 @@ using VRC.Udon.Common;
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class JanItemSync : UdonSharpBehaviour
 {
-    private const bool IsDebug = true;
+    #if ItemSyncDebug
     [HideInInspector]
     public int debugControllerIndex;
+    #endif
 
     // set on Start
     private UpdateManager updateManager;
@@ -40,8 +43,9 @@ public class JanItemSync : UdonSharpBehaviour
         {
             if (state != value)
             {
-                if (IsDebug)
-                    Debug.Log($"Switching from {StateToString(state)} to {StateToString(value)}.");
+                #if ItemSyncDebug
+                Debug.Log($"Switching from {StateToString(state)} to {StateToString(value)}.");
+                #endif
                 if (value == IdleState)
                     updateManager.Deregister(this);
                 else if (state == IdleState)
@@ -95,17 +99,28 @@ public class JanItemSync : UdonSharpBehaviour
     private Quaternion attachedRotationOffset;
 
     // VRWaitingForConsistentOffsetState and DesktopWaitingForConsistentOffsetState
-    public float SmallMagnitudeDiff = 0.005f; // asdf
-    public float SmallAngleDiff = 5f; // asdf
-    public float ConsistentOffsetDuration = 0.3f; // asdf
-    public int ConsistentOffsetFrameCount = 4; // asdf
+    #if ItemSyncDebug
+    [HideInInspector] public float SmallMagnitudeDiff = 0.005f; // asdf
+    [HideInInspector] public float SmallAngleDiff = 5f; // asdf
+    [HideInInspector] public float ConsistentOffsetDuration = 0.3f; // asdf
+    [HideInInspector] public int ConsistentOffsetFrameCount = 4; // asdf
+    #else
+    private const float SmallMagnitudeDiff = 0.005f;
+    private const float SmallAngleDiff = 5f;
+    private const float ConsistentOffsetDuration = 0.3f;
+    private const int ConsistentOffsetFrameCount = 4;
+    #endif
     private Vector3 prevPositionOffset;
     private Quaternion prevRotationOffset;
     private float consistentOffsetStopTime;
     private int stillFrameCount; // to prevent super low framerate from causing false positives
 
     // DesktopWaitingForHandToMoveState
-    public float HandMovementAngleDiff = 20f; // asdf
+    #if ItemSyncDebug
+    [HideInInspector] public float HandMovementAngleDiff = 20f; // asdf
+    #else
+    private const float HandMovementAngleDiff = 20f;
+    #endif
     private Quaternion initialBoneRotation;
 
     // ExactSendingState
@@ -114,7 +129,11 @@ public class JanItemSync : UdonSharpBehaviour
     private Quaternion gunRotationOffset = Quaternion.Euler(0, 305, 0);
 
     // ReceivingFloatingState and AttachedInterpolationState
-    public float InterpolationDuration = 0.2f; // asdf
+    #if ItemSyncDebug
+    [HideInInspector] public float InterpolationDuration = 0.2f; // asdf
+    #else
+    private const float InterpolationDuration = 0.2f;
+    #endif
     private Vector3 posInterpolationDiff;
     private Quaternion interpolationStartRotation;
     private float interpolationStartTime;
@@ -133,21 +152,34 @@ public class JanItemSync : UdonSharpBehaviour
         pickup = (VRC_Pickup)GetComponent(typeof(VRC_Pickup));
         Debug.Assert(pickup != null, "JanItemSync must be on a GameObject with a VRC_Pickup component.");
         var updateManagerObj = GameObject.Find("/UpdateManager");
-        updateManager = updateManagerObj == null ? null : (UpdateManager)updateManagerObj.GetComponent(typeof(UdonBehaviour));
-        Debug.Assert(updateManager != null, "JanItemSync requires a GameObject that must be at the root of the scene with the exact name 'UpdateManager' which has the 'UpdateManager' UdonBehaviour.");
+        if (updateManagerObj != null)
+            updateManager = (UpdateManager)updateManagerObj.GetComponent(typeof(UdonBehaviour));
+        Debug.Assert(updateManager != null, "JanItemSync requires a GameObject that must be at the root of the scene"
+            + " with the exact name 'UpdateManager' which has the 'UpdateManager' UdonBehaviour."
+        );
         dummyTransform = updateManagerObj.transform;
-        // if (IsDebug)
-        //     ((MeshRenderer)dummyTransform.GetComponent(typeof(MeshRenderer))).enabled = true;
+
+        #if ItemSyncDebug
+        dummyTransform.GetComponent<MeshRenderer>().enabled = true;
         var debugControllerObj = GameObject.Find("/DebugController");
-        DebugController debugController = debugControllerObj == null ? null : (DebugController)debugControllerObj.GetComponent(typeof(UdonBehaviour));
-        debugController.Register(this);
+        DebugController debugController = null;
+        if (debugControllerObj != null)
+            debugController = (DebugController)debugControllerObj.GetComponent(typeof(UdonBehaviour));
+        if (debugController != null)
+            debugController.Register(this);
+        #endif
     }
 
-    private void MoveDummyToBone() => dummyTransform.SetPositionAndRotation(AttachedBonePosition, AttachedBoneRotation);
-    private Vector3 GetLocalPositionToTransform(Transform transform, Vector3 worldPosition) => transform.InverseTransformDirection(worldPosition - transform.position);
-    private Vector3 GetLocalPositionToBone(Vector3 worldPosition) => GetLocalPositionToTransform(dummyTransform, worldPosition);
-    private Quaternion GetLocalRotationToTransform(Transform transform, Quaternion worldRotation) => Quaternion.Inverse(transform.rotation) * worldRotation;
-    private Quaternion GetLocalRotationToBone(Quaternion worldRotation) => GetLocalRotationToTransform(dummyTransform, worldRotation);
+    private void MoveDummyToBone()
+        => dummyTransform.SetPositionAndRotation(AttachedBonePosition, AttachedBoneRotation);
+    private Vector3 GetLocalPositionToTransform(Transform transform, Vector3 worldPosition)
+        => transform.InverseTransformDirection(worldPosition - transform.position);
+    private Vector3 GetLocalPositionToBone(Vector3 worldPosition)
+        => GetLocalPositionToTransform(dummyTransform, worldPosition);
+    private Quaternion GetLocalRotationToTransform(Transform transform, Quaternion worldRotation)
+        => Quaternion.Inverse(transform.rotation) * worldRotation;
+    private Quaternion GetLocalRotationToBone(Quaternion worldRotation)
+        => GetLocalRotationToTransform(dummyTransform, worldRotation);
     private bool IsReceivingState() => State >= ReceivingFloatingState;
     private bool IsAttachedSendingState() => State == VRSendingState || State == DesktopSendingState || State == ExactSendingState;
 
@@ -213,8 +245,9 @@ public class JanItemSync : UdonSharpBehaviour
             return;
         State = IdleState;
         SendChanges();
-        if (IsDebug)
-            dummyTransform.SetPositionAndRotation(ItemPosition, ItemRotation);
+        #if ItemSyncDebug
+        dummyTransform.SetPositionAndRotation(ItemPosition, ItemRotation);
+        #endif
     }
 
     public void CustomUpdate()
@@ -229,21 +262,20 @@ public class JanItemSync : UdonSharpBehaviour
         else
         {
             UpdateSender();
-            if (IsDebug)
+            #if ItemSyncDebug
+            if (IsAttachedSendingState())
             {
-                if (IsAttachedSendingState())
-                {
-                    MoveDummyToBone();
-                    dummyTransform.SetPositionAndRotation(
-                        AttachedBonePosition + dummyTransform.TransformDirection(attachedLocalOffset),
-                        AttachedBoneRotation * attachedRotationOffset
-                    );
-                }
-                else
-                {
-                    dummyTransform.SetPositionAndRotation(ItemPosition, ItemRotation);
-                }
+                MoveDummyToBone();
+                dummyTransform.SetPositionAndRotation(
+                    AttachedBonePosition + dummyTransform.TransformDirection(attachedLocalOffset),
+                    AttachedBoneRotation * attachedRotationOffset
+                );
             }
+            else
+            {
+                dummyTransform.SetPositionAndRotation(ItemPosition, ItemRotation);
+            }
+            #endif
         }
     }
 
@@ -251,18 +283,23 @@ public class JanItemSync : UdonSharpBehaviour
     {
         var posOffset = GetLocalPositionToBone(ItemPosition);
         var rotOffset = GetLocalRotationToBone(ItemRotation);
-        if (IsDebug)
-            Debug.Log($"*WaitingForConsistentOffsetState: offset diff: {posOffset - prevPositionOffset}, offset diff magnitude {(posOffset - prevPositionOffset).magnitude}, angle diff: {Quaternion.Angle(rotOffset, prevRotationOffset)}.");
+        #if ItemSyncDebug
+        Debug.Log($"*WaitingForConsistentOffsetState: offset diff: {posOffset - prevPositionOffset}, "
+            + $"offset diff magnitude {(posOffset - prevPositionOffset).magnitude}, "
+            + $"angle diff: {Quaternion.Angle(rotOffset, prevRotationOffset)}.");
+        #endif
         if ((posOffset - prevPositionOffset).magnitude <= SmallMagnitudeDiff
             && Quaternion.Angle(rotOffset, prevRotationOffset) <= SmallAngleDiff)
         {
             stillFrameCount++;
-            if (IsDebug)
-                Debug.Log($"stillFrameCount: {stillFrameCount}, Time.time: {Time.time}, stop time: {consistentOffsetStopTime}.");
+            #if ItemSyncDebug
+            Debug.Log($"stillFrameCount: {stillFrameCount}, Time.time: {Time.time}, stop time: {consistentOffsetStopTime}.");
+            #endif
             if (stillFrameCount >= ConsistentOffsetFrameCount && Time.time >= consistentOffsetStopTime)
             {
-                if (IsDebug)
-                    Debug.Log("Setting attached offset.");
+                #if ItemSyncDebug
+                Debug.Log("Setting attached offset.");
+                #endif
                 attachedLocalOffset = posOffset;
                 attachedRotationOffset = rotOffset;
                 return true;
@@ -270,8 +307,9 @@ public class JanItemSync : UdonSharpBehaviour
         }
         else
         {
-            if (IsDebug)
-                Debug.Log("Moved too much, resetting timer.");
+            #if ItemSyncDebug
+            Debug.Log("Moved too much, resetting timer.");
+            #endif
             stillFrameCount = 0;
             consistentOffsetStopTime = Time.time + ConsistentOffsetDuration;
         }
@@ -302,8 +340,9 @@ public class JanItemSync : UdonSharpBehaviour
         {
             if (State == DesktopWaitingForHandToMoveState)
             {
-                if (IsDebug)
-                    Debug.Log($"DesktopWaitingForHandToMoveState: angle diff: {Quaternion.Angle(AttachedBoneRotation, initialBoneRotation)}");
+                #if ItemSyncDebug
+                Debug.Log($"DesktopWaitingForHandToMoveState: angle diff: {Quaternion.Angle(AttachedBoneRotation, initialBoneRotation)}");
+                #endif
                 if (Quaternion.Angle(AttachedBoneRotation, initialBoneRotation) > HandMovementAngleDiff)
                 {
                     prevPositionOffset = GetLocalPositionToBone(ItemPosition);
