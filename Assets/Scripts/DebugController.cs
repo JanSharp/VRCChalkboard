@@ -168,6 +168,7 @@ public class DebugController : UdonSharpBehaviour
         if (float.TryParse(smallMagnitudeDiffGUI.text, out value))
             smallMagnitudeDiff = value;
         UpdateItems();
+        UpdateGUI();
         RequestSerialization();
     }
 
@@ -177,6 +178,7 @@ public class DebugController : UdonSharpBehaviour
         if (float.TryParse(smallAngleDiffGUI.text, out value))
             smallAngleDiff = value;
         UpdateItems();
+        UpdateGUI();
         RequestSerialization();
     }
 
@@ -186,6 +188,7 @@ public class DebugController : UdonSharpBehaviour
         if (float.TryParse(consistentOffsetDurationGUI.text, out value))
             consistentOffsetDuration = value;
         UpdateItems();
+        UpdateGUI();
         RequestSerialization();
     }
 
@@ -195,6 +198,7 @@ public class DebugController : UdonSharpBehaviour
         if (int.TryParse(consistentOffsetFrameCountGUI.text, out value))
             consistentOffsetFrameCount = value;
         UpdateItems();
+        UpdateGUI();
         RequestSerialization();
     }
 
@@ -204,6 +208,7 @@ public class DebugController : UdonSharpBehaviour
         if (float.TryParse(interpolationDurationGUI.text, out value))
             interpolationDuration = value;
         UpdateItems();
+        UpdateGUI();
         RequestSerialization();
     }
 
@@ -213,6 +218,7 @@ public class DebugController : UdonSharpBehaviour
         if (float.TryParse(desktopRotationCheckIntervalGUI.text, out value))
             desktopRotationCheckInterval = value;
         UpdateItems();
+        UpdateGUI();
         RequestSerialization();
     }
 
@@ -222,6 +228,7 @@ public class DebugController : UdonSharpBehaviour
         if (float.TryParse(desktopRotationCheckFastIntervalGUI.text, out value))
             desktopRotationCheckFastInterval = value;
         UpdateItems();
+        UpdateGUI();
         RequestSerialization();
     }
 
@@ -231,6 +238,7 @@ public class DebugController : UdonSharpBehaviour
         if (float.TryParse(desktopRotationToleranceGUI.text, out value))
             desktopRotationTolerance = value;
         UpdateItems();
+        UpdateGUI();
         RequestSerialization();
     }
 
@@ -240,6 +248,7 @@ public class DebugController : UdonSharpBehaviour
         if (int.TryParse(desktopRotationFastFalloffGUI.text, out value))
             desktopRotationFastFalloff = value;
         UpdateItems();
+        UpdateGUI();
         RequestSerialization();
     }
 
