@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0, g: 0, b: 0, a: 1}
+  m_IndirectSpecularColor: {r: 0.18028378, g: 0.22571412, b: 0.30692285, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -560,7 +560,7 @@ MonoBehaviour:
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: OnVRLocalAttachmentValueChanged
+          m_StringArgument: ConfirmInput
           m_BoolArgument: 0
         m_CallState: 2
   m_IsOn: 1
@@ -2197,7 +2197,7 @@ MonoBehaviour:
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: OnConsistentOffsetDurationEndText
+          m_StringArgument: ConfirmInput
           m_BoolArgument: 0
         m_CallState: 2
   m_OnValueChanged:
@@ -2691,7 +2691,7 @@ MonoBehaviour:
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: OnConsistentOffsetFrameCountEndText
+          m_StringArgument: ConfirmInput
           m_BoolArgument: 0
         m_CallState: 2
   m_OnValueChanged:
@@ -3931,7 +3931,7 @@ MonoBehaviour:
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: OnSmallMagnitudeDiffEndText
+          m_StringArgument: ConfirmInput
           m_BoolArgument: 0
         m_CallState: 2
   m_OnValueChanged:
@@ -4046,7 +4046,7 @@ MonoBehaviour:
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: OnDesktopRotationCheckFastIntervalEndText
+          m_StringArgument: ConfirmInput
           m_BoolArgument: 0
         m_CallState: 2
   m_OnValueChanged:
@@ -4435,7 +4435,7 @@ MonoBehaviour:
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: OnSmallAngleDiffEndText
+          m_StringArgument: ConfirmInput
           m_BoolArgument: 0
         m_CallState: 2
   m_OnValueChanged:
@@ -5998,7 +5998,7 @@ MonoBehaviour:
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: OnDesktopRotationToleranceEndText
+          m_StringArgument: ConfirmInput
           m_BoolArgument: 0
         m_CallState: 2
   m_OnValueChanged:
@@ -6841,25 +6841,6 @@ Transform:
   m_Father: {fileID: 1401400525}
   m_RootOrder: 12
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1192472950 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 1094421957795851142, guid: 8894fa7e4588a5c4fab98453e558847d,
-    type: 3}
-  m_PrefabInstance: {fileID: 1562253867}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1192472955
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1192472950}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 229740497, guid: 4ecd63eff847044b68db9453ce219299, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  contentType: 1
 --- !u!1 &1195156925
 GameObject:
   m_ObjectHideFlags: 0
@@ -7632,7 +7613,7 @@ MonoBehaviour:
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: OnDesktopRotationFastFalloffEndText
+          m_StringArgument: ConfirmInput
           m_BoolArgument: 0
         m_CallState: 2
   m_OnValueChanged:
@@ -7763,7 +7744,7 @@ MonoBehaviour:
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: OnInterpolationDurationEndText
+          m_StringArgument: ConfirmInput
           m_BoolArgument: 0
         m_CallState: 2
   m_OnValueChanged:
@@ -9279,7 +9260,7 @@ MonoBehaviour:
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: OnDesktopRotationCheckIntervalEndText
+          m_StringArgument: ConfirmInput
           m_BoolArgument: 0
         m_CallState: 2
   m_OnValueChanged:
@@ -10480,7 +10461,7 @@ MonoBehaviour:
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: OnDesktopLocalAttachmentValueChanged
+          m_StringArgument: ConfirmInput
           m_BoolArgument: 0
         m_CallState: 2
   m_IsOn: 1

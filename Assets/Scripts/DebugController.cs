@@ -66,6 +66,70 @@ public class DebugController : UdonSharpBehaviour
         desktopLocalAttachmentGUI.SetIsOnWithoutNotify(desktopLocalAttachment);
     }
 
+    private void UpdateItems()
+    {
+        for (int i = 0; i < itemCount; i++)
+        {
+            var item = items[i];
+            item.SmallMagnitudeDiff = smallMagnitudeDiff;
+            item.SmallAngleDiff = smallAngleDiff;
+            item.ConsistentOffsetDuration = consistentOffsetDuration;
+            item.ConsistentOffsetFrameCount = consistentOffsetFrameCount;
+            item.InterpolationDuration = interpolationDuration;
+            item.DesktopRotationCheckInterval = desktopRotationCheckInterval;
+            item.DesktopRotationCheckFastInterval = desktopRotationCheckFastInterval;
+            item.DesktopRotationTolerance = desktopRotationTolerance;
+            item.DesktopRotationFastFalloff = desktopRotationFastFalloff;
+            item.VRLocalAttachment = vRLocalAttachment;
+            item.DesktopLocalAttachment = desktopLocalAttachment;
+        }
+    }
+
+    public void ConfirmInput()
+    {
+        smallMagnitudeDiff = ReadAsFloat(smallMagnitudeDiffGUI, smallMagnitudeDiff);
+        smallAngleDiff = ReadAsFloat(smallAngleDiffGUI, smallAngleDiff);
+        consistentOffsetDuration = ReadAsFloat(consistentOffsetDurationGUI, consistentOffsetDuration);
+        consistentOffsetFrameCount = ReadAsInt(consistentOffsetFrameCountGUI, consistentOffsetFrameCount);
+        interpolationDuration = ReadAsFloat(interpolationDurationGUI, interpolationDuration);
+        desktopRotationCheckInterval = ReadAsFloat(desktopRotationCheckIntervalGUI, desktopRotationCheckInterval);
+        desktopRotationCheckFastInterval = ReadAsFloat(desktopRotationCheckFastIntervalGUI, desktopRotationCheckFastInterval);
+        desktopRotationTolerance = ReadAsFloat(desktopRotationToleranceGUI, desktopRotationTolerance);
+        desktopRotationFastFalloff = ReadAsInt(desktopRotationFastFalloffGUI, desktopRotationFastFalloff);
+        vRLocalAttachment = vRLocalAttachmentGUI.isOn;
+        desktopLocalAttachment = desktopLocalAttachmentGUI.isOn;
+        ValuesChanged();
+    }
+
+    public override void OnDeserialization()
+    {
+        UpdateItems();
+        UpdateGUI();
+    }
+
+    private void ValuesChanged()
+    {
+        UpdateItems();
+        UpdateGUI();
+        RequestSerialization();
+    }
+
+    private float ReadAsFloat(InputField inputField, float fallback)
+    {
+        float value;
+        if (float.TryParse(inputField.text, out value))
+            return value;
+        return fallback;
+    }
+
+    private int ReadAsInt(InputField inputField, int fallback)
+    {
+        int value;
+        if (int.TryParse(inputField.text, out value))
+            return value;
+        return fallback;
+    }
+
     #if ItemSyncDebug
     public void Register(JanItemSync item)
     {
@@ -136,133 +200,4 @@ public class DebugController : UdonSharpBehaviour
         itemStatesText.text = str;
     }
     #endif
-
-    private void UpdateItems()
-    {
-        for (int i = 0; i < itemCount; i++)
-        {
-            var item = items[i];
-            item.SmallMagnitudeDiff = smallMagnitudeDiff;
-            item.SmallAngleDiff = smallAngleDiff;
-            item.ConsistentOffsetDuration = consistentOffsetDuration;
-            item.ConsistentOffsetFrameCount = consistentOffsetFrameCount;
-            item.InterpolationDuration = interpolationDuration;
-            item.DesktopRotationCheckInterval = desktopRotationCheckInterval;
-            item.DesktopRotationCheckFastInterval = desktopRotationCheckFastInterval;
-            item.DesktopRotationTolerance = desktopRotationTolerance;
-            item.DesktopRotationFastFalloff = desktopRotationFastFalloff;
-            item.VRLocalAttachment = vRLocalAttachment;
-            item.DesktopLocalAttachment = desktopLocalAttachment;
-        }
-    }
-
-    public override void OnDeserialization()
-    {
-        UpdateItems();
-        UpdateGUI();
-    }
-
-    public void OnSmallMagnitudeDiffEndText()
-    {
-        float value;
-        if (float.TryParse(smallMagnitudeDiffGUI.text, out value))
-            smallMagnitudeDiff = value;
-        UpdateItems();
-        UpdateGUI();
-        RequestSerialization();
-    }
-
-    public void OnSmallAngleDiffEndText()
-    {
-        float value;
-        if (float.TryParse(smallAngleDiffGUI.text, out value))
-            smallAngleDiff = value;
-        UpdateItems();
-        UpdateGUI();
-        RequestSerialization();
-    }
-
-    public void OnConsistentOffsetDurationEndText()
-    {
-        float value;
-        if (float.TryParse(consistentOffsetDurationGUI.text, out value))
-            consistentOffsetDuration = value;
-        UpdateItems();
-        UpdateGUI();
-        RequestSerialization();
-    }
-
-    public void OnConsistentOffsetFrameCountEndText()
-    {
-        int value;
-        if (int.TryParse(consistentOffsetFrameCountGUI.text, out value))
-            consistentOffsetFrameCount = value;
-        UpdateItems();
-        UpdateGUI();
-        RequestSerialization();
-    }
-
-    public void OnInterpolationDurationEndText()
-    {
-        float value;
-        if (float.TryParse(interpolationDurationGUI.text, out value))
-            interpolationDuration = value;
-        UpdateItems();
-        UpdateGUI();
-        RequestSerialization();
-    }
-
-    public void OnDesktopRotationCheckIntervalEndText()
-    {
-        float value;
-        if (float.TryParse(desktopRotationCheckIntervalGUI.text, out value))
-            desktopRotationCheckInterval = value;
-        UpdateItems();
-        UpdateGUI();
-        RequestSerialization();
-    }
-
-    public void OnDesktopRotationCheckFastIntervalEndText()
-    {
-        float value;
-        if (float.TryParse(desktopRotationCheckFastIntervalGUI.text, out value))
-            desktopRotationCheckFastInterval = value;
-        UpdateItems();
-        UpdateGUI();
-        RequestSerialization();
-    }
-
-    public void OnDesktopRotationToleranceEndText()
-    {
-        float value;
-        if (float.TryParse(desktopRotationToleranceGUI.text, out value))
-            desktopRotationTolerance = value;
-        UpdateItems();
-        UpdateGUI();
-        RequestSerialization();
-    }
-
-    public void OnDesktopRotationFastFalloffEndText()
-    {
-        int value;
-        if (int.TryParse(desktopRotationFastFalloffGUI.text, out value))
-            desktopRotationFastFalloff = value;
-        UpdateItems();
-        UpdateGUI();
-        RequestSerialization();
-    }
-
-    public void OnVRLocalAttachmentValueChanged()
-    {
-        vRLocalAttachment = vRLocalAttachmentGUI.isOn;
-        UpdateItems();
-        RequestSerialization();
-    }
-
-    public void OnDesktopLocalAttachmentValueChanged()
-    {
-        desktopLocalAttachment = desktopLocalAttachmentGUI.isOn;
-        UpdateItems();
-        RequestSerialization();
-    }
 }
