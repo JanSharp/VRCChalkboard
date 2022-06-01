@@ -15,7 +15,6 @@ public class DebugController : UdonSharpBehaviour
     [UdonSynced] private float smallAngleDiff = 5f;
     [UdonSynced] private float consistentOffsetDuration = 0.3f;
     [UdonSynced] private int consistentOffsetFrameCount = 4;
-    [UdonSynced] private float handMovementAngleDiff = 20f;
     [UdonSynced] private float interpolationDuration = 0.2f;
     [UdonSynced] private float desktopRotationCheckInterval = 1f;
     [UdonSynced] private float desktopRotationCheckFastInterval = 0.15f;
@@ -28,7 +27,6 @@ public class DebugController : UdonSharpBehaviour
     public InputField smallAngleDiffGUI;
     public InputField consistentOffsetDurationGUI;
     public InputField consistentOffsetFrameCountGUI;
-    public InputField handMovementAngleDiffGUI;
     public InputField interpolationDurationGUI;
     public InputField desktopRotationCheckIntervalGUI;
     public InputField desktopRotationCheckFastIntervalGUI;
@@ -59,7 +57,6 @@ public class DebugController : UdonSharpBehaviour
         smallAngleDiffGUI.text = smallAngleDiff.ToString();
         consistentOffsetDurationGUI.text = consistentOffsetDuration.ToString();
         consistentOffsetFrameCountGUI.text = consistentOffsetFrameCount.ToString();
-        handMovementAngleDiffGUI.text = handMovementAngleDiff.ToString();
         interpolationDurationGUI.text = interpolationDuration.ToString();
         desktopRotationCheckIntervalGUI.text = desktopRotationCheckInterval.ToString();
         desktopRotationCheckFastIntervalGUI.text = desktopRotationCheckFastInterval.ToString();
@@ -149,7 +146,6 @@ public class DebugController : UdonSharpBehaviour
             item.SmallAngleDiff = smallAngleDiff;
             item.ConsistentOffsetDuration = consistentOffsetDuration;
             item.ConsistentOffsetFrameCount = consistentOffsetFrameCount;
-            item.HandMovementAngleDiff = handMovementAngleDiff;
             item.InterpolationDuration = interpolationDuration;
             item.DesktopRotationCheckInterval = desktopRotationCheckInterval;
             item.DesktopRotationCheckFastInterval = desktopRotationCheckFastInterval;
@@ -198,15 +194,6 @@ public class DebugController : UdonSharpBehaviour
         int value;
         if (int.TryParse(consistentOffsetFrameCountGUI.text, out value))
             consistentOffsetFrameCount = value;
-        UpdateItems();
-        RequestSerialization();
-    }
-
-    public void OnHandMovementAngleDiffEndText()
-    {
-        float value;
-        if (float.TryParse(handMovementAngleDiffGUI.text, out value))
-            handMovementAngleDiff = value;
         UpdateItems();
         RequestSerialization();
     }

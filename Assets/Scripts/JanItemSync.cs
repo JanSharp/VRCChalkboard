@@ -7,8 +7,6 @@ using VRC.SDKBase;
 using VRC.Udon;
 using VRC.Udon.Common;
 
-// TODO: remove waiting for hand to move state
-
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class JanItemSync : UdonSharpBehaviour
 {
@@ -28,14 +26,13 @@ public class JanItemSync : UdonSharpBehaviour
     private const byte IdleState = 0; // the only state with CustomUpdate deregistered
     private const byte VRWaitingForConsistentOffsetState = 1;
     private const byte VRAttachedSendingState = 2; // attached to hand
-    private const byte DesktopWaitingForHandToMoveState = 3;
-    private const byte DesktopWaitingForConsistentOffsetState = 4;
-    private const byte DesktopAttachedSendingState = 5; // attached to hand
-    private const byte DesktopAttachedRotatingState = 6; // attached to hand
-    private const byte ExactAttachedSendingState = 7; // attached to hand
-    private const byte ReceivingFloatingState = 8;
-    private const byte ReceivingMovingToBoneState = 9; // attached to hand, but interpolating offset towards the actual attached position
-    private const byte ReceivingAttachedState = 10; // attached to hand
+    private const byte DesktopWaitingForConsistentOffsetState = 3;
+    private const byte DesktopAttachedSendingState = 4; // attached to hand
+    private const byte DesktopAttachedRotatingState = 5; // attached to hand
+    private const byte ExactAttachedSendingState = 6; // attached to hand
+    private const byte ReceivingFloatingState = 7;
+    private const byte ReceivingMovingToBoneState = 8; // attached to hand, but interpolating offset towards the actual attached position
+    private const byte ReceivingAttachedState = 9; // attached to hand
     private byte state = IdleState;
     #if ItemSyncDebug
     public
@@ -85,8 +82,6 @@ public class JanItemSync : UdonSharpBehaviour
                 return "VRWaitingForConsistentOffsetState";
             case VRAttachedSendingState:
                 return "VRAttachedSendingState";
-            case DesktopWaitingForHandToMoveState:
-                return "DesktopWaitingForHandToMoveState";
             case DesktopWaitingForConsistentOffsetState:
                 return "DesktopWaitingForConsistentOffsetState";
             case DesktopAttachedSendingState:
@@ -149,14 +144,6 @@ public class JanItemSync : UdonSharpBehaviour
     private Quaternion prevRotationOffset;
     private float consistentOffsetStopTime;
     private int stillFrameCount; // to prevent super low framerate from causing false positives
-
-    // DesktopWaitingForHandToMoveState
-    #if ItemSyncDebug
-    [HideInInspector] public float HandMovementAngleDiff = 20f; // asdf
-    #else
-    private const float HandMovementAngleDiff = 20f;
-    #endif
-    private Quaternion initialBoneRotation;
 
     // DesktopAttachedSendingState and DesktopAttachedRotatingState
     #if ItemSyncDebug
@@ -273,8 +260,11 @@ public class JanItemSync : UdonSharpBehaviour
         }
         else
         {
-            initialBoneRotation = AttachedBoneRotation;
-            State = DesktopWaitingForHandToMoveState;
+            prevPositionOffset = GetLocalPositionToBone(ItemPosition);
+            prevRotationOffset = GetLocalRotationToBone(ItemRotation);
+            stillFrameCount = 0;
+            State = DesktopWaitingForConsistentOffsetState;
+            consistentOffsetStopTime = Time.time + ConsistentOffsetDuration;
         }
     }
 
@@ -424,27 +414,10 @@ public class JanItemSync : UdonSharpBehaviour
         }
         else
         {
-            if (State == DesktopWaitingForHandToMoveState)
+            if (ItemOffsetWasConsistent())
             {
-                #if ItemSyncDebug
-                Debug.Log($"DesktopWaitingForHandToMoveState: angle diff: {Quaternion.Angle(AttachedBoneRotation, initialBoneRotation)}");
-                #endif
-                if (Quaternion.Angle(AttachedBoneRotation, initialBoneRotation) >= HandMovementAngleDiff)
-                {
-                    prevPositionOffset = GetLocalPositionToBone(ItemPosition);
-                    prevRotationOffset = GetLocalRotationToBone(ItemRotation);
-                    stillFrameCount = 0;
-                    State = DesktopWaitingForConsistentOffsetState;
-                    consistentOffsetStopTime = Time.time + ConsistentOffsetDuration;
-                }
-            }
-            else
-            {
-                if (ItemOffsetWasConsistent())
-                {
-                    State = DesktopAttachedSendingState;
-                    nextRotationCheckTime = Time.time + DesktopRotationCheckInterval;
-                }
+                State = DesktopAttachedSendingState;
+                nextRotationCheckTime = Time.time + DesktopRotationCheckInterval;
             }
         }
         SendChanges(); // regardless of what happened, it has to sync
