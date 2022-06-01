@@ -114,9 +114,9 @@ public class DebugController : UdonSharpBehaviour
         string str = null;
         for (int i = 0; i < System.Math.Min(100, nonIdleCount); i++)
         {
-            str = str == null ? "" : str + "\n";
+            str = str == null ? "" : "\n" + str;
             var item = nonIdleItems[i];
-            str += $"{Networking.GetOwner(item.gameObject).displayName}: '{item.name}':   {item.StateToString(item.State)}";
+            str = $"'{item.name}', {Networking.GetOwner(item.gameObject).displayName}:   {item.StateToString(item.State)}{str}";
         }
         itemStatesText.text = str;
     }
