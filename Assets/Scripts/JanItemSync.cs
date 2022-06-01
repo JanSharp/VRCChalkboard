@@ -8,6 +8,8 @@ using VRC.Udon;
 using VRC.Udon.Common;
 
 // TODO: desktop item rotation support (much easier said than done)
+// TODO: remove waiting for hand to move state
+// TODO: add local item attachment
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class JanItemSync : UdonSharpBehaviour
