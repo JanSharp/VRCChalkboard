@@ -9,6 +9,8 @@ using VRC.Udon.Common;
 public class JanItemSync : UdonSharpBehaviour
 {
     private const bool IsDebug = true;
+    [HideInInspector]
+    public int debugControllerIndex;
 
     // set on Start
     private UpdateManager updateManager;
@@ -90,17 +92,17 @@ public class JanItemSync : UdonSharpBehaviour
     private Quaternion attachedRotationOffset;
 
     // VRWaitingForConsistentOffsetState and DesktopWaitingForConsistentOffsetState
-    private const float SmallMagnitudeDiff = 0.005f;
-    private const float SmallAngleDiff = 5f;
-    private const float ConsistentOffsetDuration = 0.3f;
-    private const int ConsistentOffsetFrameCount = 4;
+    public float SmallMagnitudeDiff = 0.005f; // asdf
+    public float SmallAngleDiff = 5f; // asdf
+    public float ConsistentOffsetDuration = 0.3f; // asdf
+    public int ConsistentOffsetFrameCount = 4; // asdf
     private Vector3 prevPositionOffset;
     private Quaternion prevRotationOffset;
     private float consistentOffsetStopTime;
     private int stillFrameCount; // to prevent super low framerate from causing false positives
 
     // DesktopWaitingForHandToMoveState
-    private const float HandMovementAngleDiff = 20f;
+    public float HandMovementAngleDiff = 20f; // asdf
     private Quaternion initialBoneRotation;
 
     // ExactSendingState
@@ -109,7 +111,7 @@ public class JanItemSync : UdonSharpBehaviour
     private Quaternion gunRotationOffset = Quaternion.Euler(0, 305, 0);
 
     // ReceivingFloatingState and AttachedInterpolationState
-    private const float InterpolationDuration = 0.2f;
+    public float InterpolationDuration = 0.2f; // asdf
     private Vector3 posInterpolationDiff;
     private Quaternion interpolationStartRotation;
     private float interpolationStartTime;
@@ -131,8 +133,11 @@ public class JanItemSync : UdonSharpBehaviour
         updateManager = updateManagerObj == null ? null : (UpdateManager)updateManagerObj.GetComponent(typeof(UdonBehaviour));
         Debug.Assert(updateManager != null, "JanItemSync requires a GameObject that must be at the root of the scene with the exact name 'UpdateManager' which has the 'UpdateManager' UdonBehaviour.");
         dummyTransform = updateManagerObj.transform;
-        if (IsDebug)
-            ((MeshRenderer)dummyTransform.GetComponent(typeof(MeshRenderer))).enabled = true;
+        // if (IsDebug)
+        //     ((MeshRenderer)dummyTransform.GetComponent(typeof(MeshRenderer))).enabled = true;
+        var debugControllerObj = GameObject.Find("/DebugController");
+        DebugController debugController = debugControllerObj == null ? null : (DebugController)debugControllerObj.GetComponent(typeof(UdonBehaviour));
+        debugController.Register(this);
     }
 
     private void MoveDummyToBone() => dummyTransform.SetPositionAndRotation(AttachedBonePosition, AttachedBoneRotation);
