@@ -1,4 +1,4 @@
-﻿
+
 #define ItemSyncDebug
 
 using UdonSharp;
@@ -530,6 +530,7 @@ public class JanItemSync : UdonSharpBehaviour
 
         if (isAttached)
         {
+            attachedPlayer = Networking.GetOwner(this.gameObject); // ensure it is up to date
             attachedBone = (syncedFlags & 2) != 0 ? HumanBodyBones.LeftHand : HumanBodyBones.RightHand;
             if (State == ReceivingAttachedState) // interpolate from old to new offset
             {
@@ -544,7 +545,6 @@ public class JanItemSync : UdonSharpBehaviour
             }
             attachedLocalOffset = syncedPosition;
             attachedRotationOffset = syncedRotation;
-            attachedPlayer = Networking.GetOwner(this.gameObject); // ensure it is up to date
             interpolationStartTime = Time.time;
             State = ReceivingMovingToBoneState;
         }
