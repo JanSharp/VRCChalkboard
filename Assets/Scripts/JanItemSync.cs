@@ -519,8 +519,12 @@ public class JanItemSync : UdonSharpBehaviour
             Debug.LogWarning($"Syncing request was dropped for {this.name}, trying again.");
             SendChanges(); // TODO: somehow test if this kind of retry even works or if the serialization request got reset right afterwards
         }
-        // else
-        //     Debug.Log($"Sending {result.byteCount} bytes");
+        else
+        {
+            #if ItemSyncDebug
+            Debug.Log($"Sending {result.byteCount} bytes");
+            #endif
+        }
     }
 
     public override void OnDeserialization()
