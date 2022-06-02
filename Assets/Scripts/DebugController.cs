@@ -11,14 +11,14 @@ using TMPro;
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class DebugController : UdonSharpBehaviour
 {
-    [UdonSynced] private float smallMagnitudeDiff = 0.005f;
-    [UdonSynced] private float smallAngleDiff = 5f;
-    [UdonSynced] private float consistentOffsetDuration = 0.3f;
+    [UdonSynced] private float smallMagnitudeDiff = 0.01f;
+    [UdonSynced] private float smallAngleDiff = 7f;
+    [UdonSynced] private float consistentOffsetDuration = 0.2f;
     [UdonSynced] private int consistentOffsetFrameCount = 4;
     [UdonSynced] private float interpolationDuration = 0.2f;
     [UdonSynced] private float desktopRotationCheckInterval = 1f;
     [UdonSynced] private float desktopRotationCheckFastInterval = 0.15f;
-    [UdonSynced] private float desktopRotationTolerance = 5f;
+    [UdonSynced] private float desktopRotationTolerance = 3f;
     [UdonSynced] private int desktopRotationFastFalloff = 10;
     [UdonSynced] private bool vRLocalAttachment = true;
     [UdonSynced] private bool desktopLocalAttachment = true;

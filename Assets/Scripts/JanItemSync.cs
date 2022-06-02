@@ -1,4 +1,4 @@
-
+﻿
 #define ItemSyncDebug
 
 using UdonSharp;
@@ -134,14 +134,14 @@ public class JanItemSync : UdonSharpBehaviour
 
     // VRWaitingForConsistentOffsetState and DesktopWaitingForConsistentOffsetState
     #if ItemSyncDebug
-    [HideInInspector] public float SmallMagnitudeDiff = 0.005f; // asdf
-    [HideInInspector] public float SmallAngleDiff = 5f; // asdf
-    [HideInInspector] public float ConsistentOffsetDuration = 0.3f; // asdf
+    [HideInInspector] public float SmallMagnitudeDiff = 0.01f; // asdf
+    [HideInInspector] public float SmallAngleDiff = 7f; // asdf
+    [HideInInspector] public float ConsistentOffsetDuration = 0.2f; // asdf
     [HideInInspector] public int ConsistentOffsetFrameCount = 4; // asdf
     #else
-    private const float SmallMagnitudeDiff = 0.005f;
-    private const float SmallAngleDiff = 5f;
-    private const float ConsistentOffsetDuration = 0.3f;
+    private const float SmallMagnitudeDiff = 0.01f;
+    private const float SmallAngleDiff = 7f;
+    private const float ConsistentOffsetDuration = 0.2f;
     private const int ConsistentOffsetFrameCount = 4;
     #endif
     private Vector3 prevPositionOffset;
@@ -153,7 +153,7 @@ public class JanItemSync : UdonSharpBehaviour
     #if ItemSyncDebug
     [HideInInspector] public float DesktopRotationCheckInterval = 1f; // asdf
     [HideInInspector] public float DesktopRotationCheckFastInterval = 0.15f; // asdf
-    [HideInInspector] public float DesktopRotationTolerance = 5f; // asdf
+    [HideInInspector] public float DesktopRotationTolerance = 3f; // asdf
     /// <summary>
     /// Amount of fast checks where the rotation didn't change before going back to the slower interval
     /// </summary>
@@ -161,7 +161,7 @@ public class JanItemSync : UdonSharpBehaviour
     #else
     private const float DesktopRotationCheckInterval = 1f;
     private const float DesktopRotationCheckFastInterval = 0.15f;
-    private const float DesktopRotationTolerance = 5f;
+    private const float DesktopRotationTolerance = 3f;
     private const int DesktopRotationFastFalloff = 10;
     #endif
     private float nextRotationCheckTime;
@@ -204,7 +204,7 @@ public class JanItemSync : UdonSharpBehaviour
         dummyTransform = updateManagerObj.transform;
 
         #if ItemSyncDebug
-        dummyTransform.GetComponent<MeshRenderer>().enabled = true;
+        // dummyTransform.GetComponent<MeshRenderer>().enabled = true;
         var debugControllerObj = GameObject.Find("/DebugController");
         if (debugControllerObj != null)
             debugController = (DebugController)debugControllerObj.GetComponent(typeof(UdonBehaviour));
