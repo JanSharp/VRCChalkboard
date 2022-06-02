@@ -162,7 +162,7 @@ MonoBehaviour:
     - Name: tooltip
       Entry: 1
       Data: Maximum amount of degrees the object to rotate is allowed to deviate
-        from the original local rotation. 360 and above means unlimited, 0 or below
+        from the original local rotation. 180 and above means unlimited, 0 or below
         means not at all.
     - Name: 
       Entry: 8

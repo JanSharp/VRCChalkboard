@@ -11,8 +11,8 @@ using UdonSharpEditor;
 public class RotationGrip : UdonSharpBehaviour
 {
     public Transform toRotate;
-    [Tooltip("Maximum amount of degrees the object to rotate is allowed to deviate from the original local rotation. 360 and above means unlimited, 0 or below means not at all.")]
-    public float maximumRotationDeviation = 360f;
+    [Tooltip("Maximum amount of degrees the object to rotate is allowed to deviate from the original local rotation. 180 and above means unlimited, 0 or below means not at all.")]
+    public float maximumRotationDeviation = 180f;
 
     private UpdateManager updateManager;
     private Transform dummyTransform;
@@ -84,6 +84,7 @@ public class RotationGrip : UdonSharpBehaviour
         if (updateManager == null)
             Debug.LogError("RotationGrip requires a GameObject that must be at the root of the scene with the exact name 'UpdateManager' which has the 'UpdateManager' UdonBehaviour.");
         initialLocalRotation = toRotate.localRotation;
+        maximumRotationDeviation = Mathf.Abs(maximumRotationDeviation);
         dummyTransform = updateManager.transform;
         initialDistance = toRotate.InverseTransformDirection(this.transform.position - toRotate.position).magnitude;
         upwardsVector = toRotate.rotation * Vector3.up;
@@ -166,9 +167,15 @@ public class RotationGrip : UdonSharpBehaviour
         float angle;
         Vector3 axis;
         deviation.ToAngleAxis(out angle, out axis);
+        float sign = 1f;
+        if (angle >= 180f)
+        {
+            angle = 360f - angle;
+            sign = -1f;
+        }
         if (angle > maximumRotationDeviation)
         {
-            deviation = Quaternion.AngleAxis(Mathf.Max(0f, maximumRotationDeviation), axis);
+            deviation = Quaternion.AngleAxis(maximumRotationDeviation * sign, axis);
             toRotate.localRotation = initialLocalRotation * deviation;
         }
     }
