@@ -337,14 +337,3 @@ public class TestScript : UdonSharpBehaviour
 
     }
 }
-
-// TODO: custom object pool
-// TODO: trash can
-// 
-// to test:
-// item theft (both it being allowed and disallowed)
-// item spawning
-// item de-spawning
-// interpolation:
-//   item sync fade in
-//   item sync fade out
