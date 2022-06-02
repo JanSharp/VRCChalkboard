@@ -6,6 +6,10 @@ using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
 using VRC.Udon.Common;
+#if UNITY_EDITOR
+using UnityEditor;
+using UdonSharpEditor;
+#endif
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class JanItemSync : UdonSharpBehaviour
@@ -557,3 +561,71 @@ public class JanItemSync : UdonSharpBehaviour
         }
     }
 }
+
+#if !COMPILER_UDONSHARP && UNITY_EDITOR
+[CustomEditor(typeof(JanItemSync))]
+public class JanItemSyncEditor : Editor
+{
+    public override void OnInspectorGUI()
+    {
+        JanItemSync target = this.target as JanItemSync;
+        if (UdonSharpGUI.DrawDefaultUdonSharpBehaviourHeader(target))
+            return;
+        EditorGUILayout.Space();
+        base.OnInspectorGUI(); // draws public/serializable fields
+        EditorGUILayout.Space();
+
+        var rigidbody = target.GetComponent<Rigidbody>();
+        if (rigidbody != null)
+        {
+            bool showButton = false;
+            if (rigidbody.useGravity)
+            {
+                EditorGUILayout.LabelField("Rigidbodies using Gravity are not supported by the Item Sync script. They don't break it, "
+                    + "but gravity related movement will not sync.", EditorStyles.wordWrappedLabel);
+                showButton = true;
+            }
+            if (!rigidbody.isKinematic)
+            {
+                EditorGUILayout.LabelField("Non Kinematic Rigidbodies are not supported by the Item Sync script. They don't break it, "
+                    + "but collision related movement will not sync.", EditorStyles.wordWrappedLabel);
+                showButton = true;
+            }
+            if (showButton && GUILayout.Button(new GUIContent("Configure Rigidbody", "Sets: useGravity = false; isKinematic = true;")))
+                ConfigureRigidbody(target, target.GetComponent<Rigidbody>());
+        }
+        var pickup = target.GetComponent<VRC.SDK3.Components.VRCPickup>();
+        if (pickup == null)
+        {
+            if (GUILayout.Button(new GUIContent("Add VRC Pickup" + (rigidbody == null ? " and Rigidbody" : ""),
+                "Adds VRC Pickup component and the necessary Rigidbody. Sets: useGravity = false; isKinematic = true; "
+                + "only if the Rigidbody didn't exist already.")))
+            {
+                AddAndConfigureComponents(target);
+            }
+        }
+    }
+
+    public static void AddAndConfigureComponents(JanItemSync target)
+    {
+        // the ?? operator doesn't work because unity doesn't actually return `null` when GetComponent doesn't find the component,
+        // it returns an instance of the component that pretends to be null and throws custom error messages when trying to use it
+        // all in all annoying
+        var rigidbody = target.GetComponent<Rigidbody>();
+        if (rigidbody == null)
+        {
+            rigidbody = target.gameObject.AddComponent<Rigidbody>();
+            ConfigureRigidbody(target, rigidbody);
+        }
+        var pickup = target.GetComponent<VRC.SDK3.Components.VRCPickup>();
+        if (pickup == null)
+            pickup = target.gameObject.AddComponent<VRC.SDK3.Components.VRCPickup>();
+    }
+
+    public static void ConfigureRigidbody(JanItemSync target, Rigidbody rigidbody)
+    {
+        rigidbody.useGravity = false;
+        rigidbody.isKinematic = true;
+    }
+}
+#endif
