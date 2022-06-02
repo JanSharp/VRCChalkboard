@@ -112,7 +112,7 @@ public class JanItemSync : UdonSharpBehaviour
     [UdonSynced] private byte syncedFlags;
     [UdonSynced] private Vector3 syncedPosition;
     [UdonSynced] private Quaternion syncedRotation;
-    // 29 bytes (1 + 12 + 16) worth of data, and we get 84 bytes as the byte count in OnPostSerialization. I'll leave it at that
+    // 29 bytes (1 + 12 + 16) worth of data, and we get 48 bytes as the byte count in OnPostSerialization. I'll leave it at that
 
     // attachment data for both sending and receiving
     private VRCPlayerApi attachedPlayer;
