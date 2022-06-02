@@ -13,12 +13,13 @@ public class RotationGrip : UdonSharpBehaviour
     public Transform toRotate;
     [Tooltip("Maximum amount of degrees the object to rotate is allowed to deviate from the original local rotation. 180 and above means unlimited, 0 or below means not at all.")]
     public float maximumRotationDeviation = 180f;
+    [Tooltip("When true the object To Rotate will only rotate around its up axis (the green arrow).")]
+    public bool rotateAroundSingleAxis;
 
     private UpdateManager updateManager;
     private Transform dummyTransform;
     private VRC_Pickup pickup;
     private Quaternion initialLocalRotation;
-    private Vector3 upwardsVector;
     private float initialDistance;
     private float nextSyncTime;
     private const float SyncInterval = 0.2f;
@@ -87,7 +88,6 @@ public class RotationGrip : UdonSharpBehaviour
         maximumRotationDeviation = Mathf.Abs(maximumRotationDeviation);
         dummyTransform = updateManager.transform;
         initialDistance = toRotate.InverseTransformDirection(this.transform.position - toRotate.position).magnitude;
-        upwardsVector = toRotate.rotation * Vector3.up;
         SnapBack();
     }
 
@@ -162,8 +162,25 @@ public class RotationGrip : UdonSharpBehaviour
 
     private void LookAtThisTransform()
     {
-        toRotate.LookAt(toRotate.position * 2 - this.transform.position, upwardsVector);
-        Quaternion deviation = Quaternion.Inverse(initialLocalRotation) * toRotate.localRotation;
+        var parent = this.transform.parent;
+        Vector3 worldUp = parent != null ? parent.up : Vector3.up;
+        toRotate.LookAt(toRotate.position * 2 - this.transform.position, worldUp);
+
+        Quaternion deviation;
+        if (rotateAroundSingleAxis)
+        {
+            Vector3 initialLocalDir = initialLocalRotation * Vector3.forward;
+            Vector3 initialLocalUp = initialLocalRotation * Vector3.up;
+            Vector3 currentLocalDir = toRotate.localRotation * Vector3.forward;
+
+            Vector3 parallelDir = currentLocalDir - (initialLocalUp * Vector3.Dot(currentLocalDir, initialLocalUp));
+            deviation = Quaternion.FromToRotation(initialLocalDir, parallelDir);
+        }
+        else
+        {
+            deviation = Quaternion.Inverse(initialLocalRotation) * toRotate.localRotation;
+        }
+
         float angle;
         Vector3 axis;
         deviation.ToAngleAxis(out angle, out axis);
@@ -176,6 +193,10 @@ public class RotationGrip : UdonSharpBehaviour
         if (angle > maximumRotationDeviation)
         {
             deviation = Quaternion.AngleAxis(maximumRotationDeviation * sign, axis);
+            toRotate.localRotation = initialLocalRotation * deviation;
+        }
+        else if (rotateAroundSingleAxis)
+        {
             toRotate.localRotation = initialLocalRotation * deviation;
         }
     }
