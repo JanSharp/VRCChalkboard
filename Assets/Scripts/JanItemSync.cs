@@ -109,9 +109,9 @@ public class JanItemSync : UdonSharpBehaviour
     ///First bit being 1 indicates the item is attached.
     ///Second bit is used when attached, 0 means attached to right hand, 1 means left hand.
     ///</summary>
-    [UdonSynced] private byte syncedFlags;
-    [UdonSynced] private Vector3 syncedPosition;
-    [UdonSynced] private Quaternion syncedRotation;
+    [UdonSynced] private byte a;
+    [UdonSynced] private Vector3 b;
+    [UdonSynced] private Quaternion c;
     // 29 bytes (1 + 12 + 16) worth of data, and we get 48 bytes as the byte count in OnPostSerialization. I'll leave it at that
 
     // attachment data for both sending and receiving
@@ -455,14 +455,14 @@ public class JanItemSync : UdonSharpBehaviour
             {
                 if (percent >= 1f)
                 {
-                    this.transform.SetPositionAndRotation(syncedPosition, syncedRotation);
+                    this.transform.SetPositionAndRotation(b, c);
                     State = IdleState;
                 }
                 else
                 {
                     this.transform.SetPositionAndRotation(
-                        syncedPosition - posInterpolationDiff * (1f - percent),
-                        Quaternion.Lerp(interpolationStartRotation, syncedRotation, percent)
+                        b - posInterpolationDiff * (1f - percent),
+                        Quaternion.Lerp(interpolationStartRotation, c, percent)
                     );
                 }
             }
@@ -495,20 +495,20 @@ public class JanItemSync : UdonSharpBehaviour
         {
             Debug.LogWarning("// TODO: uh idk what to do, shouldn't this be impossible?");
         }
-        syncedFlags = 0;
+        a = 0;
         if (IsAttachedSendingState())
         {
-            syncedFlags += 1; // set attached flag
-            syncedPosition = attachedLocalOffset;
-            syncedRotation = attachedRotationOffset;
+            a += 1; // set attached flag
+            b = attachedLocalOffset;
+            c = attachedRotationOffset;
             if (attachedBone == HumanBodyBones.LeftHand)
-                syncedFlags += 2; // set left hand flag, otherwise it's right hand
+                a += 2; // set left hand flag, otherwise it's right hand
         }
         else
         {
             // not attached, don't set the attached flag and just sync current position and rotation
-            syncedPosition = ItemPosition;
-            syncedRotation = ItemRotation;
+            b = ItemPosition;
+            c = ItemRotation;
         }
     }
 
@@ -532,33 +532,33 @@ public class JanItemSync : UdonSharpBehaviour
         if (State != IdleState && pickup.IsHeld) // did someone steal the item?
             pickup.Drop(); // drop it
 
-        bool isAttached = (syncedFlags & 1) != 0;
+        bool isAttached = (a & 1) != 0;
         if (pickup.DisallowTheft)
             pickup.pickupable = !isAttached;
 
         if (isAttached)
         {
             attachedPlayer = Networking.GetOwner(this.gameObject); // ensure it is up to date
-            attachedBone = (syncedFlags & 2) != 0 ? HumanBodyBones.LeftHand : HumanBodyBones.RightHand;
+            attachedBone = (a & 2) != 0 ? HumanBodyBones.LeftHand : HumanBodyBones.RightHand;
             if (State == ReceivingAttachedState) // interpolate from old to new offset
             {
-                posInterpolationDiff = syncedPosition - attachedLocalOffset;
+                posInterpolationDiff = b - attachedLocalOffset;
                 interpolationStartRotation = attachedRotationOffset;
             }
             else // figure out current local offset and interpolate starting from there
             {
                 MoveDummyToBone();
-                posInterpolationDiff = syncedPosition - GetLocalPositionToBone(ItemPosition);
+                posInterpolationDiff = b - GetLocalPositionToBone(ItemPosition);
                 interpolationStartRotation = GetLocalRotationToBone(ItemRotation);
             }
-            attachedLocalOffset = syncedPosition;
-            attachedRotationOffset = syncedRotation;
+            attachedLocalOffset = b;
+            attachedRotationOffset = c;
             interpolationStartTime = Time.time;
             State = ReceivingMovingToBoneState;
         }
         else // not attached
         {
-            posInterpolationDiff = syncedPosition - ItemPosition;
+            posInterpolationDiff = b - ItemPosition;
             interpolationStartRotation = ItemRotation;
             interpolationStartTime = Time.time;
             State = ReceivingFloatingState;
