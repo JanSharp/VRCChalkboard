@@ -1,8 +1,11 @@
-﻿
-using UdonSharp;
+﻿using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
+#if UNITY_EDITOR && !COMPILER_UDONSHARP
+using UnityEditor;
+using UdonSharpEditor;
+#endif
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class DoorTeleport : UdonSharpBehaviour
@@ -35,3 +38,52 @@ public class DoorTeleport : UdonSharpBehaviour
     // but what if it is simple? and i just don't know about it?
     // surely
 }
+
+#if UNITY_EDITOR && !COMPILER_UDONSHARP
+[CustomEditor(typeof(DoorTeleport))]
+public class DoorTeleportEditor : Editor
+{
+    private bool configuringCollider;
+    private int controlId;
+
+    void OnEnable()
+    {
+        configuringCollider = false;
+        controlId = GUIUtility.GetControlID(FocusType.Passive);
+    }
+
+    public override void OnInspectorGUI()
+    {
+        var target = this.target as DoorTeleport;
+        if (UdonSharpGUI.DrawDefaultUdonSharpBehaviourHeader(target))
+            return;
+        base.OnInspectorGUI();
+        EditorGUILayout.Space();
+        configuringCollider = EditorGUILayout.Toggle(new GUIContent("Configure BoxCollider", "Do Stuff"), configuringCollider);
+    }
+
+    void OnSceneGUI()
+    {
+        var target = this.target as DoorTeleport;
+        if (!configuringCollider)
+            return;
+        var e = Event.current;
+        switch (e.type)
+        {
+            case EventType.Layout:
+                HandleUtility.AddDefaultControl(controlId);
+                break;
+            case EventType.MouseUp:
+                var cam = SceneView.currentDrawingSceneView.camera;
+                Vector2 mousePos = e.mousePosition;
+                mousePos.y = cam.pixelHeight - mousePos.y;
+                if (Physics.Raycast(cam.ScreenPointToRay(mousePos), out var hit, 1000f, -1))
+                {
+                    // TODO: expand box collider;
+                }
+                e.Use();
+                break;
+        }
+    }
+}
+#endif
