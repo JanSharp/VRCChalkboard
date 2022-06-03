@@ -12,11 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c333ccfdd0cbdbc4ca30cef2dd6e6b9b, type: 3}
   m_Name: Spin
   m_EditorClassIdentifier: 
-  serializedUdonProgramAsset: {fileID: 11400000, guid: e84de321d4f0309b5a7ee3f841030fa9,
+  serializedUdonProgramAsset: {fileID: 11400000, guid: ac441b1167ff29741b746cf63d358efc,
     type: 2}
   udonAssembly: 
   assemblyError: 
-  sourceCsScript: {fileID: 11500000, guid: 226cf1ff2cb00921ea41ead7c419663b, type: 3}
+  sourceCsScript: {fileID: 11500000, guid: 09077e89da455a5309c37c494fd60d20, type: 3}
   behaviourSyncMode: 0
   behaviourIDHeapVarName: __refl_const_intnl_udonTypeID
   compileErrors: []

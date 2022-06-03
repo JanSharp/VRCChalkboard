@@ -12,11 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c333ccfdd0cbdbc4ca30cef2dd6e6b9b, type: 3}
   m_Name: MusicToggle
   m_EditorClassIdentifier: 
-  serializedUdonProgramAsset: {fileID: 11400000, guid: f9cdc28f3cd51c3dc96e0ad3ac0fdb82,
+  serializedUdonProgramAsset: {fileID: 11400000, guid: b69582b10f1d872c2a2401973935b937,
     type: 2}
   udonAssembly: 
   assemblyError: 
-  sourceCsScript: {fileID: 11500000, guid: ce94e3f2bfc65bf56a392133c1682a90, type: 3}
+  sourceCsScript: {fileID: 11500000, guid: 05bc461e4d1df49bdb5271e93bdaf3e2, type: 3}
   behaviourSyncMode: 0
   behaviourIDHeapVarName: __refl_const_intnl_udonTypeID
   compileErrors: []
@@ -25,7 +25,7 @@ MonoBehaviour:
     SerializedFormat: 2
     SerializedBytes: 
     ReferencedUnityObjects:
-    - {fileID: 11500000, guid: d47edc323bae7a2558279bbf652030ea, type: 3}
+    - {fileID: 11500000, guid: a64f626f43b8ec34396311741aa143d0, type: 3}
     SerializedBytesString: 
     Prefab: {fileID: 0}
     PrefabModificationsReferencedUnityObjects: []

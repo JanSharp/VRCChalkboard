@@ -12,11 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c333ccfdd0cbdbc4ca30cef2dd6e6b9b, type: 3}
   m_Name: MusicDescriptor
   m_EditorClassIdentifier: 
-  serializedUdonProgramAsset: {fileID: 11400000, guid: 88eebfa3b4336d5a7a0da5a85623ef8a,
+  serializedUdonProgramAsset: {fileID: 11400000, guid: 9f2c8cf3d14a314ea93fee7794084f7a,
     type: 2}
   udonAssembly: 
   assemblyError: 
-  sourceCsScript: {fileID: 11500000, guid: d47edc323bae7a2558279bbf652030ea, type: 3}
+  sourceCsScript: {fileID: 11500000, guid: a64f626f43b8ec34396311741aa143d0, type: 3}
   behaviourSyncMode: 0
   behaviourIDHeapVarName: __refl_const_intnl_udonTypeID
   compileErrors: []
@@ -25,7 +25,7 @@ MonoBehaviour:
     SerializedFormat: 2
     SerializedBytes: 
     ReferencedUnityObjects:
-    - {fileID: 11500000, guid: 6661f2c0f026f8926b30bd14a05d0b8b, type: 3}
+    - {fileID: 11500000, guid: e7fba15dad0df4aa9b365437a2af1606, type: 3}
     SerializedBytesString: 
     Prefab: {fileID: 0}
     PrefabModificationsReferencedUnityObjects: []

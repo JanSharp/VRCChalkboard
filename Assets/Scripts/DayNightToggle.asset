@@ -12,11 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c333ccfdd0cbdbc4ca30cef2dd6e6b9b, type: 3}
   m_Name: DayNightToggle
   m_EditorClassIdentifier: 
-  serializedUdonProgramAsset: {fileID: 11400000, guid: b5a7db830023d1fa1b85a704097fadc7,
+  serializedUdonProgramAsset: {fileID: 11400000, guid: 31b57bd95f2d80c4484dd01b4f52292c,
     type: 2}
   udonAssembly: 
   assemblyError: 
-  sourceCsScript: {fileID: 11500000, guid: 3e2bf275686399b3d9053e4982a009e5, type: 3}
+  sourceCsScript: {fileID: 11500000, guid: c0d6f94812b163e75b177da75c3588d8, type: 3}
   behaviourSyncMode: 0
   behaviourIDHeapVarName: __refl_const_intnl_udonTypeID
   compileErrors: []

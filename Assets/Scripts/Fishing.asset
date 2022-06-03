@@ -12,11 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c333ccfdd0cbdbc4ca30cef2dd6e6b9b, type: 3}
   m_Name: Fishing
   m_EditorClassIdentifier: 
-  serializedUdonProgramAsset: {fileID: 11400000, guid: 953d8a79a93a5ce3aac7773ed10e1cdb,
+  serializedUdonProgramAsset: {fileID: 11400000, guid: 3c4887fdbe2f408a7a55ed9b741fa460,
     type: 2}
   udonAssembly: 
   assemblyError: 
-  sourceCsScript: {fileID: 11500000, guid: d582028195922f4bb860ac5af86ee503, type: 3}
+  sourceCsScript: {fileID: 11500000, guid: 5913977f85150bd568f98fe8e6762e24, type: 3}
   behaviourSyncMode: 4
   behaviourIDHeapVarName: __refl_const_intnl_udonTypeID
   compileErrors: []
