@@ -1,7 +1,4 @@
-﻿
-#define ItemSyncDebug
-
-using UdonSharp;
+﻿using UdonSharp;
 using UnityEngine;
 using UnityEngine.UI;
 using VRC.SDKBase;
@@ -66,6 +63,7 @@ public class ItemSyncDebugController : UdonSharpBehaviour
         desktopLocalAttachmentGUI.SetIsOnWithoutNotify(desktopLocalAttachment);
     }
 
+    #if ItemSyncDebug
     private void UpdateItems()
     {
         for (int i = 0; i < itemCount; i++)
@@ -84,6 +82,9 @@ public class ItemSyncDebugController : UdonSharpBehaviour
             item.DesktopLocalAttachment = desktopLocalAttachment;
         }
     }
+    #else
+    private void UpdateItems() {}
+    #endif
 
     public void ConfirmInput()
     {
