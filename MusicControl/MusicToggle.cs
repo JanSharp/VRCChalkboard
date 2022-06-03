@@ -6,18 +6,15 @@ using VRC.Udon;
 
 public class MusicToggle : UdonSharpBehaviour
 {
-    public MusicDescriptor musicToSwitchToOnEnter;
-    public MusicDescriptor musicToSwitchToOnExit;
+    public MusicDescriptor musicForThisArea;
 
     public override void OnPlayerTriggerEnter(VRCPlayerApi player)
     {
-        if (musicToSwitchToOnEnter != null && player.isLocal)
-            musicToSwitchToOnEnter.SwitchMusicToThis();
+        musicForThisArea.PushThisMusic();
     }
 
     public override void OnPlayerTriggerExit(VRCPlayerApi player)
     {
-        if (musicToSwitchToOnExit != null && player.isLocal)
-            musicToSwitchToOnExit.SwitchMusicToThis();
+        musicForThisArea.RemoveThisMusic();
     }
 }

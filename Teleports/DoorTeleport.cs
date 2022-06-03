@@ -1,8 +1,11 @@
-﻿
-using UdonSharp;
+﻿using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
+#if UNITY_EDITOR && !COMPILER_UDONSHARP
+using UnityEditor;
+using UdonSharpEditor;
+#endif
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class DoorTeleport : UdonSharpBehaviour
@@ -10,28 +13,42 @@ public class DoorTeleport : UdonSharpBehaviour
     public Transform source;
     public Transform target;
 
+    private const float downtimeDuration = 0.2f;
+    private float nextTeleportTime;
+
     public override void OnPlayerTriggerEnter(VRCPlayerApi player)
     {
+        if (Time.time < nextTeleportTime)
+            return;
         Quaternion rotationDiffBetweenDoors = Quaternion.Inverse(source.rotation * Quaternion.Euler(0f, 180f, 0f)) * target.rotation;
         Vector3 playerVelocity = player.GetVelocity();
         player.TeleportTo(target.position, player.GetRotation() * rotationDiffBetweenDoors, VRC_SceneDescriptor.SpawnOrientation.Default, false);
         player.SetVelocity(rotationDiffBetweenDoors * playerVelocity);
+        this.JustTeleported();
+        // TODO: get target
     }
 
-    // alright, well this works. really well actually
-    // but there is one major issue
-    // it makes hooking it all up in the inspector all the more of a pain
-    // using prefabs doesn't really help with it either
-    // so we have an issue
-    // we need an editor tool that allows us to easily create linked doors
-    // if only it were that easy, right?
-    // it really isn't easy, unfortunately
-    // hmm
-    // I'm thinking about a nice point and click feature, you know
-    // but unity really doesn't make that easy
-    // at least I do not know about a straight forward way to make a script that runs in the editor
-    // that handles click events only if it is selected or something
-    // it's just not simple...
-    // but what if it is simple? and i just don't know about it?
-    // surely
+    private void JustTeleported()
+    {
+        nextTeleportTime = Time.time + downtimeDuration;
+    }
 }
+
+#if UNITY_EDITOR && !COMPILER_UDONSHARP
+[CustomEditor(typeof(DoorTeleport))]
+public class DoorTeleportEditor : Editor
+{
+    public override void OnInspectorGUI()
+    {
+        var target = this.target as DoorTeleport;
+        if (UdonSharpGUI.DrawDefaultUdonSharpBehaviourHeader(target))
+            return;
+        base.OnInspectorGUI();
+        EditorGUILayout.Space();
+    }
+
+    // TODO: somehow make a tool to link teleports without having to tediously scroll through the hierarchy.
+    // technically there are selection groups that you could use to quickly switch between the teleports and link them
+    // but... idk, it doesn't feel great
+}
+#endif
