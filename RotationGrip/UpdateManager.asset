@@ -12,11 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c333ccfdd0cbdbc4ca30cef2dd6e6b9b, type: 3}
   m_Name: UpdateManager
   m_EditorClassIdentifier: 
-  serializedUdonProgramAsset: {fileID: 11400000, guid: 49a9d7043e1391bd595b1440fad49ad6,
+  serializedUdonProgramAsset: {fileID: 11400000, guid: e857041b89608504b87869e9b5f187e8,
     type: 2}
   udonAssembly: 
   assemblyError: 
-  sourceCsScript: {fileID: 11500000, guid: 564fdb99f1f00ac07af6e1dc0da9da04, type: 3}
+  sourceCsScript: {fileID: 11500000, guid: 2c0d610528fa155d18d23b926a913ab4, type: 3}
   behaviourSyncMode: 1
   behaviourIDHeapVarName: __refl_const_intnl_udonTypeID
   compileErrors: []
