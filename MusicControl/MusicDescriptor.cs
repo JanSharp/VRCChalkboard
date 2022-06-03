@@ -10,7 +10,13 @@ public class MusicDescriptor : UdonSharpBehaviour
     public float fadeOutSeconds;
     public float updateIntervalInSeconds = 0.1f;
 
-    private MusicManager manager;
+    [SerializeField]
+    [Tooltip(@"A music descriptor describing the absence of music. When true, other properties get ignored.")]
+    private bool isSilenceDescriptor;
+    public bool IsSilenceDescriptor => isSilenceDescriptor;
+
+    public MusicManager Manager { get; private set; }
+    public int Index { get; private set; }
     private AudioSource audioSource;
     private float maxVolume;
     private float lastFadeInTime;
@@ -18,10 +24,13 @@ public class MusicDescriptor : UdonSharpBehaviour
     private float lastFadeOutTime;
     private bool fadingOut;
 
-    public void Init(MusicManager manager)
+    public void Init(MusicManager manager, int index)
     {
-        this.manager = manager;
-        audioSource = (AudioSource)GetComponent(typeof(AudioSource));
+        this.Manager = manager;
+        this.Index = index;
+        if (isSilenceDescriptor)
+            return;
+        audioSource = GetComponent<AudioSource>();
         if (audioSource == null)
         {
             Debug.LogError($"Music Descriptor {name} is missing an AudioSource component.");
@@ -31,13 +40,14 @@ public class MusicDescriptor : UdonSharpBehaviour
         audioSource.volume = 0;
     }
 
-    public void SwitchMusicToThis()
-    {
-        manager.SwitchMusic(this);
-    }
+    // for convenience, specifically for hooking them up with GUI buttons
+    public void PushThisMusic() => Manager.PushMusic(this);
+    public void RemoveThisMusic() => Manager.RemoveMusic(this);
 
     public void Play()
     {
+        if (isSilenceDescriptor)
+            return;
         if (!audioSource.isPlaying)
             audioSource.Play();
         fadingIn = true;
@@ -46,6 +56,9 @@ public class MusicDescriptor : UdonSharpBehaviour
         FadeIn();
     }
 
+    /// <summary>
+    /// isn't actually public, but has to be because it is invoked by `SendCustomEventDelayedSeconds`
+    /// </summary>
     public void FadeIn()
     {
         if (!fadingIn)
@@ -68,7 +81,7 @@ public class MusicDescriptor : UdonSharpBehaviour
 
     public void Stop()
     {
-        if (!audioSource.isPlaying)
+        if (isSilenceDescriptor || !audioSource.isPlaying)
             return;
         fadingIn = false;
         fadingOut = true;
@@ -76,6 +89,9 @@ public class MusicDescriptor : UdonSharpBehaviour
         FadeOut();
     }
 
+    /// <summary>
+    /// isn't actually public, but has to be because it is invoked by `SendCustomEventDelayedSeconds`
+    /// </summary>
     public void FadeOut()
     {
         if (!fadingOut)
