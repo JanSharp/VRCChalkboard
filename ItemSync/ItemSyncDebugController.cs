@@ -9,7 +9,7 @@ using VRC.Udon;
 using TMPro;
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
-public class DebugController : UdonSharpBehaviour
+public class ItemSyncDebugController : UdonSharpBehaviour
 {
     [UdonSynced] private float smallMagnitudeDiff = 0.01f;
     [UdonSynced] private float smallAngleDiff = 7f;
@@ -37,17 +37,17 @@ public class DebugController : UdonSharpBehaviour
     [Space]
     public TextMeshPro itemStatesText;
 
-    private JanItemSync[] items;
-    private JanItemSync[] nonIdleItems;
+    private ItemSync[] items;
+    private ItemSync[] nonIdleItems;
     private int itemCount = 0;
     private int nonIdleCount = 0;
 
     public void Start()
     {
         if (items == null)
-            items = new JanItemSync[128];
+            items = new ItemSync[128];
         if (nonIdleItems == null)
-            nonIdleItems = new JanItemSync[128];
+            nonIdleItems = new ItemSync[128];
         UpdateGUI();
     }
 
@@ -131,10 +131,10 @@ public class DebugController : UdonSharpBehaviour
     }
 
     #if ItemSyncDebug
-    public void Register(JanItemSync item)
+    public void Register(ItemSync item)
     {
         if (items == null)
-            items = new JanItemSync[128];
+            items = new ItemSync[128];
         if (itemCount == items.Length)
             GrowItems();
         items[itemCount] = item;
@@ -142,10 +142,10 @@ public class DebugController : UdonSharpBehaviour
         itemCount++;
     }
 
-    public void Deregister(JanItemSync item)
+    public void Deregister(ItemSync item)
     {
         if (items == null)
-            items = new JanItemSync[128];
+            items = new ItemSync[128];
         int index = item.debugIndex;
         // move current top into the gap
         itemCount--;
@@ -156,30 +156,30 @@ public class DebugController : UdonSharpBehaviour
 
     private void GrowItems()
     {
-        JanItemSync[] grownItems = new JanItemSync[items.Length * 2];
+        ItemSync[] grownItems = new ItemSync[items.Length * 2];
         for (int i = 0; i < items.Length; i++)
             grownItems[i] = items[i];
         items = grownItems;
 
-        JanItemSync[] grownNonIdleItems = new JanItemSync[nonIdleItems.Length * 2];
+        ItemSync[] grownNonIdleItems = new ItemSync[nonIdleItems.Length * 2];
         for (int i = 0; i < nonIdleItems.Length; i++)
             grownNonIdleItems[i] = nonIdleItems[i];
         nonIdleItems = grownNonIdleItems;
     }
 
-    public void RegisterNonIdle(JanItemSync item)
+    public void RegisterNonIdle(ItemSync item)
     {
         if (nonIdleItems == null)
-            nonIdleItems = new JanItemSync[128];
+            nonIdleItems = new ItemSync[128];
         nonIdleItems[nonIdleCount] = item;
         item.debugNonIdleIndex = nonIdleCount;
         nonIdleCount++;
     }
 
-    public void DeregisterNonIdle(JanItemSync item)
+    public void DeregisterNonIdle(ItemSync item)
     {
         if (nonIdleItems == null)
-            nonIdleItems = new JanItemSync[128];
+            nonIdleItems = new ItemSync[128];
         int index = item.debugNonIdleIndex;
         // move current top into the gap
         nonIdleCount--;
