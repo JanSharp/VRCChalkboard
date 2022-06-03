@@ -1,4 +1,8 @@
 
+# Dependencies
+
+Requires the `UpdateManager` from `Common`.
+
 # One Time Setup
 
 Drag the `UpdateManager` prefab into your scene. It must keep that exact name and be at the root of the hierarchy.

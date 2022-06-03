@@ -30,6 +30,7 @@
     "tsconfig.json": "tsconfig.*.json",
     "package.json": "package-lock.json, yarn.lock",
     // custom
-    "*": "${capture}.meta"
+    "*.cs": "${capture}.asset",
+    "*": "${capture}.meta",
   },
 }
