@@ -1,7 +1,4 @@
-﻿
-#define ItemSyncDebug
-
-using UdonSharp;
+﻿using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
@@ -12,12 +9,12 @@ using UdonSharpEditor;
 #endif
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
-public class JanItemSync : UdonSharpBehaviour
+public class ItemSync : UdonSharpBehaviour
 {
     #if ItemSyncDebug
     [HideInInspector] public int debugIndex;
     [HideInInspector] public int debugNonIdleIndex;
-    private DebugController debugController;
+    private ItemSyncDebugController debugController;
     #endif
 
     // set on Start
@@ -194,11 +191,11 @@ public class JanItemSync : UdonSharpBehaviour
     private void Start()
     {
         pickup = (VRC_Pickup)GetComponent(typeof(VRC_Pickup));
-        Debug.Assert(pickup != null, "JanItemSync must be on a GameObject with a VRC_Pickup component.");
+        Debug.Assert(pickup != null, "ItemSync must be on a GameObject with a VRC_Pickup component.");
         var updateManagerObj = GameObject.Find("/UpdateManager");
         if (updateManagerObj != null)
             updateManager = (UpdateManager)updateManagerObj.GetComponent(typeof(UdonBehaviour));
-        Debug.Assert(updateManager != null, "JanItemSync requires a GameObject that must be at the root of the scene"
+        Debug.Assert(updateManager != null, "ItemSync requires a GameObject that must be at the root of the scene"
             + " with the exact name 'UpdateManager' which has the 'UpdateManager' UdonBehaviour."
         );
         dummyTransform = updateManagerObj.transform;
@@ -207,7 +204,7 @@ public class JanItemSync : UdonSharpBehaviour
         // dummyTransform.GetComponent<MeshRenderer>().enabled = true;
         var debugControllerObj = GameObject.Find("/DebugController");
         if (debugControllerObj != null)
-            debugController = (DebugController)debugControllerObj.GetComponent(typeof(UdonBehaviour));
+            debugController = (ItemSyncDebugController)debugControllerObj.GetComponent(typeof(UdonBehaviour));
         if (debugController != null)
             debugController.Register(this);
         #endif
@@ -567,12 +564,12 @@ public class JanItemSync : UdonSharpBehaviour
 }
 
 #if !COMPILER_UDONSHARP && UNITY_EDITOR
-[CustomEditor(typeof(JanItemSync))]
-public class JanItemSyncEditor : Editor
+[CustomEditor(typeof(ItemSync))]
+public class ItemSyncEditor : Editor
 {
     public override void OnInspectorGUI()
     {
-        JanItemSync target = this.target as JanItemSync;
+        ItemSync target = this.target as ItemSync;
         if (UdonSharpGUI.DrawDefaultUdonSharpBehaviourHeader(target))
             return;
         EditorGUILayout.Space();
@@ -610,7 +607,7 @@ public class JanItemSyncEditor : Editor
         }
     }
 
-    public static void AddAndConfigureComponents(JanItemSync target)
+    public static void AddAndConfigureComponents(ItemSync target)
     {
         // the ?? operator doesn't work because unity doesn't actually return `null` when GetComponent doesn't find the component,
         // it returns an instance of the component that pretends to be null and throws custom error messages when trying to use it
@@ -626,7 +623,7 @@ public class JanItemSyncEditor : Editor
             pickup = target.gameObject.AddComponent<VRC.SDK3.Components.VRCPickup>();
     }
 
-    public static void ConfigureRigidbody(JanItemSync target, Rigidbody rigidbody)
+    public static void ConfigureRigidbody(ItemSync target, Rigidbody rigidbody)
     {
         rigidbody.useGravity = false;
         rigidbody.isKinematic = true;
