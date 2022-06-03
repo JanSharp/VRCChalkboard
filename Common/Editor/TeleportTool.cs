@@ -21,7 +21,7 @@ public class TeleportTool : EditorTool
         {
             image = null,
             text = "Teleport Tool",
-            tooltip = "Teleport Tool",
+            tooltip = "Teleport selected objects to where you click, facing away from the collider the ray hit.",
         };
         controlID = GUIUtility.GetControlID(FocusType.Passive);
         layerMaskNames = new string[32];
