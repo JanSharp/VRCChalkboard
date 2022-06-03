@@ -44,7 +44,9 @@ public class MusicManager : UdonSharpBehaviour
     /// Default/Default also breaks the rules because it always lives at index 0, even if it is null or when it gets replaced.
     /// </summary>
     private MusicDescriptor[] musicList;
+    private uint[] musicListIds;
     private int musicListCount;
+    private uint nextMusicId;
     private bool muted;
     public bool Muted
     {
@@ -77,6 +79,7 @@ public class MusicManager : UdonSharpBehaviour
         for (int i = 0; i < descriptors.Length; i++)
             descriptors[i].Init(this, i);
         musicList = new MusicDescriptor[8];
+        musicListIds = new uint[8];
         PushMusic(DefaultMusic);
     }
 
@@ -110,36 +113,53 @@ public class MusicManager : UdonSharpBehaviour
         SwitchMusic(musicList[musicListCount - 1]);
     }
 
-    public void PushMusic(MusicDescriptor toPush)
+    /// <summary>
+    /// Returns and id used by `RemoveMusic` to remove the descriptor from the music list again
+    /// </summary>
+    public uint PushMusic(MusicDescriptor toPush)
     {
         if (musicListCount == musicList.Length)
             GrowMusicList();
         musicList[musicListCount] = toPush;
-        musicListCount++;
+        musicListIds[musicListCount++] = nextMusicId;
         SwitchToTop();
+        return nextMusicId++;
     }
 
     private void GrowMusicList()
     {
-        var newMusicList = new MusicDescriptor[musicList.Length * 2];
-        for (int i = 0; i < musicList.Length; i++)
+        var Length = musicList.Length;
+        var newMusicList = new MusicDescriptor[Length * 2];
+        var newMusicListIds = new uint[Length * 2];
+        for (int i = 0; i < Length; i++)
+        {
             newMusicList[i] = musicList[i];
+            newMusicListIds[i] = musicListIds[i];
+        }
         musicList = newMusicList;
+        musicListIds = newMusicListIds;
     }
 
-    public void RemoveMusic(MusicDescriptor toPop)
+    public void RemoveMusic(uint id)
     {
-        for (int i = musicListCount - 1; i >= 0; i--)
+        musicListCount--;
+        MusicDescriptor prevDescriptor = null;
+        uint prevId = 0;
+        for (int i = musicListCount; i >= 0; i--)
         {
-            if (musicList[i] == toPop)
+            // move down as we go so we don't need a second loop
+            var currentDescriptor = musicList[i];
+            var currentId = musicListIds[i];
+            musicList[i] = prevDescriptor;
+            musicListIds[i] = prevId;
+            if (currentId == id)
             {
-                musicListCount--;
-                for (int j = i; j < musicListCount; j++)
-                    musicList[j] = musicList[j + 1];
                 if (i == musicListCount)
                     SwitchToTop();
                 return;
             }
+            prevDescriptor = currentDescriptor;
+            prevId = currentId;
         }
         Debug.LogError("Attempt to PopMusic a descriptor that is not in the music stack.");
     }

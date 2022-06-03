@@ -1,4 +1,4 @@
-﻿
+
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
@@ -40,9 +40,7 @@ public class MusicDescriptor : UdonSharpBehaviour
         audioSource.volume = 0;
     }
 
-    // for convenience, specifically for hooking them up with GUI buttons
-    public void PushThisMusic() => Manager.PushMusic(this);
-    public void RemoveThisMusic() => Manager.RemoveMusic(this);
+    public uint PushThisMusic() => Manager.PushMusic(this);
 
     public void Play()
     {

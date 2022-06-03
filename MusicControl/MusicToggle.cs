@@ -7,14 +7,15 @@ using VRC.Udon;
 public class MusicToggle : UdonSharpBehaviour
 {
     public MusicDescriptor musicForThisArea;
+    private uint id;
 
     public override void OnPlayerTriggerEnter(VRCPlayerApi player)
     {
-        musicForThisArea.PushThisMusic();
+        id = musicForThisArea.PushThisMusic();
     }
 
     public override void OnPlayerTriggerExit(VRCPlayerApi player)
     {
-        musicForThisArea.RemoveThisMusic();
+        musicForThisArea.Manager.RemoveMusic(id);
     }
 }

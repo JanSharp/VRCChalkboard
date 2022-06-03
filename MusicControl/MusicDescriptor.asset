@@ -280,9 +280,8 @@ MonoBehaviour:
       Data: 17|UnityEngine.TooltipAttribute, UnityEngine.CoreModule
     - Name: tooltip
       Entry: 1
-      Data: "A music descriptor describing the absence of music. When true, other
-        properties get ignored.\r\n        Every MusicManager must have exactly one
-        of these."
+      Data: A music descriptor describing the absence of music. When true, other
+        properties get ignored.
     - Name: 
       Entry: 8
       Data: 
