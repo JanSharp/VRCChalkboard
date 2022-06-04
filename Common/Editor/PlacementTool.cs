@@ -14,6 +14,8 @@ public class PlacementTool : EditorTool
     private int layerMask = -1;
     private float distance = 0.5f;
     private string[] layerMaskNames;
+    private bool ignoreSelectedObjects = true;
+    private bool keepRotation = false;
 
     void OnEnable()
     {
@@ -21,7 +23,7 @@ public class PlacementTool : EditorTool
         {
             image = null,
             text = "Placement Tool",
-            tooltip = "Teleport selected objects to where you click, facing away from the collider the ray hit.",
+            tooltip = "Teleport selected objects to where you click, by default facing away from the collider the ray hit.",
         };
         controlID = GUIUtility.GetControlID(FocusType.Passive);
         layerMaskNames = new string[32];
@@ -49,6 +51,14 @@ public class PlacementTool : EditorTool
                     layerMask,
                     layerMaskNames
                 );
+                ignoreSelectedObjects = GUILayout.Toggle(
+                    ignoreSelectedObjects,
+                    new GUIContent("Ignore Selected", "Should the ray used to figure out the target position pass through selected GameObjects?")
+                );
+                keepRotation = GUILayout.Toggle(
+                    keepRotation,
+                    new GUIContent("Keep Rotation", "Should the teleported objects keep their rotation?")
+                );
             }
             GUILayout.FlexibleSpace();
         }
@@ -61,14 +71,29 @@ public class PlacementTool : EditorTool
                 HandleUtility.AddDefaultControl(controlID);
                 break;
             case EventType.MouseUp:
+                if (!objs.Any())
+                    break;
                 Vector2 mousePos = e.mousePosition;
                 mousePos.y = sceneView.camera.pixelHeight - mousePos.y;
-                if (objs.Any() && Physics.Raycast(sceneView.camera.ScreenPointToRay(mousePos), out var hit, 1000f, layerMask, QueryTriggerInteraction.Ignore))
+                RaycastHit hit;
+                HashSet<Transform> ignore = ignoreSelectedObjects
+                    ? new HashSet<Transform>(objs.SelectMany(o => o.GetComponentsInChildren<Transform>()))
+                    : new HashSet<Transform>();
+                bool didHit;
+                Ray ray = sceneView.camera.ScreenPointToRay(mousePos);
+                while ((didHit = Physics.Raycast(ray, out hit, 1000f, layerMask, QueryTriggerInteraction.Ignore))
+                    && ignore.Contains(hit.transform))
+                {
+                    ray.origin = hit.point + ray.direction * 0.01f;
+                }
+                if (didHit)
                 {
                     foreach (var obj in objs)
                     {
                         Undo.RecordObject(obj.transform, "Teleport Objects");
-                        obj.transform.SetPositionAndRotation(hit.point + hit.normal * distance, Quaternion.LookRotation(hit.normal, Vector3.up));
+                        obj.transform.position = hit.point + hit.normal * distance;
+                        if (!keepRotation)
+                            obj.transform.rotation = Quaternion.LookRotation(hit.normal, Vector3.up);
                     }
                     Undo.IncrementCurrentGroup();
                 }
