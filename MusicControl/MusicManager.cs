@@ -124,7 +124,7 @@ public class MusicManager : UdonSharpBehaviour
     }
 
     /// <summary>
-    /// Returns and id used by `RemoveMusic` to remove the descriptor from the music list again
+    /// Returns an id used by `RemoveMusic` to remove the descriptor from the music list again
     /// </summary>
     public uint AddMusic(MusicDescriptor toAdd)
     {
