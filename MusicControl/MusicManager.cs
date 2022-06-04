@@ -16,6 +16,7 @@ public class MusicManager : UdonSharpBehaviour
         {
             if (defaultMusic == value)
                 return;
+            Debug.Log($"DefaultMusic setter, changing default from {defaultMusic.Index} to {value.Index}");
             defaultMusic.isCurrentDefaultMusic = false;
             value.isCurrentDefaultMusic = true;
             ReplaceMusic(0, value);
@@ -34,6 +35,7 @@ public class MusicManager : UdonSharpBehaviour
 
     public override void OnDeserialization()
     {
+        Debug.Log($"OnDeserialization, setting default to {defaultMusicIndex}");
         receivingData = true;
         DefaultMusic = descriptors[defaultMusicIndex];
         receivingData = false;
@@ -73,6 +75,7 @@ public class MusicManager : UdonSharpBehaviour
 
     void Start()
     {
+        Debug.Log($"Start");
         if (descriptors == null || descriptors.Length == 0)
         {
             Debug.LogError($"MusicManager {name} is missing music descriptors.");
@@ -85,6 +88,7 @@ public class MusicManager : UdonSharpBehaviour
         DefaultMusic.isCurrentDefaultMusic = true;
         musicListCount++;
         SetMusic(0, nextMusicId++, DefaultMusic);
+        defaultMusicIndex = DefaultMusic.Index;
     }
 
     public override void OnPlayerRespawn(VRCPlayerApi player)
@@ -106,9 +110,15 @@ public class MusicManager : UdonSharpBehaviour
         if (toSwitchTo == currentlyPlaying)
             return;
         if (currentlyPlaying != null)
+        {
+            Debug.Log($"Stopping {currentlyPlaying.Index} because of a switch");
             currentlyPlaying.Stop();
+        }
         if (toSwitchTo != null && !Muted)
+        {
+            Debug.Log($"Starting {currentlyPlaying.Index} because of a switch");
             toSwitchTo.Play();
+        }
         currentlyPlaying = toSwitchTo;
     }
 
