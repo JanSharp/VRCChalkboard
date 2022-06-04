@@ -116,7 +116,7 @@ public class MusicManager : UdonSharpBehaviour
         }
         if (toSwitchTo != null && !Muted)
         {
-            Debug.Log($"Starting {currentlyPlaying.Index} because of a switch");
+            Debug.Log($"Starting {toSwitchTo.Index} because of a switch");
             toSwitchTo.Play();
         }
         currentlyPlaying = toSwitchTo;

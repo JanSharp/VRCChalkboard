@@ -29,6 +29,8 @@ public class MusicDescriptor : UdonSharpBehaviour
     private float lastFadeOutTime;
     private bool fadingOut;
 
+    private bool isPlaying;
+
     public void Init(MusicManager manager, int index)
     {
         this.Manager = manager;
@@ -51,8 +53,9 @@ public class MusicDescriptor : UdonSharpBehaviour
     {
         if (isSilenceDescriptor)
             return;
-        if (!audioSource.isPlaying)
+        if (!isPlaying)
             audioSource.Play();
+        isPlaying = true;
         fadingIn = true;
         fadingOut = false;
         lastFadeInTime = Time.time - updateIntervalInSeconds;
@@ -84,7 +87,7 @@ public class MusicDescriptor : UdonSharpBehaviour
 
     public void Stop()
     {
-        if (isSilenceDescriptor || !audioSource.isPlaying)
+        if (isSilenceDescriptor || !isPlaying)
             return;
         fadingIn = false;
         fadingOut = true;
@@ -111,6 +114,7 @@ public class MusicDescriptor : UdonSharpBehaviour
         {
             fadingOut = false;
             audioSource.Stop();
+            isPlaying = false;
             return;
         }
         SendCustomEventDelayedSeconds(nameof(FadeOut), updateIntervalInSeconds);
