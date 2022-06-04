@@ -12,6 +12,7 @@ public class MusicDescriptor : UdonSharpBehaviour
     [SerializeField]
     private int priority;
     public int Priority => isCurrentDefaultMusic ? int.MinValue : priority;
+    [HideInInspector]
     public bool isCurrentDefaultMusic;
 
     [SerializeField]

@@ -16,6 +16,8 @@ public class MusicManager : UdonSharpBehaviour
         {
             if (defaultMusic == value)
                 return;
+            defaultMusic.isCurrentDefaultMusic = false;
+            value.isCurrentDefaultMusic = true;
             ReplaceMusic(0, value);
             defaultMusic = value;
             defaultMusicIndex = value.Index;
