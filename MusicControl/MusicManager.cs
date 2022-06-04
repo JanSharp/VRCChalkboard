@@ -85,6 +85,7 @@ public class MusicManager : UdonSharpBehaviour
         DefaultMusic.isCurrentDefaultMusic = true;
         musicListCount++;
         SetMusic(0, nextMusicId++, DefaultMusic);
+        defaultMusicIndex = DefaultMusic.Index;
     }
 
     public override void OnPlayerRespawn(VRCPlayerApi player)
