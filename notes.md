@@ -13,5 +13,3 @@ TODO: door teleport setup editor tool
 TODO: item sync: test unloaded players pickup up items
 TODO: item sync: test initialization times with `Start` and without `Start`
 TODO: tool to mass replace object syncs with item sync
-
-TODO: music syncing after disable and enable
