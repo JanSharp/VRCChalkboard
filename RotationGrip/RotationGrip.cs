@@ -247,9 +247,9 @@ public class RotationGrip : UdonSharpBehaviour
                 lerpStartTime = Time.time;
             }
         }
-        else if (holdingPlayerIsInVR && isRegistered)
+        else
         {
-            // start interpolation when a player in VR dropped the pickup
+            // start interpolation when dropped
             lerpStartRotation = toRotate.rotation;
             prevRotation = toRotate.rotation;
             lerpStartTime = Time.time;
