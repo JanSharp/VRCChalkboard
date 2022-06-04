@@ -15,6 +15,10 @@ public class RandomUtils : MonoBehaviour
     public GameObject[] mainParents;
     public Material oldMaterial;
     public Material newMaterial;
+
+    [Header("Replace VRC Object Sync with ItemSync")]
+    public string nameFilter;
+    public bool parentMustHaveVRCObjectPool = true;
 }
 
 #if UNITY_EDITOR
@@ -58,6 +62,44 @@ public class RandomUtilsEditor : Editor
             else
                 foreach (GameObject obj in target.mainParents)
                     RecursivelyChangeMaterial(target, obj.transform);
+        }
+
+        // ok, hear me out
+        // my brain is fried
+        // I know from plenty of experience that programming in a sleep deprived state is incredibly inefficient and a big source of errors
+        // but
+        // alright
+        // I can't just leave
+        // If I focus enough I'll be able to write scripts
+        // So I'm going to wreck my sleep schedule
+        // because who cares
+        // it's already half broken anyway
+
+        if (GUILayout.Button(new GUIContent("Replace VRC Object Sync with ItemSync")))
+        {
+            // my brain is fried, i can't think of variable names
+            foreach (var hi in UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects())
+                asdf(hi.transform);
+            void asdf(Transform t)
+            {
+                sdf(t, !target.parentMustHaveVRCObjectPool || t.GetComponent<VRC.SDK3.Components.VRCObjectPool>() != null);
+            }
+            void sdf(Transform help, bool yesDoThing)
+            {
+                foreach (Transform t in help)
+                {
+                    asdf(t);
+                    if (yesDoThing)
+                    {
+                        VRC.SDK3.Components.VRCObjectSync sync = t.GetComponent<VRC.SDK3.Components.VRCObjectSync>();
+                        if (sync != null)
+                        {
+                            // TODO: magic
+                            // sync.
+                        }
+                    }
+                }
+            }
         }
     }
 

@@ -5,8 +5,8 @@ using UnityEngine;
 using UnityEditor;
 using UnityEditor.EditorTools;
 
-[EditorTool("Teleport Tool")]
-public class TeleportTool : EditorTool
+[EditorTool("Placement Tool")]
+public class PlacementTool : EditorTool
 {
     GUIContent iconContent;
     public override GUIContent toolbarIcon => iconContent;
@@ -20,7 +20,7 @@ public class TeleportTool : EditorTool
         iconContent = new GUIContent()
         {
             image = null,
-            text = "Teleport Tool",
+            text = "Placement Tool",
             tooltip = "Teleport selected objects to where you click, facing away from the collider the ray hit.",
         };
         controlID = GUIUtility.GetControlID(FocusType.Passive);
