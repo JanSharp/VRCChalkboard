@@ -80,7 +80,9 @@ public class MusicManager : UdonSharpBehaviour
             descriptors[i].Init(this, i);
         musicList = new MusicDescriptor[8];
         musicListIds = new uint[8];
-        PushMusic(DefaultMusic);
+        DefaultMusic.isCurrentDefaultMusic = true;
+        musicListCount++;
+        SetMusic(0, nextMusicId++, DefaultMusic);
     }
 
     public override void OnPlayerRespawn(VRCPlayerApi player)
@@ -113,16 +115,35 @@ public class MusicManager : UdonSharpBehaviour
         SwitchMusic(musicList[musicListCount - 1]);
     }
 
+    private void SetMusic(int index, uint id, MusicDescriptor toSet)
+    {
+        musicList[index] = toSet;
+        musicListIds[index] = id;
+        if (index == musicListCount - 1)
+            SwitchToTop();
+    }
+
     /// <summary>
     /// Returns and id used by `RemoveMusic` to remove the descriptor from the music list again
     /// </summary>
-    public uint PushMusic(MusicDescriptor toPush)
+    public uint AddMusic(MusicDescriptor toAdd)
     {
         if (musicListCount == musicList.Length)
             GrowMusicList();
-        musicList[musicListCount] = toPush;
-        musicListIds[musicListCount++] = nextMusicId;
-        SwitchToTop();
+        // figure out where to put the music in the active list based on priority
+        for (int i = (musicListCount++) - 1; i >= 0; i--)
+        {
+            var descriptor = musicList[i];
+            // on priority collision the last one added "wins"
+            if (toAdd.Priority >= descriptor.Priority)
+            {
+                SetMusic(i + 1, nextMusicId, toAdd);
+                break;
+            }
+            // move items up as we go so we don't need a second loop
+            musicList[i + 1] = descriptor;
+            musicListIds[i + 1] = musicListIds[i];
+        }
         return nextMusicId++;
     }
 
@@ -161,7 +182,7 @@ public class MusicManager : UdonSharpBehaviour
             prevDescriptor = currentDescriptor;
             prevId = currentId;
         }
-        Debug.LogError("Attempt to PopMusic a descriptor that is not in the music stack.");
+        Debug.LogError($"Attempt to RemoveMusic the id {id} that is not in the music stack.");
     }
 
     private void ReplaceMusic(int index, MusicDescriptor descriptor)

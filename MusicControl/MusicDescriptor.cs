@@ -1,5 +1,4 @@
-
-using UdonSharp;
+﻿using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
@@ -9,9 +8,13 @@ public class MusicDescriptor : UdonSharpBehaviour
     public float fadeInSeconds;
     public float fadeOutSeconds;
     public float updateIntervalInSeconds = 0.1f;
+    [SerializeField]
+    private int priority;
+    public int Priority => isCurrentDefaultMusic ? int.MinValue : priority;
+    public bool isCurrentDefaultMusic;
 
     [SerializeField]
-    [Tooltip(@"A music descriptor describing the absence of music. When true, other properties get ignored.")]
+    [Tooltip(@"A music descriptor describing the absence of music. When true, other properties get ignored, except for priority.")]
     private bool isSilenceDescriptor;
     public bool IsSilenceDescriptor => isSilenceDescriptor;
 
@@ -40,7 +43,7 @@ public class MusicDescriptor : UdonSharpBehaviour
         audioSource.volume = 0;
     }
 
-    public uint PushThisMusic() => Manager.PushMusic(this);
+    public uint AddThisMusic() => Manager.AddMusic(this);
 
     public void Play()
     {

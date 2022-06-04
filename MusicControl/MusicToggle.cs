@@ -1,5 +1,4 @@
-﻿
-using UdonSharp;
+﻿using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
@@ -11,7 +10,7 @@ public class MusicToggle : UdonSharpBehaviour
 
     public override void OnPlayerTriggerEnter(VRCPlayerApi player)
     {
-        id = musicForThisArea.PushThisMusic();
+        id = musicForThisArea.AddThisMusic();
     }
 
     public override void OnPlayerTriggerExit(VRCPlayerApi player)
