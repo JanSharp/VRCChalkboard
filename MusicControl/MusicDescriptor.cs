@@ -48,6 +48,7 @@ public class MusicDescriptor : UdonSharpBehaviour
     }
 
     public uint AddThisMusic() => Manager.AddMusic(this);
+    public void SetAsDefault() => Manager.DefaultMusic = this;
 
     public void Play()
     {
