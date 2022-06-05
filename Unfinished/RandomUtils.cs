@@ -64,34 +64,19 @@ public class RandomUtilsEditor : Editor
                     RecursivelyChangeMaterial(target, obj.transform);
         }
 
-        // ok, hear me out
-        // my brain is fried
-        // I know from plenty of experience that programming in a sleep deprived state is incredibly inefficient and a big source of errors
-        // but
-        // alright
-        // I can't just leave
-        // If I focus enough I'll be able to write scripts
-        // So I'm going to wreck my sleep schedule
-        // because who cares
-        // it's already half broken anyway
-
         if (GUILayout.Button(new GUIContent("Replace VRC Object Sync with ItemSync")))
         {
-            // my brain is fried, i can't think of variable names
-            foreach (var hi in UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects())
-                asdf(hi.transform);
-            void asdf(Transform t)
+            foreach (var obj in UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects())
+                ProcessTransform(obj.transform, doCheckChildren(obj.transform));
+            bool doCheckChildren(Transform t) => !target.parentMustHaveVRCObjectPool || t.GetComponent<VRC.SDK3.Components.VRCObjectPool>() != null;
+            void ProcessTransform(Transform parent, bool checkChildren)
             {
-                sdf(t, !target.parentMustHaveVRCObjectPool || t.GetComponent<VRC.SDK3.Components.VRCObjectPool>() != null);
-            }
-            void sdf(Transform help, bool yesDoThing)
-            {
-                foreach (Transform t in help)
+                foreach (Transform child in parent)
                 {
-                    asdf(t);
-                    if (yesDoThing)
+                    ProcessTransform(child, doCheckChildren(child));
+                    if (checkChildren)
                     {
-                        VRC.SDK3.Components.VRCObjectSync sync = t.GetComponent<VRC.SDK3.Components.VRCObjectSync>();
+                        VRC.SDK3.Components.VRCObjectSync sync = child.GetComponent<VRC.SDK3.Components.VRCObjectSync>();
                         if (sync != null)
                         {
                             // TODO: magic
