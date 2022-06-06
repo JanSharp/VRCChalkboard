@@ -114,9 +114,9 @@ namespace JanSharp
 
         public void UseSelectedEffect()
         {
-            if (selectedEffect == null)
+            if (selectedEffect == null || !IsTargetIndicatorActive)
                 return;
-            Debug.Log($"Using {selectedEffect.effectName}");
+            selectedEffect.Use(targetIndicator);
         }
 
         public void CustomUpdate()
