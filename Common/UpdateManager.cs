@@ -27,17 +27,20 @@ public class UpdateManager : UdonSharpBehaviour
         if (listenerCount == listeners.Length)
             GrowListeners();
         listeners[listenerCount] = listener;
-        listener.SetProgramVariable(InternalIndexFieldName, listenerCount);
+        listener.SetProgramVariable(InternalIndexFieldName, listenerCount + 1);
         listenerCount++;
     }
 
     public void Deregister(UdonSharpBehaviour listener)
     {
-        int index = (int)listener.GetProgramVariable(InternalIndexFieldName);
+        int index = (int)listener.GetProgramVariable(InternalIndexFieldName) - 1;
+        if (index == -1)
+            return;
+        listener.SetProgramVariable(InternalIndexFieldName, 0);
         // move current top into the gap
         listenerCount--;
         listeners[index] = listeners[listenerCount];
-        ((UdonSharpBehaviour)listeners[index]).SetProgramVariable(InternalIndexFieldName, index);
+        ((UdonSharpBehaviour)listeners[index]).SetProgramVariable(InternalIndexFieldName, index + 1);
         listeners[listenerCount] = null;
     }
 

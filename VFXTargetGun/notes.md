@@ -13,3 +13,5 @@ it's basically a grid of buttons that have been instantiated the first time you 
 The GUI also needs a close button to not confuse people, and if i'm using colors it'll need a legend for what they mean
 
 maybe add a toggle in the UI to keep it open to allow for quick testing of the different effects, especially in VR where you have 2 hands. Yea I like this idea
+
+indication text for which one is currently selected, outside of the gui.

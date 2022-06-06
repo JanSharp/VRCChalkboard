@@ -15,8 +15,8 @@ namespace JanSharp
         public void Init(VFXTargetGun gun)
         {
             this.gun = gun;
-            var button = VRCInstantiate(gun.buttonPrefab);
-            button.transform.SetParent(gun.buttonGrid, false);
+            var button = VRCInstantiate(gun.ButtonPrefab);
+            button.transform.SetParent(gun.ButtonGrid, false);
             data = (EffectButtonData)button.GetComponent(typeof(UdonBehaviour));
             data.descriptor = this;
             data.text.text = effectName;
@@ -24,7 +24,8 @@ namespace JanSharp
 
         public void SelectThisEffect()
         {
-            Debug.Log($"Selected {effectName}");
+            gun.SetUIActive(false);
+            gun.SelectedEffect = this;
         }
     }
 }
