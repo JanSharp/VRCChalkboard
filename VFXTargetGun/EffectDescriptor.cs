@@ -16,10 +16,33 @@ namespace JanSharp
         private bool[] activeEffects;
         private int[] activeEffectIndexes;
         private int activeCount;
+        private int ActiveCount
+        {
+            get => activeCount;
+            set
+            {
+                if (activeCount == 0)
+                {
+                    if (value != 0)
+                    {
+                        var colors = buttonData.button.colors;
+                        colors.normalColor = new Color(0, 1, 0);
+                        buttonData.button.colors = colors;
+                    }
+                }
+                else if (value == 0)
+                {
+                    var colors = buttonData.button.colors;
+                    colors.normalColor = new Color(1, 1, 1);
+                    buttonData.button.colors = colors;
+                }
+                activeCount = value;
+            }
+        }
         private float effectDuration;
         private bool loop;
 
-        private EffectButtonData data;
+        private EffectButtonData buttonData;
         private VFXTargetGun gun;
 
         public void Init(VFXTargetGun gun)
@@ -28,9 +51,9 @@ namespace JanSharp
             // make button
             var button = VRCInstantiate(gun.ButtonPrefab);
             button.transform.SetParent(gun.ButtonGrid, false);
-            data = (EffectButtonData)button.GetComponent(typeof(UdonBehaviour));
-            data.descriptor = this;
-            data.text.text = effectName;
+            buttonData = (EffectButtonData)button.GetComponent(typeof(UdonBehaviour));
+            buttonData.descriptor = this;
+            buttonData.text.text = effectName;
             // get particle system
             particleSystemParents = new Transform[4];
             particleSystems = new ParticleSystem[4];
@@ -92,22 +115,22 @@ namespace JanSharp
         {
             if (loop)
             {
-                if (activeEffects[0])
+                if (ActiveCount == 1)
                 {
                     particleSystems[0].Stop();
-                    activeEffects[0] = false;
+                    ActiveCount = 0;
                 }
                 else
                 {
                     particleSystemParents[0].SetPositionAndRotation(position, rotation);
                     particleSystems[0].Play();
-                    activeEffects[0] = true;
+                    ActiveCount = 1;
                 }
                 return;
             }
             // not looped, allow creating multiple
             int index;
-            if (activeCount == count)
+            if (ActiveCount == count)
             {
                 index = count;
                 CreateNewEffect();
@@ -124,7 +147,7 @@ namespace JanSharp
                     }
             }
             activeEffects[index] = true;
-            activeEffectIndexes[activeCount++] = index;
+            activeEffectIndexes[ActiveCount++] = index;
             particleSystemParents[index].SetPositionAndRotation(position, rotation);
             particleSystems[index].Play();
             this.SendCustomEventDelayedSeconds(nameof(FinishEffect), effectDuration);
@@ -133,9 +156,9 @@ namespace JanSharp
         public void FinishEffect()
         {
             int index = activeEffectIndexes[0];
-            for (int i = 1; i < activeCount; i++)
+            for (int i = 1; i < ActiveCount; i++)
                 activeEffectIndexes[i - 1] = activeEffectIndexes[i];
-            activeCount--;
+            ActiveCount--;
             activeEffects[index] = false;
         }
     }
