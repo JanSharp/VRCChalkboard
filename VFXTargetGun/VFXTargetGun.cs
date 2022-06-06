@@ -66,9 +66,21 @@ namespace JanSharp
                 }
                 else
                 {
-                    targetIndicator.gameObject.SetActive(false);
+                    IsTargetIndicatorActive = false;
                     UManager.Deregister(this);
                 }
+            }
+        }
+        private bool isTargetIndicatorActive;
+        private bool IsTargetIndicatorActive
+        {
+            get => isTargetIndicatorActive;
+            set
+            {
+                if (isTargetIndicatorActive == value)
+                    return;
+                isTargetIndicatorActive = value;
+                targetIndicator.gameObject.SetActive(value);
             }
         }
 
@@ -113,11 +125,11 @@ namespace JanSharp
             if (Physics.Raycast(aimPoint.position, aimPoint.forward, out hit, maxDistance, rayLayerMask.value))
             {
                 targetIndicator.SetPositionAndRotation(hit.point, Quaternion.LookRotation(hit.normal));
-                targetIndicator.gameObject.SetActive(true);
+                IsTargetIndicatorActive = true;
             }
             else
             {
-                targetIndicator.gameObject.SetActive(false);
+                IsTargetIndicatorActive = false;
             }
         }
     }
