@@ -229,20 +229,19 @@ public class RotationGrip : UdonSharpBehaviour
     {
         currentlyHeld = (syncedData & IsHeldFlag) != 0;
         currentHandBone = ToHeldHandBone(syncedData);
+        isReceiving = true;
+        Register();
         if (currentlyHeld)
         {
-            isReceiving = true;
             pickup.pickupable = false;
             HoldingPlayer = Networking.GetOwner(this.gameObject);
-            if (holdingPlayerIsInVR)
-                Register();
-            return;
         }
-        // otherwise simply interpolate to the new rotation
-        lerpStartRotation = toRotate.rotation;
-        prevRotation = toRotate.rotation;
-        Register();
-        lerpStartTime = Time.time;
+        if (!holdingPlayerIsInVR || !currentlyHeld) // always interpolate for desktop, also interpolate for VR when not held
+        {
+            lerpStartRotation = toRotate.rotation;
+            prevRotation = toRotate.rotation;
+            lerpStartTime = Time.time;
+        }
     }
 
     public void Register()
