@@ -1,5 +1,6 @@
 ﻿using UdonSharp;
 using UnityEngine;
+using UnityEngine.UI;
 using VRC.SDKBase;
 using VRC.Udon;
 
@@ -11,6 +12,10 @@ namespace JanSharp
         [Header("Configuration")]
         [SerializeField] private float maxDistance = 100f;
         [SerializeField] private LayerMask rayLayerMask = -1; // everything
+        [SerializeField] private Color inactiveColor = new Color(0.8f, 0.8f, 0.8f);
+        [SerializeField] private Color activeColor = Color.white;
+        [SerializeField] private Color inactiveLoopColor = new Color(0.2f, 0.7f, 1f);
+        [SerializeField] private Color activeLoopColor = Color.cyan;
         [Header("Internal")]
         [SerializeField] private RectTransform buttonGrid;
         public RectTransform ButtonGrid => buttonGrid;
@@ -47,7 +52,10 @@ namespace JanSharp
             {
                 if (selectedEffect == null && IsHeld)
                     UManager.Register(this);
+                else if (selectedEffect != null)
+                    selectedEffect.Selected = false;
                 selectedEffect = value;
+                selectedEffect.Selected = true;
             }
         }
         private bool isHeld;
@@ -84,9 +92,18 @@ namespace JanSharp
             }
         }
 
+        public ColorBlock InactiveColor { get; private set; }
+        public ColorBlock ActiveColor { get; private set; }
+        public ColorBlock InactiveLoopColor { get; private set; }
+        public ColorBlock ActiveLoopColor { get; private set; }
+
         private void Init()
         {
             initialized = true;
+            InactiveColor = MakeColorBlock(inactiveColor);
+            ActiveColor = MakeColorBlock(activeColor);
+            InactiveLoopColor = MakeColorBlock(inactiveLoopColor);
+            ActiveLoopColor = MakeColorBlock(activeLoopColor);
             int count = effectsParent.childCount;
             descriptors = new EffectDescriptor[count];
             for (int i = 0; i < count; i++)
@@ -101,6 +118,20 @@ namespace JanSharp
             }
             int rows = (count + columnCount - 1) / columnCount;
             buttonGrid.sizeDelta = new Vector2(buttonGrid.sizeDelta.x, buttonHeight * rows);
+        }
+
+        private ColorBlock MakeColorBlock(Color color)
+        {
+            var colors = new ColorBlock();
+            colors.normalColor = color;
+            colors.highlightedColor = color * new Color(0.95f, 0.95f, 0.95f);
+            colors.pressedColor = color * new Color(0.75f, 0.75f, 0.75f);
+            colors.selectedColor = color * new Color(0.95f, 0.95f, 0.95f);
+            colors.disabledColor = color * new Color(0.75f, 0.75f, 0.75f, 0.5f);
+            colors.colorMultiplier = 1f;
+            colors.fadeDuration = 0.1f;
+            // Debug.Log($"colors.normalColor: {colors.normalColor}, colors.highlightedColor: {colors.highlightedColor}, colors.pressedColor: {colors.pressedColor}, colors.selectedColor: {colors.selectedColor}, colors.disabledColor: {colors.disabledColor}");
+            return colors;
         }
 
         public void ToggleUI() => SetUIActive(!uiCanvas.activeSelf);

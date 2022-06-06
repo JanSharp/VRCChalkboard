@@ -3,14 +3,13 @@ using UnityEngine;
 using UnityEngine.UI;
 using VRC.SDKBase;
 using VRC.Udon;
-using TMPro;
 
 namespace JanSharp
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class EffectButtonData : UdonSharpBehaviour
     {
-        public TextMeshProUGUI text;
+        public Text text;
         public Button button;
         [HideInInspector]
         public EffectDescriptor descriptor;

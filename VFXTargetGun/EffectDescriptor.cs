@@ -21,40 +21,50 @@ namespace JanSharp
             get => activeCount;
             set
             {
-                if (activeCount == 0)
+                if (activeCount == 0 || value == 0)
                 {
-                    if (value != 0)
-                    {
-                        var colors = buttonData.button.colors;
-                        colors.normalColor = new Color(0, 1, 0);
-                        buttonData.button.colors = colors;
-                    }
+                    activeCount = value;
+                    UpdateButtonColor();
                 }
-                else if (value == 0)
-                {
-                    var colors = buttonData.button.colors;
-                    colors.normalColor = new Color(1, 1, 1);
-                    buttonData.button.colors = colors;
-                }
-                activeCount = value;
+                else
+                    activeCount = value;
             }
         }
         private float effectDuration;
         private bool loop;
 
+        private bool selected;
+        public bool Selected
+        {
+            get => selected;
+            set
+            {
+                selected = value;
+                UpdateButtonColor();
+            }
+        }
+
         private EffectButtonData buttonData;
         private VFXTargetGun gun;
+
+        private void UpdateButtonColor()
+        {
+            buttonData.text.fontStyle = Selected ? FontStyle.Bold : FontStyle.Normal;
+            if (ActiveCount == 0)
+                buttonData.button.colors = loop ? gun.InactiveLoopColor : gun.InactiveColor;
+            else
+                buttonData.button.colors = loop ? gun.ActiveLoopColor : gun.ActiveColor;
+        }
 
         public void Init(VFXTargetGun gun)
         {
             this.gun = gun;
-            // make button
-            var button = VRCInstantiate(gun.ButtonPrefab);
-            button.transform.SetParent(gun.ButtonGrid, false);
-            buttonData = (EffectButtonData)button.GetComponent(typeof(UdonBehaviour));
-            buttonData.descriptor = this;
-            buttonData.text.text = effectName;
-            // get particle system
+            InitParticleSystem(); // init first so the button knows what color to use (looped or not)
+            MakeButton();
+        }
+
+        private void InitParticleSystem()
+        {
             particleSystemParents = new Transform[4];
             particleSystems = new ParticleSystem[4];
             activeEffects = new bool[4];
@@ -71,6 +81,16 @@ namespace JanSharp
             effectDuration = psMain.duration + psMain.startLifetime.constantMax;
             loop = ps.main.loop;
             count = 1;
+        }
+
+        private void MakeButton()
+        {
+            var button = VRCInstantiate(gun.ButtonPrefab);
+            button.transform.SetParent(gun.ButtonGrid, false);
+            buttonData = (EffectButtonData)button.GetComponent(typeof(UdonBehaviour));
+            buttonData.descriptor = this;
+            buttonData.text.text = effectName;
+            UpdateButtonColor();
         }
 
         public void SelectThisEffect()
