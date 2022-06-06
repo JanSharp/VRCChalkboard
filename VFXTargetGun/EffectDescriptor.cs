@@ -90,6 +90,22 @@ namespace JanSharp
 
         public void PlayEffect(Vector3 position, Quaternion rotation)
         {
+            if (loop)
+            {
+                if (activeEffects[0])
+                {
+                    particleSystems[0].Stop();
+                    activeEffects[0] = false;
+                }
+                else
+                {
+                    particleSystemParents[0].SetPositionAndRotation(position, rotation);
+                    particleSystems[0].Play();
+                    activeEffects[0] = true;
+                }
+                return;
+            }
+            // not looped, allow creating multiple
             int index;
             if (activeCount == count)
             {
