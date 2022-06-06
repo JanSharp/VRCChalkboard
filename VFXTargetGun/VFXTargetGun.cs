@@ -116,7 +116,7 @@ namespace JanSharp
         {
             if (selectedEffect == null || !IsTargetIndicatorActive)
                 return;
-            selectedEffect.Use(targetIndicator);
+            selectedEffect.PlayEffect(targetIndicator.position, targetIndicator.rotation);
         }
 
         public void CustomUpdate()
