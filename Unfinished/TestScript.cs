@@ -26,17 +26,6 @@ public class TestScript : UdonSharpBehaviour
     //     // Debug.Log(createdArray[1]);
     // }
 
-    // TODO: what exactly is a statement
-    // TODO: what exactly is an expression
-    // TODO: shortcut to raising custom events
-    // TODO: function calls with parameters and return values (new!!)
-    // TODO: while loops
-    // TODO: explain "custom events" with parameters and return values
-    // TODO: explain local variables
-    // TODO: if statements without {} - single statement bodies
-
-
-
     void Start()
     {
         // OnChangeTest();
