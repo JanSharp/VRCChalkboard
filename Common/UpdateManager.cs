@@ -24,6 +24,8 @@ public class UpdateManager : UdonSharpBehaviour
 
     public void Register(UdonSharpBehaviour listener)
     {
+        if ((int)listener.GetProgramVariable(InternalIndexFieldName) != 0)
+            return;
         if (listenerCount == listeners.Length)
             GrowListeners();
         listeners[listenerCount] = listener;
