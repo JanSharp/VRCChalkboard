@@ -7,7 +7,6 @@ using UnityEditor;
 using UdonSharpEditor;
 #endif
 
-// TODO: always sync local rotation instead of global
 // TODO: interpolate to hand in VR
 // TODO: option to always interpolate, regardless of VR or not
 // TODO: improve interpolation by taking the previous interpolation time into consideration
@@ -56,7 +55,10 @@ public class RotationGrip : UdonSharpBehaviour
     private bool currentlyHeld; // synced through syncedData
     private HumanBodyBones currentHandBone; // synced through syncedData
     /// <summary>
-    /// <para>Used as the target rotation for interpolation.</para>
+    /// <para>Used as the target global rotation for interpolation.
+    /// Global is ultimately better because it allows for RotationGrips to be used where the
+    /// parent transform rotation can move but isn't synced. And it is ultimately only a little
+    /// bit more complex.</para>
     /// <para>If the holding user is in VR and is currently holding the grip then this is
     /// used as the rotation offset between the held hand rotation and the pickup rotation.</para>
     /// </summary>
@@ -131,7 +133,7 @@ public class RotationGrip : UdonSharpBehaviour
     {
         if (isReceiving)
         {
-            if (holdingPlayerIsInVR && currentlyHeld) // when not currentlyHeld interpolate instead
+            if (holdingPlayerIsInVR && currentlyHeld)
             {
                 // figure out the position of the pickup based on the current bone position
                 this.transform.SetPositionAndRotation(
@@ -142,7 +144,7 @@ public class RotationGrip : UdonSharpBehaviour
                 this.transform.rotation *= syncedRotation;
                 LookAtThisTransform();
             }
-            else
+            else // when not currentlyHeld interpolate instead
             {
                 var percent = (Time.time - lerpStartTime) / (SyncInterval + 0.05f);
                 Quaternion extraRotationSinceLastFrame = Quaternion.Inverse(prevRotation) * toRotate.rotation;
