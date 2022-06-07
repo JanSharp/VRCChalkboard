@@ -11,5 +11,4 @@ TODO: script to change references to all kinds of things, most notably udon beha
 TODO: door teleport setup editor tool
 
 TODO: item sync: test unloaded players pickup up items
-TODO: item sync: test initialization times with `Start` and without `Start`
 TODO: tool to mass replace object syncs with item sync
