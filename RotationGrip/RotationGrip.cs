@@ -2,7 +2,8 @@
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
-#if UNITY_EDITOR
+using JanSharp;
+#if UNITY_EDITOR && !COMPILER_UDONSHARP
 using UnityEditor;
 using UdonSharpEditor;
 #endif
@@ -14,6 +15,9 @@ using UdonSharpEditor;
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class RotationGrip : UdonSharpBehaviour
+#if UNITY_EDITOR && !COMPILER_UDONSHARP
+    , JanSharp.IOnBuildCallback
+#endif
 {
     public Transform toRotate;
     [Tooltip("Maximum amount of degrees the object to rotate is allowed to deviate from the original local rotation. 180 and above means unlimited, 0 or below means not at all.")]
@@ -21,16 +25,19 @@ public class RotationGrip : UdonSharpBehaviour
     [Tooltip("When true the object To Rotate will only rotate around its up axis (the green arrow).")]
     public bool rotateAroundSingleAxis;
 
-    private UpdateManager updateManager;
-    private Transform dummyTransform;
-    private VRC_Pickup pickup;
-    private Quaternion initialLocalRotation;
-    private float initialDistance;
+    [SerializeField] [HideInInspector] private UpdateManager updateManager;
+    [SerializeField] [HideInInspector] private Transform dummyTransform;
+    [SerializeField] [HideInInspector] private VRC_Pickup pickup;
+    [SerializeField] [HideInInspector] private Quaternion initialLocalRotation;
+    [SerializeField] [HideInInspector] private float initialDistance;
     private float nextSyncTime;
     private const float SyncInterval = 0.2f;
+    private const float LerpDuration = SyncInterval + 0.05f;
     private bool isRegistered;
     private bool isReceiving;
+    private bool isLerping;
     private float lerpStartTime;
+    private float currentLerpDuration;
     private Quaternion lerpStartRotation;
     private Quaternion prevRotation;
     private VRCPlayerApi holdingPlayer;
@@ -86,19 +93,31 @@ public class RotationGrip : UdonSharpBehaviour
     // for UpdateManager
     private int customUpdateInternalIndex;
 
-    public void Start()
+    #if UNITY_EDITOR && !COMPILER_UDONSHARP
+    [InitializeOnLoad]
+    public static class OnBuildRegister
     {
-        pickup = (VRC_Pickup)GetComponent(typeof(VRC_Pickup));
-        var updateManagerObj = GameObject.Find("/UpdateManager");
-        updateManager = updateManagerObj == null ? null : (UpdateManager)updateManagerObj.GetComponent(typeof(UdonBehaviour));
+        static OnBuildRegister() => JanSharp.OnBuildUtil.RegisterType<RotationGrip>();
+    }
+    bool IOnBuildCallback.OnBuild()
+    {
+        pickup = GetComponent<VRC_Pickup>();
+        updateManager = GameObject.Find("/UpdateManager")?.GetUdonSharpComponent<UpdateManager>();
         if (updateManager == null)
-            Debug.LogError("RotationGrip requires a GameObject that must be at the root of the scene with the exact name 'UpdateManager' which has the 'UpdateManager' UdonBehaviour.");
+        {
+            Debug.LogError("RotationGrip requires a GameObject that must be at the root of the scene "
+                + "with the exact name 'UpdateManager' which has the 'UpdateManager' UdonBehaviour.");
+            return false;
+        }
         initialLocalRotation = toRotate.localRotation;
         maximumRotationDeviation = Mathf.Abs(maximumRotationDeviation);
         dummyTransform = updateManager.transform;
         initialDistance = toRotate.InverseTransformDirection(this.transform.position - toRotate.position).magnitude;
         SnapBack();
+        this.ApplyProxyModifications();
+        return true;
     }
+    #endif
 
     public void Snap(float distance)
     {
@@ -146,13 +165,14 @@ public class RotationGrip : UdonSharpBehaviour
             }
             else // when not currentlyHeld interpolate instead
             {
-                var percent = (Time.time - lerpStartTime) / (SyncInterval + 0.05f);
+                var percent = (Time.time - lerpStartTime) / currentLerpDuration;
                 Quaternion extraRotationSinceLastFrame = Quaternion.Inverse(prevRotation) * toRotate.rotation;
                 toRotate.rotation = Quaternion.Lerp(lerpStartRotation, syncedRotation, percent) * extraRotationSinceLastFrame;
                 if (percent >= 1f)
                 {
                     SnapBack();
                     pickup.pickupable = true;
+                    isLerping = false;
                     Deregister();
                 }
                 prevRotation = toRotate.rotation;
@@ -242,6 +262,7 @@ public class RotationGrip : UdonSharpBehaviour
         Register();
         if (currentlyHeld)
         {
+            isLerping = false;
             pickup.pickupable = false;
             HoldingPlayer = Networking.GetOwner(this.gameObject);
         }
@@ -249,7 +270,107 @@ public class RotationGrip : UdonSharpBehaviour
         {
             lerpStartRotation = toRotate.rotation;
             prevRotation = toRotate.rotation;
-            lerpStartTime = Time.time;
+            if (isLerping)
+            {
+                float time = Time.time;
+                float percent = (Time.time - lerpStartTime) / currentLerpDuration;
+                float remainingPercentage = 1 - percent;
+                if (remainingPercentage == 1)
+                {
+                    currentLerpDuration = LerpDuration;
+                    lerpStartTime = time;
+                }
+                else
+                {
+                    currentLerpDuration = -(LerpDuration / (1 - remainingPercentage));
+                    lerpStartTime = time + LerpDuration - currentLerpDuration;
+                }
+                #region math
+                // ok, so, math...
+                // we need to know the remaining percentage of the duration of the current on going interpolation
+                // then we need to figure out the lerp start time and the current duration such that the current
+                // `Time.time` is at the same percentage as before, except flipped, and that the ultimate stop time is
+                // exactly `LerpDuration` away from the current `Time.time`
+                //
+                // alright, so it's a bit of formula shuffling
+                // lerpStartTime + currentLerpDuration = time + LerpDuration;
+                // &
+                // lerpStartTime + (remainingPercentage * currentLerpDuration) = time;
+                //
+                // The unknown variables are `lerpStartTime` and `currentLerpDuration`.
+                //
+                // The way to solve this kind of equation is to reformulate one of them to say
+                // either `lerpStartTime = ...` or `currentLerpDuration = ...`
+                // and then insert the right hand side of that formula into the other formula
+                //
+                // then you can reformulate that one such that the only
+                // unknown variable in it is alone on the left hand side
+                //
+                // we now know one of the 2 unknowns, now we can use the very first reformulated equation
+                // to figure out the second one
+                //
+                // and done
+                //
+                // the reason why I remember this is because I loved these kinds of problems at school
+                //
+                //
+                // ok, first step:
+                // lerpStartTime + currentLerpDuration = time + LerpDuration;
+                // lerpStartTime = time + LerpDuration - currentLerpDuration;
+                //
+                // second step:
+                // lerpStartTime + (remainingPercentage * currentLerpDuration) = time;
+                // time + LerpDuration - currentLerpDuration + (remainingPercentage * currentLerpDuration) = time;
+                // now extract currentLerpDuration somehow
+                // LerpDuration - currentLerpDuration + (remainingPercentage * currentLerpDuration) = 0;
+                // currentLerpDuration + (remainingPercentage * currentLerpDuration) = -LerpDuration;
+                // (currentLerpDuration + (remainingPercentage * currentLerpDuration)) / remainingPercentage = (-LerpDuration) / remainingPercentage;
+                // currentLerpDuration / remainingPercentage + (remainingPercentage * currentLerpDuration) / remainingPercentage = (-LerpDuration) / remainingPercentage;
+                // currentLerpDuration / remainingPercentage + currentLerpDuration = (-LerpDuration) / remainingPercentage;
+
+                // AAA I can't remember! I can't remember how to math
+                // I could try to just logic it out, without math, but I'm too invested now
+                // plus I already know that logic wouldn't me much simpler
+
+                // ok, so, we have this:
+                // time + LerpDuration - currentLerpDuration + (remainingPercentage * currentLerpDuration) = time;
+                // and we want to know currentLerpDuration
+                // which means we need to somehow get `currentLerpDuration = ...` out of it
+                // but how... ok, well, `time` is easy to get rid of
+                // LerpDuration - currentLerpDuration + (remainingPercentage * currentLerpDuration) = 0;
+                // LerpDuration / remainingPercentage - currentLerpDuration / remainingPercentage + currentLerpDuration = 0;
+                // ok, I give up for now
+                // I still do want to figure it out myself, but right now I want to move on
+                // y - x + (z * x) = 0
+                // x + (z * x) = -y       | -y
+                // (1 * x) + (z * x) = -y
+                // yea idk, let's just accept the solution
+                // x = (-y) / (-1 + z)
+                // no I will not just accept it
+                // (1 * x) / (-1 + z) + (z * x) / (-1 + z) = -y / (-1 + z)
+                // so basically what you're telling me is that
+                // (1 * x) / (-1 + z) + (z * x) / (-1 + z)
+                // is ultimately the same as just `x`
+                // uh huh
+                // I don't get it
+                //
+                // (a + b) * (a - b)
+                // a * (a - b) + b * (a - b)
+                // a * a - a * b + b * a - b * b
+                // a * a - b * b
+                // nope that's not what I'm looking for
+                //
+                // alright, moving on
+                // currentLerpDuration = -(LerpDuration / (1 - remainingPercentage));
+                // lerpStartTime = time + LerpDuration - currentLerpDuration;
+                #endregion
+            }
+            else
+            {
+                isLerping = true;
+                currentLerpDuration = LerpDuration;
+                lerpStartTime = Time.time;
+            }
         }
     }
 
@@ -270,7 +391,7 @@ public class RotationGrip : UdonSharpBehaviour
     }
 }
 
-#if !COMPILER_UDONSHARP && UNITY_EDITOR
+#if UNITY_EDITOR && !COMPILER_UDONSHARP
 [CustomEditor(typeof(RotationGrip))]
 public class RotationGripEditor : Editor
 {
