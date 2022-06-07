@@ -7,6 +7,12 @@ using UnityEditor;
 using UdonSharpEditor;
 #endif
 
+// TODO: always sync local rotation instead of global
+// TODO: interpolate to hand in VR
+// TODO: option to always interpolate, regardless of VR or not
+// TODO: improve interpolation by taking the previous interpolation time into consideration
+// TODO: fix toRotate local rotation being all kinds of funky
+
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class RotationGrip : UdonSharpBehaviour
 {
