@@ -41,8 +41,11 @@ public class UpdateManager : UdonSharpBehaviour
         listener.SetProgramVariable(InternalIndexFieldName, 0);
         // move current top into the gap
         listenerCount--;
-        listeners[index] = listeners[listenerCount];
-        ((UdonSharpBehaviour)listeners[index]).SetProgramVariable(InternalIndexFieldName, index + 1);
+        if (index != listenerCount)
+        {
+            listeners[index] = listeners[listenerCount];
+            ((UdonSharpBehaviour)listeners[index]).SetProgramVariable(InternalIndexFieldName, index + 1);
+        }
         listeners[listenerCount] = null;
     }
 
