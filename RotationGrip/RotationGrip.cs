@@ -7,7 +7,6 @@ using UnityEditor;
 using UdonSharpEditor;
 #endif
 
-// TODO: always sync local rotation instead of global
 // TODO: interpolate to hand in VR
 // TODO: option to always interpolate, regardless of VR or not
 // TODO: improve interpolation by taking the previous interpolation time into consideration
@@ -33,7 +32,6 @@ public class RotationGrip : UdonSharpBehaviour
     private bool isReceiving;
     private float lerpStartTime;
     private Quaternion lerpStartRotation;
-    private Quaternion prevRotation;
     private VRCPlayerApi holdingPlayer;
     private VRCPlayerApi HoldingPlayer
     {
@@ -56,7 +54,7 @@ public class RotationGrip : UdonSharpBehaviour
     private bool currentlyHeld; // synced through syncedData
     private HumanBodyBones currentHandBone; // synced through syncedData
     /// <summary>
-    /// <para>Used as the target rotation for interpolation.</para>
+    /// <para>Used as the target local rotation for interpolation.</para>
     /// <para>If the holding user is in VR and is currently holding the grip then this is
     /// used as the rotation offset between the held hand rotation and the pickup rotation.</para>
     /// </summary>
@@ -131,7 +129,7 @@ public class RotationGrip : UdonSharpBehaviour
     {
         if (isReceiving)
         {
-            if (holdingPlayerIsInVR && currentlyHeld) // when not currentlyHeld interpolate instead
+            if (holdingPlayerIsInVR && currentlyHeld)
             {
                 // figure out the position of the pickup based on the current bone position
                 this.transform.SetPositionAndRotation(
@@ -142,18 +140,16 @@ public class RotationGrip : UdonSharpBehaviour
                 this.transform.rotation *= syncedRotation;
                 LookAtThisTransform();
             }
-            else
+            else // when not currentlyHeld interpolate instead
             {
                 var percent = (Time.time - lerpStartTime) / (SyncInterval + 0.05f);
-                Quaternion extraRotationSinceLastFrame = Quaternion.Inverse(prevRotation) * toRotate.rotation;
-                toRotate.rotation = Quaternion.Lerp(lerpStartRotation, syncedRotation, percent) * extraRotationSinceLastFrame;
+                toRotate.localRotation = Quaternion.Lerp(lerpStartRotation, syncedRotation, percent);
                 if (percent >= 1f)
                 {
                     SnapBack();
                     pickup.pickupable = true;
                     Deregister();
                 }
-                prevRotation = toRotate.rotation;
             }
         }
         else
@@ -229,7 +225,7 @@ public class RotationGrip : UdonSharpBehaviour
             syncedPosition = dummyTransform.InverseTransformDirection(this.transform.position - bonePosition);
         }
         else
-            syncedRotation = toRotate.rotation;
+            syncedRotation = toRotate.localRotation;
     }
 
     public override void OnDeserialization()
@@ -245,8 +241,7 @@ public class RotationGrip : UdonSharpBehaviour
         }
         if (!holdingPlayerIsInVR || !currentlyHeld) // always interpolate for desktop, also interpolate for VR when not held
         {
-            lerpStartRotation = toRotate.rotation;
-            prevRotation = toRotate.rotation;
+            lerpStartRotation = toRotate.localRotation;
             lerpStartTime = Time.time;
         }
     }
