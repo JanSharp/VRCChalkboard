@@ -56,8 +56,9 @@ public class RotationGrip : UdonSharpBehaviour
     private bool currentlyHeld; // synced through syncedData
     private HumanBodyBones currentHandBone; // synced through syncedData
     /// <summary>
-    /// Used as the target rotation for interpolation when the holding user is in VR.
-    /// Otherwise used as the rotation offset between the held hand rotation and the pickup rotation.
+    /// <para>Used as the target rotation for interpolation.</para>
+    /// <para>If the holding user is in VR and is currently holding the grip then this is
+    /// used as the rotation offset between the held hand rotation and the pickup rotation.</para>
     /// </summary>
     [UdonSynced] private Quaternion syncedRotation;
     /// <summary>
