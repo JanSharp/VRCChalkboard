@@ -101,7 +101,9 @@ namespace JanSharp
 
         public void SelectThisEffect()
         {
-            gun.SetUIActive(false);
+            var toggle = gun.KeepOpenToggle; // UdonSharp being picky and weird
+            if (!toggle.isOn)
+                gun.SetUIActive(false);
             gun.SelectedEffect = this;
         }
 

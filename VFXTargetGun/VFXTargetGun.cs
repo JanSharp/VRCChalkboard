@@ -29,6 +29,8 @@ namespace JanSharp
         [SerializeField] private Transform aimPoint;
         [SerializeField] private Transform targetIndicator;
         [SerializeField] private Renderer uiToggleRenderer;
+        [SerializeField] private Toggle keepOpenToggle;
+        public Toggle KeepOpenToggle => keepOpenToggle;
 
         // for UpdateManager
         private int customUpdateInternalIndex;
