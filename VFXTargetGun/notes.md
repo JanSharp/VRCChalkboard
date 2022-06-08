@@ -22,6 +22,7 @@
 ## Todo
 
 - local visibility and grab-able toggle, global for all guns
+- preview selected effect at current target location
 - sync non looping effects when they are played
 - sync looping effects when they are played
 - sync looping effects for late joiners
