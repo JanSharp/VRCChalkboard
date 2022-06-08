@@ -21,6 +21,11 @@
 
 ## Todo
 
+- underline instead of bold
+- deselect button
+- make it smaller
+- don't collide with the player
+- reduce proximity for the UI toggle
 - local visibility and grab-able toggle, global for all guns
 - preview selected effect at current target location
 - sync non looping effects when they are played
