@@ -9,6 +9,7 @@ namespace JanSharp
     public class EffectDescriptor : UdonSharpBehaviour
     {
         [SerializeField] private string effectName;
+        public string EffectName => effectName;
 
         private Transform[] particleSystemParents;
         private ParticleSystem[] particleSystems;

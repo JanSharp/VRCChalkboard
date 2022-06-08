@@ -14,11 +14,11 @@
 - allow disabling of currently active looped effect without having to point at the ground
 - disable target indicator if the current loop effect is active
 - add a toggle in the UI to keep it open to allow for quick testing of the different effects, especially in VR where you have 2 hands. Yea I like this idea
+- show name of selected effect outside of UI
 
 ## Todo
 
 - maybe add stop button for currently active looped effects in the UI
-- show name of selected effect outside of UI
 - The GUI also needs a close button to not confuse people
 - color legend for what they mean
 - local visibility and grab-able toggle, global for all guns

@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using VRC.SDKBase;
 using VRC.Udon;
+using TMPro;
 
 namespace JanSharp
 {
@@ -31,6 +32,7 @@ namespace JanSharp
         [SerializeField] private Renderer uiToggleRenderer;
         [SerializeField] private Toggle keepOpenToggle;
         public Toggle KeepOpenToggle => keepOpenToggle;
+        [SerializeField] private TextMeshPro selectedEffectNameText;
 
         // for UpdateManager
         private int customUpdateInternalIndex;
@@ -59,6 +61,7 @@ namespace JanSharp
                     selectedEffect.Selected = false;
                 selectedEffect = value;
                 selectedEffect.Selected = true;
+                selectedEffectNameText.text = value.EffectName;
             }
         }
         private bool isHeld;
