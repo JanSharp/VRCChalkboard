@@ -146,9 +146,18 @@ namespace JanSharp
 
         public void UseSelectedEffect()
         {
-            if (selectedEffect == null || !IsTargetIndicatorActive)
+            if (selectedEffect == null)
                 return;
+            if (!IsTargetIndicatorActive)
+            {
+                // allow disabling of loop effects without pointing at any object
+                if (selectedEffect.Loop && selectedEffect.ActiveCount != 0)
+                    selectedEffect.PlayEffect(new Vector3(), new Quaternion());
+                return;
+            }
             selectedEffect.PlayEffect(targetIndicator.position, targetIndicator.rotation);
+            if (selectedEffect.Loop)
+                IsTargetIndicatorActive = false;
         }
 
         public void UpdateColors()
@@ -161,6 +170,9 @@ namespace JanSharp
 
         public void CustomUpdate()
         {
+            // don't show an indicator if the loop is currently active
+            if (selectedEffect.Loop && selectedEffect.ActiveCount != 0)
+                return;
             RaycastHit hit;
             if (Physics.Raycast(aimPoint.position, aimPoint.forward, out hit, maxDistance, rayLayerMask.value))
             {

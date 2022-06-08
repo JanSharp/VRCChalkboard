@@ -11,11 +11,12 @@
 - interact on top of the gun to show a UI
   it's basically a grid of buttons that have been instantiated the first time you picked it up, where the currently active is indicated somehow. Currently looping ones are also marked somehow. Upon click of one of those buttons, change active effect to the clicked one and close the UI immediately
 - indicate active state of both looped and non looped effects outside of the UI
+- allow disabling of currently active looped effect without having to point at the ground
+- disable target indicator if the current loop effect is active
 
 ## Todo
 
 - maybe add stop button for currently active looped effects in the UI
-- allow disabling of currently active looped effect without having to point at the ground
 - show name of selected effect outside of UI
 - The GUI also needs a close button to not confuse people
 - color legend for what they mean
