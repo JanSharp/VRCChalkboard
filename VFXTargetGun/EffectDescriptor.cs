@@ -52,7 +52,7 @@ namespace JanSharp
         private void UpdateColors()
         {
             // update button color and style
-            buttonData.text.fontStyle = Selected ? FontStyle.Bold : FontStyle.Normal;
+            buttonData.text.text = Selected ? ("<u>" + effectName + "</u>") : effectName;
             if (ActiveCount == 0)
                 buttonData.button.colors = loop ? gun.InactiveLoopColor : gun.InactiveColor;
             else
