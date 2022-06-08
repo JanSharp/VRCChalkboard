@@ -152,6 +152,7 @@ namespace JanSharp
         }
 
         public void ToggleUI() => SetUIActive(!uiCanvas.activeSelf);
+        public void CloseUI() => SetUIActive(false);
         public void SetUIActive(bool active)
         {
             if (!initialized && active)
