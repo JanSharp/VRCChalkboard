@@ -28,6 +28,7 @@ namespace JanSharp
         [SerializeField] private UdonBehaviour uiToggle;
         [SerializeField] private Transform aimPoint;
         [SerializeField] private Transform targetIndicator;
+        [SerializeField] private Renderer uiToggleRenderer;
 
         // for UpdateManager
         private int customUpdateInternalIndex;
@@ -148,6 +149,14 @@ namespace JanSharp
             if (selectedEffect == null || !IsTargetIndicatorActive)
                 return;
             selectedEffect.PlayEffect(targetIndicator.position, targetIndicator.rotation);
+        }
+
+        public void UpdateColors()
+        {
+            if (SelectedEffect.ActiveCount == 0)
+                uiToggleRenderer.material.color = SelectedEffect.Loop ? inactiveLoopColor : inactiveColor;
+            else
+                uiToggleRenderer.material.color = SelectedEffect.Loop ? activeLoopColor : activeColor;
         }
 
         public void CustomUpdate()

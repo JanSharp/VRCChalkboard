@@ -16,15 +16,15 @@ namespace JanSharp
         private bool[] activeEffects;
         private int[] activeEffectIndexes;
         private int activeCount;
-        private int ActiveCount
+        public int ActiveCount
         {
             get => activeCount;
-            set
+            private set
             {
                 if (activeCount == 0 || value == 0)
                 {
                     activeCount = value;
-                    UpdateButtonColor();
+                    UpdateColors();
                 }
                 else
                     activeCount = value;
@@ -32,6 +32,7 @@ namespace JanSharp
         }
         private float effectDuration;
         private bool loop;
+        public bool Loop => loop;
 
         private bool selected;
         public bool Selected
@@ -40,20 +41,25 @@ namespace JanSharp
             set
             {
                 selected = value;
-                UpdateButtonColor();
+                UpdateColors();
             }
         }
 
         private EffectButtonData buttonData;
         private VFXTargetGun gun;
 
-        private void UpdateButtonColor()
+        private void UpdateColors()
         {
+            // update button color and style
             buttonData.text.fontStyle = Selected ? FontStyle.Bold : FontStyle.Normal;
             if (ActiveCount == 0)
                 buttonData.button.colors = loop ? gun.InactiveLoopColor : gun.InactiveColor;
             else
                 buttonData.button.colors = loop ? gun.ActiveLoopColor : gun.ActiveColor;
+
+            // update the gun if this is the currently selected effect
+            if (Selected)
+                gun.UpdateColors();
         }
 
         public void Init(VFXTargetGun gun)
@@ -90,7 +96,7 @@ namespace JanSharp
             buttonData = (EffectButtonData)button.GetComponent(typeof(UdonBehaviour));
             buttonData.descriptor = this;
             buttonData.text.text = effectName;
-            UpdateButtonColor();
+            UpdateColors();
         }
 
         public void SelectThisEffect()
