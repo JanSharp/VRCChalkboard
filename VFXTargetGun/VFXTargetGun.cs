@@ -158,7 +158,7 @@ namespace JanSharp
             if (!initialized && active)
                 Init();
             uiCanvas.SetActive(active);
-            uiToggle.InteractionText = active ? "Select Effect" : "Hide UI";
+            uiToggle.InteractionText = active ? "Hide UI" : "Select Effect";
         }
 
         public void UseSelectedEffect()
