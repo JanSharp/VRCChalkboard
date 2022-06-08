@@ -17,10 +17,10 @@
 - show name of selected effect outside of UI
 - color legend for what they mean
 - close button for the UI both to not confuse people and to make it easy to disable keep open and then close the UI, since those are right next to each other
+- add stop button for currently active looped effects in the UI
 
 ## Todo
 
-- maybe add stop button for currently active looped effects in the UI
 - local visibility and grab-able toggle, global for all guns
 - sync non looping effects when they are played
 - sync looping effects when they are played

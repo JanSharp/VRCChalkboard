@@ -11,9 +11,12 @@ namespace JanSharp
     {
         public Text text;
         public Button button;
+        public GameObject stopButton;
         [HideInInspector]
         public EffectDescriptor descriptor;
 
         public void OnClick() => descriptor.SelectThisEffect();
+
+        public void OnStopClick() => descriptor.PlayEffect(new Vector3(), new Quaternion());
     }
 }

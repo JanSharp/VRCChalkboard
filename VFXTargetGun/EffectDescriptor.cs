@@ -57,6 +57,9 @@ namespace JanSharp
                 buttonData.button.colors = loop ? gun.InactiveLoopColor : gun.InactiveColor;
             else
                 buttonData.button.colors = loop ? gun.ActiveLoopColor : gun.ActiveColor;
+            
+            if (loop)
+                buttonData.stopButton.gameObject.SetActive(activeCount != 0);
 
             // update the gun if this is the currently selected effect
             if (Selected)
