@@ -33,6 +33,7 @@ namespace JanSharp
         [SerializeField] private Toggle keepOpenToggle;
         public Toggle KeepOpenToggle => keepOpenToggle;
         [SerializeField] private TextMeshPro selectedEffectNameText;
+        [SerializeField] private Text legendText;
 
         // for UpdateManager
         private int customUpdateInternalIndex;
@@ -103,6 +104,11 @@ namespace JanSharp
         public ColorBlock InactiveLoopColor { get; private set; }
         public ColorBlock ActiveLoopColor { get; private set; }
 
+        private uint ToHex(Color32 c32, bool includeAlpha) {
+            if(!includeAlpha) return ((uint)c32.r << 16) | ((uint)c32.g << 8) | (uint)c32.b;
+            return ((uint)c32.r << 24) | ((uint)c32.g << 16) | ((uint)c32.b << 8) | (uint)c32.a;
+        }
+
         private void Init()
         {
             initialized = true;
@@ -110,6 +116,11 @@ namespace JanSharp
             ActiveColor = MakeColorBlock(activeColor);
             InactiveLoopColor = MakeColorBlock(inactiveLoopColor);
             ActiveLoopColor = MakeColorBlock(activeLoopColor);
+            legendText.text = $"[<b>Bold=Selected</b>]"
+                + $" [<b><color=#{ToHex(inactiveColor, false):X6}>Inactive</color></b>]"
+                + $" [<b><color=#{ToHex(activeColor, false):X6}>Active</color></b>]"
+                + $" [<b><color=#{ToHex(inactiveLoopColor, false):X6}>Inactive Loop</color></b>]"
+                + $" [<b><color=#{ToHex(activeLoopColor, false):X6}>Active Loop</color></b>]";
             int count = effectsParent.childCount;
             descriptors = new EffectDescriptor[count];
             for (int i = 0; i < count; i++)
