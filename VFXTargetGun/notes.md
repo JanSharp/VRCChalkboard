@@ -21,6 +21,7 @@
 - underline instead of bold
 - deselect button
 - reduce proximity for the UI toggle
+- don't collide with the player (including the UI)
 
 ## Todo
 
@@ -28,7 +29,6 @@
 - option for fixed effect rotation (forward being aligned with the hit normal, up facing away from the gun as good as possible)
 - is the first time a non loop effect gets used broken? In that it ends up getting teleported for the second one instead of making a new one?
 - make it smaller, like 2x smaller, and maybe angle it a bit so it's not exact 90 degrees. And maybe make it prettier
-- don't collide with the player
 - local visibility and grab-able toggle, global for all guns
 - preview selected effect at current target location
 - sync non looping effects when they are played
@@ -38,3 +38,6 @@
   - the synced state must not care about the UI, because the UI may not even exist yet. Well, the buttons.
     - when creating the buttons, adjust them to match the current state
   - sync selected effect
+- toggle the UI off when someone else picks up the gun. still possible to be toggled on again, but only the owner can actually interact with it
+
+- potentially disable the Hide UI toggle to prevent any of the proximity issues in VR

@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.18028378, g: 0.22571412, b: 0.30692285, a: 1}
+  m_IndirectSpecularColor: {r: 0, g: 0, b: 0, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -289,7 +289,7 @@ GameObject:
   - component: {fileID: 202771804}
   - component: {fileID: 202771803}
   - component: {fileID: 202771802}
-  m_Layer: 0
+  m_Layer: 17
   m_Name: Scrollbar Vertical
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -443,7 +443,7 @@ GameObject:
   - component: {fileID: 243109349}
   - component: {fileID: 243109351}
   - component: {fileID: 243109350}
-  m_Layer: 0
+  m_Layer: 17
   m_Name: LegendBackground
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -612,7 +612,7 @@ GameObject:
   - component: {fileID: 253175651}
   - component: {fileID: 253175650}
   - component: {fileID: 253175653}
-  m_Layer: 8
+  m_Layer: 17
   m_Name: UIToggle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -818,7 +818,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 347244203}
-  m_Layer: 0
+  m_Layer: 17
   m_Name: Footer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -876,6 +876,25 @@ Transform:
   m_Father: {fileID: 43668203}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: -90, y: 0, z: 180}
+--- !u!1 &464284830 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1094421957795851142, guid: 8894fa7e4588a5c4fab98453e558847d,
+    type: 3}
+  m_PrefabInstance: {fileID: 1763028395}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &464284835
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 464284830}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 229740497, guid: 4ecd63eff847044b68db9453ce219299, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  contentType: 1
 --- !u!1 &474486145
 GameObject:
   m_ObjectHideFlags: 0
@@ -921,7 +940,7 @@ GameObject:
   - component: {fileID: 532611645}
   - component: {fileID: 532611647}
   - component: {fileID: 532611646}
-  m_Layer: 0
+  m_Layer: 17
   m_Name: Title
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1000,7 +1019,7 @@ GameObject:
   - component: {fileID: 543443035}
   - component: {fileID: 543443034}
   - component: {fileID: 543443033}
-  m_Layer: 0
+  m_Layer: 17
   m_Name: Viewport
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1119,7 +1138,7 @@ GameObject:
   - component: {fileID: 653377224}
   - component: {fileID: 653377223}
   - component: {fileID: 653377222}
-  m_Layer: 0
+  m_Layer: 17
   m_Name: Scroll View
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5976,7 +5995,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 675203395}
-  m_Layer: 13
+  m_Layer: 17
   m_Name: UI
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6044,7 +6063,7 @@ GameObject:
   - component: {fileID: 748827923}
   - component: {fileID: 748827922}
   - component: {fileID: 748827921}
-  m_Layer: 0
+  m_Layer: 17
   m_Name: Canvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6153,7 +6172,7 @@ GameObject:
   m_Component:
   - component: {fileID: 811371362}
   - component: {fileID: 811371363}
-  m_Layer: 0
+  m_Layer: 17
   m_Name: ContentGrid
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6214,7 +6233,7 @@ GameObject:
   - component: {fileID: 885390292}
   - component: {fileID: 885390294}
   - component: {fileID: 885390293}
-  m_Layer: 0
+  m_Layer: 17
   m_Name: Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6290,7 +6309,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 888482509}
-  m_Layer: 0
+  m_Layer: 17
   m_Name: Body
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6328,7 +6347,7 @@ GameObject:
   - component: {fileID: 895762236}
   - component: {fileID: 895762238}
   - component: {fileID: 895762237}
-  m_Layer: 0
+  m_Layer: 17
   m_Name: Panel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6404,7 +6423,7 @@ GameObject:
   m_Component:
   - component: {fileID: 899454554}
   - component: {fileID: 899454555}
-  m_Layer: 0
+  m_Layer: 17
   m_Name: KeepOpenToggle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6617,7 +6636,7 @@ GameObject:
   - component: {fileID: 1073295868}
   - component: {fileID: 1073295870}
   - component: {fileID: 1073295869}
-  m_Layer: 0
+  m_Layer: 17
   m_Name: Label
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6695,7 +6714,7 @@ GameObject:
   - component: {fileID: 1117785874}
   - component: {fileID: 1117785876}
   - component: {fileID: 1117785875}
-  m_Layer: 0
+  m_Layer: 17
   m_Name: Handle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6970,7 +6989,7 @@ GameObject:
   - component: {fileID: 1428441456}
   - component: {fileID: 1428441458}
   - component: {fileID: 1428441457}
-  m_Layer: 0
+  m_Layer: 17
   m_Name: Checkmark
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7233,7 +7252,7 @@ GameObject:
   - component: {fileID: 1621053389}
   - component: {fileID: 1621053388}
   - component: {fileID: 1621053387}
-  m_Layer: 0
+  m_Layer: 17
   m_Name: DeselectButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7362,7 +7381,7 @@ GameObject:
   - component: {fileID: 1661019473}
   - component: {fileID: 1661019475}
   - component: {fileID: 1661019474}
-  m_Layer: 0
+  m_Layer: 17
   m_Name: Background
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7690,7 +7709,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1735475904}
-  m_Layer: 0
+  m_Layer: 17
   m_Name: Header
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7732,7 +7751,7 @@ GameObject:
   - component: {fileID: 1753974080}
   - component: {fileID: 1753974079}
   - component: {fileID: 1753974078}
-  m_Layer: 0
+  m_Layer: 17
   m_Name: CloseButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7931,17 +7950,17 @@ PrefabInstance:
         type: 3}
       propertyPath: DynamicMaterials.Array.data[0]
       value: 
-      objectReference: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+      objectReference: {fileID: 10308, guid: 0000000000000000f000000000000000, type: 0}
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
       propertyPath: DynamicMaterials.Array.data[1]
       value: 
-      objectReference: {fileID: 10308, guid: 0000000000000000f000000000000000, type: 0}
+      objectReference: {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
     - target: {fileID: 6759095419728963412, guid: 8894fa7e4588a5c4fab98453e558847d,
         type: 3}
       propertyPath: DynamicMaterials.Array.data[2]
       value: 
-      objectReference: {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+      objectReference: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 8894fa7e4588a5c4fab98453e558847d, type: 3}
 --- !u!1 &1827093107
@@ -17781,7 +17800,7 @@ GameObject:
   - component: {fileID: 2071927728}
   - component: {fileID: 2071927730}
   - component: {fileID: 2071927729}
-  m_Layer: 0
+  m_Layer: 17
   m_Name: LegendText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17859,7 +17878,7 @@ GameObject:
   - component: {fileID: 2091269369}
   - component: {fileID: 2091269371}
   - component: {fileID: 2091269370}
-  m_Layer: 0
+  m_Layer: 17
   m_Name: Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17935,7 +17954,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2108765552}
-  m_Layer: 0
+  m_Layer: 17
   m_Name: Sliding Area
   m_TagString: Untagged
   m_Icon: {fileID: 0}
