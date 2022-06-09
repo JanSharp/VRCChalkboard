@@ -9,8 +9,17 @@ namespace JanSharp
     public class VFXTargetGunPickup : UdonSharpBehaviour
     {
         public VFXTargetGun gun;
+        private float lastUseTime;
 
-        public override void OnPickupUseDown() => gun.UseSelectedEffect();
+        public override void OnPickupUseDown()
+        {
+            var time = Time.time;
+            if (time - lastUseTime >= 0.175f)
+            {
+                lastUseTime = time;
+                gun.UseSelectedEffect();
+            }
+        }
 
         public override void OnPickup() => gun.IsHeld = true;
 
