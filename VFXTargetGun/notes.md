@@ -23,6 +23,7 @@
 - reduce proximity for the UI toggle
 - don't collide with the player (including the UI)
 - make it smaller, like 2x smaller, and maybe angle it a bit so it's not exact 90 degrees. And maybe make it prettier
+- adjust default layer mask to not collide with everything
 
 ## Todo
 

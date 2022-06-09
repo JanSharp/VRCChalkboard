@@ -12,7 +12,8 @@ namespace JanSharp
     {
         [Header("Configuration")]
         [SerializeField] private float maxDistance = 100f;
-        [SerializeField] private LayerMask rayLayerMask = -1; // everything
+        // 0: Default, 4: Water, 8: Interactive, 11: Environment, 13: Pickup
+        [SerializeField] private LayerMask rayLayerMask = (1 << 0) | (1 << 4) | (1 << 8) | (1 << 11) | (1 << 13);
         private Color deselectedColor;
         [SerializeField] private Color inactiveColor = new Color(0.8f, 0.8f, 0.8f);
         [SerializeField] private Color activeColor = Color.white;
