@@ -20,13 +20,13 @@
 - add stop button for currently active looped effects in the UI
 - underline instead of bold
 - deselect button
+- reduce proximity for the UI toggle
 
 ## Todo
 
 - is the first time a non loop effect gets used broken? In that it ends up getting teleported for the second one instead of making a new one?
 - make it smaller
 - don't collide with the player
-- reduce proximity for the UI toggle
 - local visibility and grab-able toggle, global for all guns
 - preview selected effect at current target location
 - sync non looping effects when they are played
