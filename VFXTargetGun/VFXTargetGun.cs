@@ -11,7 +11,7 @@ namespace JanSharp
     public class VFXTargetGun : UdonSharpBehaviour
     {
         [Header("Configuration")]
-        [SerializeField] private float maxDistance = 100f;
+        [SerializeField] private float maxDistance = 250f;
         // 0: Default, 4: Water, 8: Interactive, 11: Environment, 13: Pickup
         [SerializeField] private LayerMask rayLayerMask = (1 << 0) | (1 << 4) | (1 << 8) | (1 << 11) | (1 << 13);
         private Color deselectedColor;
@@ -22,13 +22,15 @@ namespace JanSharp
         [Header("Internal")]
         [SerializeField] private RectTransform buttonGrid;
         public RectTransform ButtonGrid => buttonGrid;
-        [SerializeField] private int columnCount;
+        [SerializeField] private int columnCount = 4;
         [SerializeField] private GameObject buttonPrefab;
         public GameObject ButtonPrefab => buttonPrefab;
-        [SerializeField] private float buttonHeight;
+        [SerializeField] private float buttonHeight = 90f;
         [SerializeField] private Transform effectsParent;
         [SerializeField] private GameObject uiCanvas;
         [SerializeField] private UdonBehaviour uiToggle;
+        [SerializeField] private GameObject gunMesh;
+        [SerializeField] private VRC_Pickup pickup;
         [SerializeField] private Transform aimPoint;
         [SerializeField] private Transform targetIndicator;
         [SerializeField] private Renderer uiToggleRenderer;
@@ -109,6 +111,24 @@ namespace JanSharp
                     return;
                 isTargetIndicatorActive = value;
                 targetIndicator.gameObject.SetActive(value);
+            }
+        }
+        private bool isVisible;
+        public bool IsVisible
+        {
+            get => isVisible;
+            set
+            {
+                isVisible = value;
+                if (!value)
+                {
+                    SetUIActive(false);
+                    pickup.Drop();
+                }
+                pickup.pickupable = value;
+                gunMesh.SetActive(value);
+                uiToggle.gameObject.SetActive(value);
+                selectedEffectNameText.gameObject.SetActive(value);
             }
         }
 
@@ -213,7 +233,6 @@ namespace JanSharp
             color.a = deselectedColor.a;
             uiToggleRenderer.material.color = color;
         }
-        
 
         public void CustomUpdate()
         {
