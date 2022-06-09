@@ -37,7 +37,7 @@ namespace JanSharp
         [SerializeField] private Toggle keepOpenToggle;
         public Toggle KeepOpenToggle => keepOpenToggle;
         [SerializeField] private TextMeshPro selectedEffectNameText;
-        [SerializeField] private Text legendText;
+        [SerializeField] private TextMeshProUGUI legendText;
 
         // for UpdateManager
         private int customUpdateInternalIndex;
@@ -150,7 +150,7 @@ namespace JanSharp
             ActiveColor = MakeColorBlock(activeColor);
             InactiveLoopColor = MakeColorBlock(inactiveLoopColor);
             ActiveLoopColor = MakeColorBlock(activeLoopColor);
-            legendText.text = $"[<b>Bold=Selected</b>]"
+            legendText.text = $"[<b><u>Selected</u></b>]"
                 + $" [<b><color=#{ToHex(inactiveColor, false):X6}>Inactive</color></b>]"
                 + $" [<b><color=#{ToHex(activeColor, false):X6}>Active</color></b>]"
                 + $" [<b><color=#{ToHex(inactiveLoopColor, false):X6}>Inactive Loop</color></b>]"

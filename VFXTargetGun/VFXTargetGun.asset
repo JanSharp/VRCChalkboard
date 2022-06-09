@@ -1470,7 +1470,7 @@ MonoBehaviour:
       Data: 101|System.RuntimeType, mscorlib
     - Name: 
       Entry: 1
-      Data: UnityEngine.UI.Text, UnityEngine.UI
+      Data: TMPro.TextMeshProUGUI, Unity.TextMeshPro
     - Name: 
       Entry: 8
       Data: 
@@ -1482,7 +1482,7 @@ MonoBehaviour:
       Data: 0
     - Name: symbolResolvedTypeName
       Entry: 1
-      Data: UnityEngineUIText
+      Data: TMProTextMeshProUGUI
     - Name: symbolOriginalName
       Entry: 1
       Data: legendText
