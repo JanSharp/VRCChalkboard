@@ -13,6 +13,7 @@ namespace JanSharp
         [Header("Configuration")]
         [SerializeField] private float maxDistance = 100f;
         [SerializeField] private LayerMask rayLayerMask = -1; // everything
+        private Color deselectedColor;
         [SerializeField] private Color inactiveColor = new Color(0.8f, 0.8f, 0.8f);
         [SerializeField] private Color activeColor = Color.white;
         [SerializeField] private Color inactiveLoopColor = new Color(0.2f, 0.7f, 1f);
@@ -56,13 +57,24 @@ namespace JanSharp
             get => selectedEffect;
             set
             {
-                if (selectedEffect == null && IsHeld)
-                    UManager.Register(this);
-                else if (selectedEffect != null)
+                if (value == selectedEffect)
+                    return;
+                if (selectedEffect != null)
                     selectedEffect.Selected = false;
-                selectedEffect = value;
-                selectedEffect.Selected = true;
-                selectedEffectNameText.text = value.EffectName;
+                else
+                    UManager.Register(this);
+                selectedEffect = value; // update `selectedEffect` before setting `Selected` to true on an effect descriptor
+                if (value == null)
+                {
+                    UManager.Deregister(this);
+                    UpdateColors();
+                    selectedEffectNameText.text = "";
+                }
+                else
+                {
+                    value.Selected = true;
+                    selectedEffectNameText.text = value.EffectName;
+                }
             }
         }
         private bool isHeld;
@@ -112,6 +124,7 @@ namespace JanSharp
         private void Init()
         {
             initialized = true;
+            deselectedColor = uiToggleRenderer.material.color;
             InactiveColor = MakeColorBlock(inactiveColor);
             ActiveColor = MakeColorBlock(activeColor);
             InactiveLoopColor = MakeColorBlock(inactiveLoopColor);
@@ -151,6 +164,13 @@ namespace JanSharp
             return colors;
         }
 
+        public void DeselectEffect()
+        {
+            SelectedEffect = null;
+            if (!KeepOpenToggle.isOn)
+                CloseUI();
+        }
+
         public void ToggleUI() => SetUIActive(!uiCanvas.activeSelf);
         public void CloseUI() => SetUIActive(false);
         public void SetUIActive(bool active)
@@ -179,6 +199,11 @@ namespace JanSharp
 
         public void UpdateColors()
         {
+            if (SelectedEffect == null)
+            {
+                uiToggleRenderer.material.color = deselectedColor;
+                return;
+            }
             if (SelectedEffect.ActiveCount == 0)
                 uiToggleRenderer.material.color = SelectedEffect.Loop ? inactiveLoopColor : inactiveColor;
             else

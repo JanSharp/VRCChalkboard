@@ -19,10 +19,10 @@
 - close button for the UI both to not confuse people and to make it easy to disable keep open and then close the UI, since those are right next to each other
 - add stop button for currently active looped effects in the UI
 - underline instead of bold
+- deselect button
 
 ## Todo
 
-- deselect button
 - make it smaller
 - don't collide with the player
 - reduce proximity for the UI toggle

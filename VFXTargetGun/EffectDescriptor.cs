@@ -107,7 +107,7 @@ namespace JanSharp
         {
             var toggle = gun.KeepOpenToggle; // UdonSharp being picky and weird
             if (!toggle.isOn)
-                gun.SetUIActive(false);
+                gun.CloseUI();
             gun.SelectedEffect = this;
         }
 
