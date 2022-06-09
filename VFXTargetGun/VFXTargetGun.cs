@@ -223,7 +223,7 @@ namespace JanSharp
             RaycastHit hit;
             if (Physics.Raycast(aimPoint.position, aimPoint.forward, out hit, maxDistance, rayLayerMask.value))
             {
-                targetIndicator.SetPositionAndRotation(hit.point, Quaternion.LookRotation(hit.normal));
+                targetIndicator.SetPositionAndRotation(hit.point, Quaternion.LookRotation(hit.normal, aimPoint.forward));
                 IsTargetIndicatorActive = true;
             }
             else
