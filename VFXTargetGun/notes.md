@@ -24,6 +24,8 @@
 
 ## Todo
 
+- double tap prevention
+- option for fixed effect rotation (forward being aligned with the hit normal, up facing away from the gun as good as possible)
 - is the first time a non loop effect gets used broken? In that it ends up getting teleported for the second one instead of making a new one?
 - make it smaller, like 2x smaller, and maybe angle it a bit so it's not exact 90 degrees. And maybe make it prettier
 - don't collide with the player
