@@ -23,6 +23,7 @@
 
 ## Todo
 
+- is the first time a non loop effect gets used broken? In that it ends up getting teleported for the second one instead of making a new one?
 - make it smaller
 - don't collide with the player
 - reduce proximity for the UI toggle
