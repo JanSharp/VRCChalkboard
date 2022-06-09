@@ -22,6 +22,7 @@
 - deselect button
 - reduce proximity for the UI toggle
 - don't collide with the player (including the UI)
+- make it smaller, like 2x smaller, and maybe angle it a bit so it's not exact 90 degrees. And maybe make it prettier
 
 ## Todo
 
@@ -29,7 +30,6 @@
 - option for fixed effect rotation (forward being aligned with the hit normal, up facing away from the gun as good as possible)
 - is the first time a non loop effect gets used broken? In that it ends up getting teleported for the second one instead of making a new one?
   VRCInstantiate is just broken. There is no other explanation. All my references are correct, it works the second time you use it so that confirms it, but when modifying the position and rotation of the newly instantiated object right after it was created it behaves as if it was still referring to the old object. There is nothing I can do except blame VRChat and then hopefully find a workaround at some point
-- make it smaller, like 2x smaller, and maybe angle it a bit so it's not exact 90 degrees. And maybe make it prettier
 - local visibility and grab-able toggle, global for all guns
 - preview selected effect at current target location
 - sync non looping effects when they are played

@@ -204,11 +204,15 @@ namespace JanSharp
                 uiToggleRenderer.material.color = deselectedColor;
                 return;
             }
+            Color color;
             if (SelectedEffect.ActiveCount == 0)
-                uiToggleRenderer.material.color = SelectedEffect.Loop ? inactiveLoopColor : inactiveColor;
+                color = SelectedEffect.Loop ? inactiveLoopColor : inactiveColor;
             else
-                uiToggleRenderer.material.color = SelectedEffect.Loop ? activeLoopColor : activeColor;
+                color = SelectedEffect.Loop ? activeLoopColor : activeColor;
+            color.a = deselectedColor.a;
+            uiToggleRenderer.material.color = color;
         }
+        
 
         public void CustomUpdate()
         {
