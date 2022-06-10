@@ -64,7 +64,7 @@ namespace JanSharp
                     return;
                 if (selectedEffect != null)
                     selectedEffect.Selected = false;
-                else
+                else if (IsHeld)
                     UManager.Register(this);
                 selectedEffect = value; // update `selectedEffect` before setting `Selected` to true on an effect descriptor
                 if (value == null)
