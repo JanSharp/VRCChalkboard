@@ -307,12 +307,15 @@ namespace JanSharp
         {
             if (syncedPositions == null)
                 return;
-            InitParticleSystem();
-            InitIncrementalSyncing();
+            bool isZero = syncedPositions.Length == 0;
+            // only init where there is actually an effect being played
+            // to save some performance specifically when loading into the world
+            if (!isZero)
+                InitParticleSystem();
             if (loop)
             {
-                if (syncedPositions.Length == 0)
-                    StopLoopEffectInternal();
+                if (isZero)
+                    StopLoopEffectInternal(); // this does not error even when the particle system isn't initialized yet
                 else
                 {
                     PlayEffectInternal(syncedPositions[0], syncedRotations[0]);
@@ -320,6 +323,9 @@ namespace JanSharp
                 }
                 return;
             }
+            else if (isZero)
+                return;
+            InitIncrementalSyncing();
             float delay = Mathf.Min(-syncedStartTimes[0], MaxDelay);
             for (int i = 0; i < syncedPositions.Length; i++)
             {
