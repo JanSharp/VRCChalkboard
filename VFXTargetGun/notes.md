@@ -44,6 +44,7 @@
 - preview selected effect at current target location
 - flip selected effect text to the other side when held in the left hand
 - sync looping effects for late joiners
+- support non particle system effects. They really aren't effects anymore at that point, just objects that you can place in the world
 
 ## Maybe
 
