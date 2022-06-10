@@ -129,9 +129,6 @@ namespace JanSharp
             var newParticleSystems = new ParticleSystem[newLength];
             var newActiveEffects = new bool[newLength];
             var newActiveEffectIndexes = new int[newLength];
-            var newPositionsStage = new Vector3[newLength];
-            var newRotationsStage = new Quaternion[newLength];
-            var newStartTimesStage = new float[newLength];
             for (int i = 0; i < count; i++)
             {
                 newParticleSystemParents[i] = particleSystemParents[i];
@@ -139,20 +136,10 @@ namespace JanSharp
                 newActiveEffects[i] = activeEffects[i];
                 newActiveEffectIndexes[i] = activeEffectIndexes[i];
             }
-            // see PlayEffect for the reason why we need a Math.Min here
-            for (int i = 0; i < System.Math.Min(stagedCount, positionsStage.Length); i++)
-            {
-                newPositionsStage[i] = positionsStage[i];
-                newRotationsStage[i] = rotationsStage[i];
-                newStartTimesStage[i] = startTimesStage[i];
-            }
             particleSystemParents = newParticleSystemParents;
             particleSystems = newParticleSystems;
             activeEffects = newActiveEffects;
             activeEffectIndexes = newActiveEffectIndexes;
-            positionsStage = newPositionsStage;
-            rotationsStage = newRotationsStage;
-            startTimesStage = newStartTimesStage;
         }
 
         private void CreateNewEffect()
@@ -168,20 +155,12 @@ namespace JanSharp
 
         public void PlayEffect(Vector3 position, Quaternion rotation)
         {
-            PlayEffectInternal(position, rotation); // may grow arrays, so add to stage afterwards
-            // just to prevent gigantic lag spikes from causing errors
-            // Like i mean gigantic. for this to become an issue the person holding the gun would hve to
-            // play an effect, wait for it to finish, and play it again and do that more times than the
-            // current length of the positionsStage. At this point overwriting the first one in the array
-            // is fine, it's already timed out anyway. It does technically lead to dropped effects in terms of syncing
-            // but again, this is just to prevent errors for a very very rare edge case
-            // because of the way delayed effects are played this could also lead to effects being played out of order
-            // but I believe that the start time would always go into the negative anyway so all effects get played at the same time
-            // but once again, rare edge case. All it needs to do is not break
-            var index = (stagedCount++) % positionsStage.Length;
-            positionsStage[index] = position;
-            rotationsStage[index] = rotation;
-            startTimesStage[index] = Time.time;
+            PlayEffectInternal(position, rotation);
+            if (stagedCount == positionsStage.Length)
+                GrowStageArrays();
+            positionsStage[stagedCount] = position;
+            rotationsStage[stagedCount] = rotation;
+            startTimesStage[stagedCount++] = Time.time;
             RequestSerialization();
         }
 
@@ -261,6 +240,23 @@ namespace JanSharp
             delayedRotations = new Quaternion[4];
         }
 
+        private void GrowStageArrays()
+        {
+            var newLength = positionsStage.Length * 2;
+            var newPositionsStage = new Vector3[newLength];
+            var newRotationsStage = new Quaternion[newLength];
+            var newStartTimesStage = new float[newLength];
+            for (int i = 0; i < stagedCount; i++)
+            {
+                newPositionsStage[i] = positionsStage[i];
+                newRotationsStage[i] = rotationsStage[i];
+                newStartTimesStage[i] = startTimesStage[i];
+            }
+            positionsStage = newPositionsStage;
+            rotationsStage = newRotationsStage;
+            startTimesStage = newStartTimesStage;
+        }
+
         public override void OnPreSerialization()
         {
             // nothing to sync yet
@@ -270,8 +266,7 @@ namespace JanSharp
             syncedRotations = new Quaternion[stagedCount];
             syncedStartTimes = new float[stagedCount];
             var time = Time.time;
-            // see PlayEffect for the reason why we need a Math.Min here
-            for (int i = 0; i < System.Math.Min(stagedCount, positionsStage.Length); i++)
+            for (int i = 0; i < stagedCount; i++)
             {
                 syncedPositions[i] = positionsStage[i];
                 syncedRotations[i] = rotationsStage[i];
