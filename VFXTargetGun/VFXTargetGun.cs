@@ -36,7 +36,8 @@ namespace JanSharp
         [SerializeField] private Renderer uiToggleRenderer;
         [SerializeField] private Toggle keepOpenToggle;
         public Toggle KeepOpenToggle => keepOpenToggle;
-        [SerializeField] private TextMeshPro selectedEffectNameText;
+        [SerializeField] private TextMeshPro selectedEffectNameTextLeftHand;
+        [SerializeField] private TextMeshPro selectedEffectNameTextRightHand;
         [SerializeField] private TextMeshProUGUI legendText;
 
         // for UpdateManager
@@ -71,13 +72,15 @@ namespace JanSharp
                 {
                     UManager.Deregister(this);
                     UpdateColors();
-                    selectedEffectNameText.text = "";
+                    selectedEffectNameTextLeftHand.text = "";
+                    selectedEffectNameTextRightHand.text = "";
                     IsTargetIndicatorActive = false;
                 }
                 else
                 {
                     value.Selected = true;
-                    selectedEffectNameText.text = value.EffectName;
+                    selectedEffectNameTextLeftHand.text = value.EffectName;
+                    selectedEffectNameTextRightHand.text = value.EffectName;
                 }
                 if (!isReceiving)
                 {
@@ -102,6 +105,16 @@ namespace JanSharp
                     if (SelectedEffect != null)
                         UManager.Register(this);
                     BecomeOwner(); // preemptive transfer to spread ownership of objects out between players
+                    if (pickup.currentHand == VRC_Pickup.PickupHand.Left)
+                    {
+                        selectedEffectNameTextLeftHand.gameObject.SetActive(true);
+                        selectedEffectNameTextRightHand.gameObject.SetActive(false);
+                    }
+                    else
+                    {
+                        selectedEffectNameTextLeftHand.gameObject.SetActive(false);
+                        selectedEffectNameTextRightHand.gameObject.SetActive(true);
+                    }
                 }
                 else
                 {
@@ -137,7 +150,7 @@ namespace JanSharp
                 pickup.pickupable = value;
                 gunMesh.SetActive(value);
                 uiToggle.gameObject.SetActive(value);
-                selectedEffectNameText.gameObject.SetActive(value);
+                selectedEffectNameTextRightHand.gameObject.SetActive(value);
             }
         }
 
