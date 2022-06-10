@@ -12,6 +12,7 @@ namespace JanSharp
         [SerializeField] private string effectName;
         public string EffectName => effectName;
 
+        private GameObject originalParticleSystemParent;
         private Transform[] particleSystemParents;
         private ParticleSystem[] particleSystems;
         private int count;
@@ -91,9 +92,8 @@ namespace JanSharp
             rotationsStage = new Quaternion[4];
             startTimesStage = new float[4];
             var psParent = this.transform.GetChild(0);
-            particleSystemParents[0] = psParent;
+            originalParticleSystemParent = psParent.gameObject;
             var ps = psParent.GetChild(0).GetComponent<ParticleSystem>();
-            particleSystems[0] = ps;
             var psMain = ps.main;
             // I have no idea what `psMain.startLifetimeMultiplier` actually means. It clearly isn't a multiplier.
             // it might also only apply to curves, but I don't know what to do with that information
@@ -101,7 +101,16 @@ namespace JanSharp
             // that is not how a multiplier works
             effectDuration = psMain.duration + psMain.startLifetime.constantMax;
             loop = ps.main.loop;
-            count = 1;
+            if (loop)
+            {
+                particleSystemParents[0] = psParent;
+                particleSystems[0] = ps;
+                count = 1;
+            }
+            else
+            {
+                count = 0;
+            }
         }
 
         private void MakeButton()
@@ -146,7 +155,14 @@ namespace JanSharp
         {
             if (count == particleSystemParents.Length)
                 GrowArrays();
-            var obj = VRCInstantiate(particleSystemParents[0].gameObject);
+            // HACK: workaround for VRChat's weird behaviour when instantiating a copy of an existing object in the world.
+            // modifying the position and rotation of the copy ends up modifying the original one for some reason
+            // also the particle system Play call doesn't seem to go off on the copy
+            // but when using the copy at a later point in time where it is accessed the same way through the arrays it does behave as a copy
+            // which ultimately just makes me believe it is VRCInstantiate not behaving. So, my solution is to simply not use the original object
+            // except for creating copies of it and then modifying the copies. It's a waste of memory and performance
+            // and an unused game object in the world but what am I supposed to do
+            var obj = VRCInstantiate(originalParticleSystemParent);
             var transform = obj.transform;
             transform.parent = this.transform;
             particleSystemParents[count] = transform;
