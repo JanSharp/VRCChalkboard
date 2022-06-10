@@ -34,6 +34,7 @@
   - the synced state must not care about the UI, because the UI may not even exist yet. Well, the buttons.
     - when creating the buttons, adjust them to match the current state
   - sync selected effect
+- sync looping effects for late joiners
 
 ## Todo
 
@@ -43,7 +44,6 @@
   oh right, we don't. the inner transform is for the user to adjust rotation however they want. so we have a single transform
 - preview selected effect at current target location
 - flip selected effect text to the other side when held in the left hand
-- sync looping effects for late joiners
 - support non particle system effects. They really aren't effects anymore at that point, just objects that you can place in the world
 
 ## Maybe

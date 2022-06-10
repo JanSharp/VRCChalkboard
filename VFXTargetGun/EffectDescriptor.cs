@@ -320,7 +320,8 @@ namespace JanSharp
                 syncedRotations[i] = rotationsStage[i];
                 syncedStartTimes[i] = startTimesStage[i] - time;
             }
-            stagedCount = 0;
+            if (!loop) // don't reset for loops
+                stagedCount = 0;
         }
 
         public override void OnDeserialization()
@@ -332,10 +333,10 @@ namespace JanSharp
             // to save some performance specifically when loading into the world
             if (!isZero)
                 InitParticleSystem();
-            if (loop)
+            if (loop) // if it isn't initialized it won't enter this block
             {
                 if (isZero)
-                    StopLoopEffectInternal(); // this does not error even when the particle system isn't initialized yet
+                    StopLoopEffectInternal();
                 else
                 {
                     PlayEffectInternal(syncedPositions[0], syncedRotations[0]);
@@ -343,7 +344,7 @@ namespace JanSharp
                 }
                 return;
             }
-            else if (isZero)
+            else if (isZero) // and if it isn't initialized then this will just return
                 return;
             InitIncrementalSyncing();
             float delay = Mathf.Min(-syncedStartTimes[0], MaxDelay);
