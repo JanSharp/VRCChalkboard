@@ -18,6 +18,6 @@ namespace JanSharp
 
         public void OnClick() => descriptor.SelectThisEffect();
 
-        public void OnStopClick() => descriptor.PlayEffect(new Vector3(), new Quaternion());
+        public void OnStopClick() => descriptor.StopLoopEffect();
     }
 }

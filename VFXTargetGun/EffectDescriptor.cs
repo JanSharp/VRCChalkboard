@@ -156,12 +156,42 @@ namespace JanSharp
         public void PlayEffect(Vector3 position, Quaternion rotation)
         {
             PlayEffectInternal(position, rotation);
-            if (stagedCount == positionsStage.Length)
-                GrowStageArrays();
-            positionsStage[stagedCount] = position;
-            rotationsStage[stagedCount] = rotation;
-            startTimesStage[stagedCount++] = Time.time;
+            if (loop)
+            {
+                if (ActiveCount == 1)
+                {
+                    positionsStage[0] = position;
+                    rotationsStage[0] = rotation;
+                    startTimesStage[0] = Time.time;
+                    stagedCount = 1;
+                }
+                else
+                    stagedCount = 0;
+            }
+            else
+            {
+                if (stagedCount == positionsStage.Length)
+                    GrowStageArrays();
+                positionsStage[stagedCount] = position;
+                rotationsStage[stagedCount] = rotation;
+                startTimesStage[stagedCount++] = Time.time;
+            }
             RequestSerialization();
+        }
+
+        public void StopLoopEffect()
+        {
+            StopLoopEffectInternal();
+            stagedCount = 0;
+            RequestSerialization();
+        }
+
+        private void StopLoopEffectInternal()
+        {
+            if (ActiveCount == 0)
+                return;
+            particleSystems[0].Stop();
+            ActiveCount = 0;
         }
 
         private void PlayEffectInternal(Vector3 position, Quaternion rotation)
@@ -169,10 +199,7 @@ namespace JanSharp
             if (loop)
             {
                 if (ActiveCount == 1)
-                {
-                    particleSystems[0].Stop();
-                    ActiveCount = 0;
-                }
+                    StopLoopEffectInternal();
                 else
                 {
                     particleSystemParents[0].SetPositionAndRotation(position, rotation);
@@ -225,7 +252,8 @@ namespace JanSharp
         [UdonSynced] private Vector3[] syncedPositions;
         [UdonSynced] private Quaternion[] syncedRotations;
         [UdonSynced] private float[] syncedStartTimes;
-        private const float MaxDelay = 1f;
+        private const float MaxLoopDelay = 0.15f;
+        private const float MaxDelay = 0.5f;
         private Vector3[] delayedPositions;
         private Quaternion[] delayedRotations;
         private int delayedCount;
@@ -277,11 +305,21 @@ namespace JanSharp
 
         public override void OnDeserialization()
         {
-            // nothing was synced
             if (syncedPositions == null)
                 return;
             InitParticleSystem();
             InitIncrementalSyncing();
+            if (loop)
+            {
+                if (syncedPositions.Length == 0)
+                    StopLoopEffectInternal();
+                else
+                {
+                    PlayEffectInternal(syncedPositions[0], syncedRotations[0]);
+                    particleSystems[0].time = Mathf.Max(0f, -syncedStartTimes[0] - MaxLoopDelay);
+                }
+                return;
+            }
             float delay = Mathf.Min(-syncedStartTimes[0], MaxDelay);
             for (int i = 0; i < syncedPositions.Length; i++)
             {

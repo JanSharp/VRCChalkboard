@@ -220,7 +220,7 @@ namespace JanSharp
             {
                 // allow disabling of loop effects without pointing at any object
                 if (selectedEffect.Loop && selectedEffect.ActiveCount != 0)
-                    selectedEffect.PlayEffect(new Vector3(), new Quaternion());
+                    selectedEffect.StopLoopEffect();
                 return;
             }
             selectedEffect.PlayEffect(targetIndicator.position, targetIndicator.rotation);
