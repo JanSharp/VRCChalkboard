@@ -26,6 +26,7 @@
 - adjust default layer mask to not collide with everything
 - double tap prevention
 - local visibility and grab-able toggle, global for all guns
+- sync non looping effects when they are played
 
 ## Todo
 
@@ -36,7 +37,7 @@
 - is the first time a non loop effect gets used broken? In that it ends up getting teleported for the second one instead of making a new one?
   VRCInstantiate is just broken. There is no other explanation. All my references are correct, it works the second time you use it so that confirms it, but when modifying the position and rotation of the newly instantiated object right after it was created it behaves as if it was still referring to the old object. There is nothing I can do except blame VRChat and then hopefully find a workaround at some point
 - preview selected effect at current target location
-- sync non looping effects when they are played
+- flip selected effect text to the other side when held in the left hand
 - sync looping effects when they are played
 - sync looping effects for late joiners
 - sync controller state to allow giving another DM your gun

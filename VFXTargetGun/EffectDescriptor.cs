@@ -2,10 +2,11 @@
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
+using VRC.Udon.Common;
 
 namespace JanSharp
 {
-    [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
+    [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class EffectDescriptor : UdonSharpBehaviour
     {
         [SerializeField] private string effectName;
@@ -25,7 +26,9 @@ namespace JanSharp
                 if (activeCount == 0 || value == 0)
                 {
                     activeCount = value;
-                    UpdateColors();
+                    // only update colors if the references to the gun and the UI even exists
+                    if (gun != null)
+                        UpdateColors();
                 }
                 else
                     activeCount = value;
@@ -46,6 +49,7 @@ namespace JanSharp
             }
         }
 
+        // these 2 only exist for people who have opened the UI at some point
         private EffectButtonData buttonData;
         private VFXTargetGun gun;
 
@@ -73,12 +77,19 @@ namespace JanSharp
             MakeButton();
         }
 
+        private bool particleSystemInitialized;
         private void InitParticleSystem()
         {
+            if (particleSystemInitialized)
+                return;
+            particleSystemInitialized = true;
             particleSystemParents = new Transform[4];
             particleSystems = new ParticleSystem[4];
             activeEffects = new bool[4];
             activeEffectIndexes = new int[4];
+            positionsStage = new Vector3[4];
+            rotationsStage = new Quaternion[4];
+            startTimesStage = new float[4];
             var psParent = this.transform.GetChild(0);
             particleSystemParents[0] = psParent;
             var ps = psParent.GetChild(0).GetComponent<ParticleSystem>();
@@ -113,23 +124,35 @@ namespace JanSharp
 
         private void GrowArrays()
         {
-            var length = particleSystemParents.Length;
-            var newLength = length * 2;
+            var newLength = particleSystemParents.Length * 2;
             var newParticleSystemParents = new Transform[newLength];
             var newParticleSystems = new ParticleSystem[newLength];
             var newActiveEffects = new bool[newLength];
             var newActiveEffectIndexes = new int[newLength];
-            for (int i = 0; i < length; i++)
+            var newPositionsStage = new Vector3[newLength];
+            var newRotationsStage = new Quaternion[newLength];
+            var newStartTimesStage = new float[newLength];
+            for (int i = 0; i < count; i++)
             {
                 newParticleSystemParents[i] = particleSystemParents[i];
                 newParticleSystems[i] = particleSystems[i];
                 newActiveEffects[i] = activeEffects[i];
                 newActiveEffectIndexes[i] = activeEffectIndexes[i];
             }
+            // see PlayEffect for the reason why we need a Math.Min here
+            for (int i = 0; i < System.Math.Min(stagedCount, positionsStage.Length); i++)
+            {
+                newPositionsStage[i] = positionsStage[i];
+                newRotationsStage[i] = rotationsStage[i];
+                newStartTimesStage[i] = startTimesStage[i];
+            }
             particleSystemParents = newParticleSystemParents;
             particleSystems = newParticleSystems;
             activeEffects = newActiveEffects;
             activeEffectIndexes = newActiveEffectIndexes;
+            positionsStage = newPositionsStage;
+            rotationsStage = newRotationsStage;
+            startTimesStage = newStartTimesStage;
         }
 
         private void CreateNewEffect()
@@ -144,6 +167,25 @@ namespace JanSharp
         }
 
         public void PlayEffect(Vector3 position, Quaternion rotation)
+        {
+            PlayEffectInternal(position, rotation); // may grow arrays, so add to stage afterwards
+            // just to prevent gigantic lag spikes from causing errors
+            // Like i mean gigantic. for this to become an issue the person holding the gun would hve to
+            // play an effect, wait for it to finish, and play it again and do that more times than the
+            // current length of the positionsStage. At this point overwriting the first one in the array
+            // is fine, it's already timed out anyway. It does technically lead to dropped effects in terms of syncing
+            // but again, this is just to prevent errors for a very very rare edge case
+            // because of the way delayed effects are played this could also lead to effects being played out of order
+            // but I believe that the start time would always go into the negative anyway so all effects get played at the same time
+            // but once again, rare edge case. All it needs to do is not break
+            var index = (stagedCount++) % positionsStage.Length;
+            positionsStage[index] = position;
+            rotationsStage[index] = rotation;
+            startTimesStage[index] = Time.time;
+            RequestSerialization();
+        }
+
+        private void PlayEffectInternal(Vector3 position, Quaternion rotation)
         {
             if (loop)
             {
@@ -192,6 +234,99 @@ namespace JanSharp
                 activeEffectIndexes[i - 1] = activeEffectIndexes[i];
             ActiveCount--;
             activeEffects[index] = false;
+        }
+
+
+
+        // incremental syncing
+        private Vector3[] positionsStage;
+        private Quaternion[] rotationsStage;
+        private float[] startTimesStage;
+        private int stagedCount;
+        [UdonSynced] private Vector3[] syncedPositions;
+        [UdonSynced] private Quaternion[] syncedRotations;
+        [UdonSynced] private float[] syncedStartTimes;
+        private const float MaxDelay = 1f;
+        private Vector3[] delayedPositions;
+        private Quaternion[] delayedRotations;
+        private int delayedCount;
+
+        private bool incrementalSyncingInitialized;
+        private void InitIncrementalSyncing()
+        {
+            if (incrementalSyncingInitialized)
+                return;
+            incrementalSyncingInitialized = true;
+            delayedPositions = new Vector3[4];
+            delayedRotations = new Quaternion[4];
+        }
+
+        public override void OnPreSerialization()
+        {
+            // nothing to sync yet
+            if (!particleSystemInitialized)
+                return;
+            syncedPositions = new Vector3[stagedCount];
+            syncedRotations = new Quaternion[stagedCount];
+            syncedStartTimes = new float[stagedCount];
+            var time = Time.time;
+            // see PlayEffect for the reason why we need a Math.Min here
+            for (int i = 0; i < System.Math.Min(stagedCount, positionsStage.Length); i++)
+            {
+                syncedPositions[i] = positionsStage[i];
+                syncedRotations[i] = rotationsStage[i];
+                syncedStartTimes[i] = startTimesStage[i] - time;
+            }
+            stagedCount = 0;
+        }
+
+        public override void OnDeserialization()
+        {
+            // nothing was synced
+            if (syncedPositions == null)
+                return;
+            InitParticleSystem();
+            InitIncrementalSyncing();
+            float delay = Mathf.Min(-syncedStartTimes[0], MaxDelay);
+            for (int i = 0; i < syncedPositions.Length; i++)
+            {
+                float startTime = syncedStartTimes[i] + delay;
+                if (startTime <= 0f)
+                    PlayEffectInternal(syncedPositions[i], syncedRotations[i]);
+                else
+                {
+                    if (delayedCount == delayedPositions.Length)
+                        GrowDelayedArrays();
+                    delayedPositions[delayedCount] = syncedPositions[i];
+                    delayedRotations[delayedCount++] = syncedRotations[i];
+                    SendCustomEventDelayedSeconds(nameof(PlayEffectDelayed), startTime);
+                }
+            }
+        }
+
+        private void GrowDelayedArrays()
+        {
+            int newLength = delayedPositions.Length * 2;
+            var newDelayedPositions = new Vector3[newLength];
+            var newDelayedRotations = new Quaternion[newLength];
+            for (int i = 0; i < delayedCount; i++)
+            {
+                newDelayedPositions[i] = delayedPositions[i];
+                newDelayedRotations[i] = delayedRotations[i];
+            }
+            delayedPositions = newDelayedPositions;
+            delayedRotations = newDelayedRotations;
+        }
+
+        public void PlayEffectDelayed()
+        {
+            PlayEffectInternal(delayedPositions[0], delayedRotations[0]);
+            for (int i = 1; i < delayedCount; i++)
+            {
+                delayedPositions[i - 1] = delayedPositions[i];
+                delayedRotations[i - 1] = delayedRotations[i];
+            }
+            delayedCount--;
         }
     }
 }

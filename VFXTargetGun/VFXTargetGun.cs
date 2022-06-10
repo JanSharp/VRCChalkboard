@@ -93,6 +93,14 @@ namespace JanSharp
                 {
                     if (SelectedEffect != null)
                         UManager.Register(this);
+                    var localPlayer = Networking.LocalPlayer;
+                    if (!localPlayer.IsOwner(this.gameObject))
+                    {
+                        Networking.SetOwner(localPlayer, this.gameObject);
+                        if (initialized)
+                            foreach (var descriptor in descriptors)
+                                Networking.SetOwner(localPlayer, descriptor.gameObject);
+                    }
                 }
                 else
                 {
@@ -160,6 +168,8 @@ namespace JanSharp
             for (int i = 0; i < count; i++)
             {
                 var descriptor = (EffectDescriptor)effectsParent.GetChild(i).GetComponent(typeof(UdonBehaviour));
+                if (IsHeld)
+                    Networking.SetOwner(Networking.LocalPlayer, descriptor.gameObject);
                 descriptors[i] = descriptor;
                 if (descriptors[i] == null)
                     Debug.LogError($"The child #{i + 1} ({effectsParent.GetChild(i).name}) "
