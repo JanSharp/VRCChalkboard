@@ -7,7 +7,7 @@ using TMPro;
 
 namespace JanSharp
 {
-    [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
+    [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class VFXTargetGun : UdonSharpBehaviour
     {
         [Header("Configuration")]
@@ -72,11 +72,17 @@ namespace JanSharp
                     UManager.Deregister(this);
                     UpdateColors();
                     selectedEffectNameText.text = "";
+                    IsTargetIndicatorActive = false;
                 }
                 else
                 {
                     value.Selected = true;
                     selectedEffectNameText.text = value.EffectName;
+                }
+                if (!isReceiving)
+                {
+                    Networking.SetOwner(Networking.LocalPlayer, this.gameObject);
+                    RequestSerialization();
                 }
             }
         }
@@ -91,16 +97,11 @@ namespace JanSharp
                 isHeld = value;
                 if (value)
                 {
+                    if (!initialized && selectedEffectIndex != -1)
+                        Init();
                     if (SelectedEffect != null)
                         UManager.Register(this);
-                    var localPlayer = Networking.LocalPlayer;
-                    if (!localPlayer.IsOwner(this.gameObject))
-                    {
-                        Networking.SetOwner(localPlayer, this.gameObject);
-                        if (initialized)
-                            foreach (var descriptor in descriptors)
-                                Networking.SetOwner(localPlayer, descriptor.gameObject);
-                    }
+                    BecomeOwner(); // preemptive transfer to spread ownership of objects out between players
                 }
                 else
                 {
@@ -168,17 +169,17 @@ namespace JanSharp
             for (int i = 0; i < count; i++)
             {
                 var descriptor = (EffectDescriptor)effectsParent.GetChild(i).GetComponent(typeof(UdonBehaviour));
-                if (IsHeld)
-                    Networking.SetOwner(Networking.LocalPlayer, descriptor.gameObject);
                 descriptors[i] = descriptor;
                 if (descriptors[i] == null)
                     Debug.LogError($"The child #{i + 1} ({effectsParent.GetChild(i).name}) "
                         + "of the effects descriptor parent does not have an EffectDescriptor.");
                 else
-                    descriptor.Init(this);
+                    descriptor.Init(this, i);
             }
             int rows = (count + columnCount - 1) / columnCount;
             buttonGrid.sizeDelta = new Vector2(buttonGrid.sizeDelta.x, buttonHeight * rows);
+            if (selectedEffectIndex != -1)
+                SelectedEffect = descriptors[selectedEffectIndex];
         }
 
         private ColorBlock MakeColorBlock(Color color)
@@ -210,6 +211,17 @@ namespace JanSharp
                 Init();
             uiCanvas.SetActive(active);
             uiToggle.InteractionText = active ? "Hide UI" : "Select Effect";
+            if (active)
+                BecomeOwner();
+        }
+
+        private void BecomeOwner()
+        {
+            var localPlayer = Networking.LocalPlayer;
+            Networking.SetOwner(localPlayer, this.gameObject);
+            if (initialized)
+                foreach (var descriptor in descriptors)
+                    Networking.SetOwner(localPlayer, descriptor.gameObject);
         }
 
         public void UseSelectedEffect()
@@ -259,6 +271,26 @@ namespace JanSharp
             {
                 IsTargetIndicatorActive = false;
             }
+        }
+
+
+
+        [UdonSynced] private int selectedEffectIndex = -1;
+        private bool isReceiving;
+
+        public override void OnPreSerialization()
+        {
+            selectedEffectIndex = SelectedEffect == null ? -1 : SelectedEffect.Index;
+        }
+
+        public override void OnDeserialization()
+        {
+            isReceiving = true;
+            if (!initialized && IsHeld) // someone else pressed a button while this client was holding it and didn't have the UI open before
+                Init();
+            if (initialized)
+                SelectedEffect = selectedEffectIndex == -1 ? null : descriptors[selectedEffectIndex];
+            isReceiving = false;
         }
     }
 }

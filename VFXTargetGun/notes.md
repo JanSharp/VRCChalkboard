@@ -30,6 +30,10 @@
 - sync looping effects when they are played
 - is the first time a non loop effect gets used broken? In that it ends up getting teleported for the second one instead of making a new one?
   VRCInstantiate is just broken. There is no other explanation. All my references are correct, it works the second time you use it so that confirms it, but when modifying the position and rotation of the newly instantiated object right after it was created it behaves as if it was still referring to the old object. There is nothing I can do except blame VRChat and then hopefully find a workaround at some point
+- sync controller state to allow giving another DM your gun
+  - the synced state must not care about the UI, because the UI may not even exist yet. Well, the buttons.
+    - when creating the buttons, adjust them to match the current state
+  - sync selected effect
 
 ## Todo
 
@@ -40,10 +44,8 @@
 - preview selected effect at current target location
 - flip selected effect text to the other side when held in the left hand
 - sync looping effects for late joiners
-- sync controller state to allow giving another DM your gun
-  - the synced state must not care about the UI, because the UI may not even exist yet. Well, the buttons.
-    - when creating the buttons, adjust them to match the current state
-  - sync selected effect
-- toggle the UI off when someone else picks up the gun. still possible to be toggled on again, but only the owner can actually interact with it
 
-- potentially disable the Hide UI toggle to prevent any of the proximity issues in VR
+## Maybe
+
+- toggle the UI off when someone else picks up the gun. still possible to be toggled on again afterwards while the other person is holding it
+- disable the Hide UI toggle to prevent any of the proximity issues in VR

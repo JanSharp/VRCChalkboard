@@ -50,9 +50,10 @@ namespace JanSharp
             }
         }
 
-        // these 2 only exist for people who have opened the UI at some point
+        // these 3 are only set for people who have opened the UI at some point
         private EffectButtonData buttonData;
         private VFXTargetGun gun;
+        public int Index { get; private set; }
 
         private void UpdateColors()
         {
@@ -71,9 +72,10 @@ namespace JanSharp
                 gun.UpdateColors();
         }
 
-        public void Init(VFXTargetGun gun)
+        public void Init(VFXTargetGun gun, int index)
         {
             this.gun = gun;
+            Index = index;
             InitParticleSystem(); // init first so the button knows what color to use (looped or not)
             MakeButton();
         }
@@ -192,6 +194,7 @@ namespace JanSharp
                 rotationsStage[stagedCount] = rotation;
                 startTimesStage[stagedCount++] = Time.time;
             }
+            Networking.SetOwner(Networking.LocalPlayer, this.gameObject);
             RequestSerialization();
         }
 
@@ -199,6 +202,7 @@ namespace JanSharp
         {
             StopLoopEffectInternal();
             stagedCount = 0;
+            Networking.SetOwner(Networking.LocalPlayer, this.gameObject);
             RequestSerialization();
         }
 
