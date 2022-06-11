@@ -19,6 +19,8 @@ namespace JanSharp
         [SerializeField] private Color activeColor = Color.white;
         [SerializeField] private Color inactiveLoopColor = new Color(0.2f, 0.7f, 1f);
         [SerializeField] private Color activeLoopColor = Color.cyan;
+        [SerializeField] private Color inactiveObjectColor = new Color(0.6f, 0.0f, 0f);
+        [SerializeField] private Color activeObjectColor = Color.red;
         [Header("Internal")]
         [SerializeField] private RectTransform buttonGrid;
         public RectTransform ButtonGrid => buttonGrid;
@@ -158,6 +160,8 @@ namespace JanSharp
         public ColorBlock ActiveColor { get; private set; }
         public ColorBlock InactiveLoopColor { get; private set; }
         public ColorBlock ActiveLoopColor { get; private set; }
+        public ColorBlock InactiveObjectColor { get; private set; }
+        public ColorBlock ActiveObjectColor { get; private set; }
 
         private uint ToHex(Color32 c32, bool includeAlpha) {
             if(!includeAlpha) return ((uint)c32.r << 16) | ((uint)c32.g << 8) | (uint)c32.b;
@@ -172,11 +176,12 @@ namespace JanSharp
             ActiveColor = MakeColorBlock(activeColor);
             InactiveLoopColor = MakeColorBlock(inactiveLoopColor);
             ActiveLoopColor = MakeColorBlock(activeLoopColor);
-            legendText.text = $"[<b><u>Selected</u></b>]"
-                + $" [<b><color=#{ToHex(inactiveColor, false):X6}>Inactive</color></b>]"
-                + $" [<b><color=#{ToHex(activeColor, false):X6}>Active</color></b>]"
-                + $" [<b><color=#{ToHex(inactiveLoopColor, false):X6}>Inactive Loop</color></b>]"
-                + $" [<b><color=#{ToHex(activeLoopColor, false):X6}>Active Loop</color></b>]";
+            InactiveObjectColor = MakeColorBlock(inactiveObjectColor);
+            ActiveObjectColor = MakeColorBlock(activeObjectColor);
+            legendText.text = $"[<b><u>Selected</u></b>] "
+                + $"[<b><color=#{ToHex(inactiveColor, false):X6}>once</color>: <color=#{ToHex(activeColor, false):X6}>on</color>/<color=#{ToHex(inactiveColor, false):X6}>off</color></b>] "
+                + $"[<b><color=#{ToHex(inactiveLoopColor, false):X6}>loop</color>: <color=#{ToHex(activeLoopColor, false):X6}>on</color>/<color=#{ToHex(inactiveLoopColor, false):X6}>off</color></b>] "
+                + $"[<b><color=#{ToHex(inactiveObjectColor, false):X6}>object</color>: <color=#{ToHex(activeObjectColor, false):X6}>on</color>/<color=#{ToHex(inactiveObjectColor, false):X6}>off</color></b>]";
             int count = effectsParent.childCount;
             descriptors = new EffectDescriptor[count];
             for (int i = 0; i < count; i++)
@@ -244,12 +249,12 @@ namespace JanSharp
             if (!IsTargetIndicatorActive)
             {
                 // allow disabling of loop effects without pointing at any object
-                if (selectedEffect.Loop && selectedEffect.ActiveCount != 0)
+                if (selectedEffect.IsToggle && selectedEffect.ActiveCount != 0)
                     selectedEffect.StopLoopEffect();
                 return;
             }
             selectedEffect.PlayEffect(targetIndicator.position, targetIndicator.rotation);
-            if (selectedEffect.Loop)
+            if (selectedEffect.IsToggle)
                 IsTargetIndicatorActive = false;
         }
 
@@ -261,18 +266,21 @@ namespace JanSharp
                 return;
             }
             Color color;
-            if (SelectedEffect.ActiveCount == 0)
-                color = SelectedEffect.Loop ? inactiveLoopColor : inactiveColor;
+            bool active = SelectedEffect.ActiveCount != 0;
+            if (SelectedEffect.IsLoop)
+                color = active ? activeLoopColor : inactiveLoopColor;
+            else if (SelectedEffect.IsObject)
+                color = active ? activeObjectColor : inactiveObjectColor;
             else
-                color = SelectedEffect.Loop ? activeLoopColor : activeColor;
+                color = active ? activeColor : inactiveColor;
             color.a = deselectedColor.a;
             uiToggleRenderer.material.color = color;
         }
 
         public void CustomUpdate()
         {
-            // don't show an indicator if the loop is currently active
-            if (selectedEffect.Loop && selectedEffect.ActiveCount != 0)
+            // don't show an indicator if the toggle is currently active
+            if (selectedEffect.IsToggle && selectedEffect.ActiveCount != 0)
                 return;
             RaycastHit hit;
             if (Physics.Raycast(aimPoint.position, aimPoint.forward, out hit, maxDistance, rayLayerMask.value))

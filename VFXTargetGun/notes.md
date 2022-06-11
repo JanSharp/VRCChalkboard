@@ -36,6 +36,7 @@
   - sync selected effect
 - sync looping effects for late joiners
 - flip selected effect text to the other side when held in the left hand
+- support non particle system effects. They really aren't effects anymore at that point, just objects that you can place in the world
 
 ## Todo
 
@@ -44,7 +45,6 @@
   wait actually we have 2 transforms to play with, we can rotate the second one where up is actually up
   oh right, we don't. the inner transform is for the user to adjust rotation however they want. so we have a single transform
 - preview selected effect at current target location
-- support non particle system effects. They really aren't effects anymore at that point, just objects that you can place in the world
 
 ## Maybe
 

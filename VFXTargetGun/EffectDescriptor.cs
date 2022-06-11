@@ -12,6 +12,18 @@ namespace JanSharp
         [SerializeField] private string effectName;
         public string EffectName => effectName;
 
+        private const int UnknownEffect = 0;
+        private const int OnceEffect = 1;
+        private const int LoopEffect = 2;
+        private const int ObjectEffect = 3;
+        public int EffectType { get; private set; }
+        public bool IsUnknown => EffectType == UnknownEffect;
+        public bool IsOnce => EffectType == OnceEffect;
+        public bool IsLoop => EffectType == LoopEffect;
+        public bool IsObject => EffectType == ObjectEffect;
+
+        public bool IsToggle => IsLoop || IsObject;
+
         private GameObject originalParticleSystemParent;
         private Transform[] particleSystemParents;
         private ParticleSystem[] particleSystems;
@@ -36,8 +48,6 @@ namespace JanSharp
             }
         }
         private float effectDuration;
-        private bool loop;
-        public bool Loop => loop;
 
         private bool selected;
         public bool Selected
@@ -59,12 +69,21 @@ namespace JanSharp
         {
             // update button color and style
             buttonData.text.text = Selected ? ("<u>" + effectName + "</u>") : effectName;
-            if (ActiveCount == 0)
-                buttonData.button.colors = loop ? gun.InactiveLoopColor : gun.InactiveColor;
-            else
-                buttonData.button.colors = loop ? gun.ActiveLoopColor : gun.ActiveColor;
-            
-            if (loop)
+            bool active = ActiveCount != 0;
+            switch (EffectType)
+            {
+                case LoopEffect:
+                    buttonData.button.colors = active ? gun.ActiveLoopColor : gun.InactiveLoopColor;
+                    break;
+                case ObjectEffect:
+                    buttonData.button.colors = active ? gun.ActiveObjectColor : gun.InactiveObjectColor;
+                    break;
+                default:
+                    buttonData.button.colors = active ? gun.ActiveColor : gun.InactiveColor;
+                    break;
+            }
+
+            if (IsToggle)
                 buttonData.stopButton.gameObject.SetActive(activeCount != 0);
 
             // update the gun if this is the currently selected effect
@@ -96,22 +115,27 @@ namespace JanSharp
             var psParent = this.transform.GetChild(0);
             originalParticleSystemParent = psParent.gameObject;
             var ps = psParent.GetChild(0).GetComponent<ParticleSystem>();
-            var psMain = ps.main;
-            // I have no idea what `psMain.startLifetimeMultiplier` actually means. It clearly isn't a multiplier.
-            // it might also only apply to curves, but I don't know what to do with that information
-            // basically, it gives me a 5 when the lifetime is 5. I set it to 2, it gives me a 2 back, as expected, but it also set the constant lifetime to 2.
-            // that is not how a multiplier works
-            effectDuration = psMain.duration + psMain.startLifetime.constantMax;
-            loop = ps.main.loop;
-            if (loop)
+            if (ps != null)
             {
-                particleSystemParents[0] = psParent;
-                particleSystems[0] = ps;
-                count = 1;
+                var psMain = ps.main;
+                // I have no idea what `psMain.startLifetimeMultiplier` actually means. It clearly isn't a multiplier.
+                // it might also only apply to curves, but I don't know what to do with that information
+                // basically, it gives me a 5 when the lifetime is 5. I set it to 2, it gives me a 2 back, as expected, but it also set the constant lifetime to 2.
+                // that is not how a multiplier works
+                effectDuration = psMain.duration + psMain.startLifetime.constantMax;
+                EffectType = ps.main.loop ? LoopEffect : OnceEffect;
+                if (IsLoop)
+                {
+                    particleSystemParents[0] = psParent;
+                    particleSystems[0] = ps;
+                    count = 1;
+                }
+                else
+                    count = 0;
             }
             else
             {
-                count = 0;
+                EffectType = ObjectEffect;
             }
         }
 
@@ -174,7 +198,7 @@ namespace JanSharp
         public void PlayEffect(Vector3 position, Quaternion rotation)
         {
             PlayEffectInternal(position, rotation);
-            if (loop)
+            if (IsToggle)
             {
                 if (ActiveCount == 1)
                 {
@@ -200,30 +224,41 @@ namespace JanSharp
 
         public void StopLoopEffect()
         {
-            StopLoopEffectInternal();
+            StopToggleEffectInternal();
             stagedCount = 0;
             Networking.SetOwner(Networking.LocalPlayer, this.gameObject);
             RequestSerialization();
         }
 
-        private void StopLoopEffectInternal()
+        private void StopToggleEffectInternal()
         {
             if (ActiveCount == 0)
                 return;
-            particleSystems[0].Stop();
+            if (IsLoop)
+                particleSystems[0].Stop();
+            else
+                originalParticleSystemParent.SetActive(false);
             ActiveCount = 0;
         }
 
         private void PlayEffectInternal(Vector3 position, Quaternion rotation)
         {
-            if (loop)
+            if (IsToggle)
             {
                 if (ActiveCount == 1)
-                    StopLoopEffectInternal();
+                    StopToggleEffectInternal();
                 else
                 {
-                    particleSystemParents[0].SetPositionAndRotation(position, rotation);
-                    particleSystems[0].Play();
+                    if (IsLoop)
+                    {
+                        particleSystemParents[0].SetPositionAndRotation(position, rotation);
+                        particleSystems[0].Play();
+                    }
+                    else
+                    {
+                        originalParticleSystemParent.transform.SetPositionAndRotation(position, rotation);
+                        originalParticleSystemParent.SetActive(true);
+                    }
                     ActiveCount = 1;
                 }
                 return;
@@ -325,7 +360,7 @@ namespace JanSharp
                 syncedRotations[i] = rotationsStage[i];
                 syncedStartTimes[i] = startTimesStage[i] - time;
             }
-            if (!loop) // don't reset for loops
+            if (!IsToggle) // don't reset for toggles
                 stagedCount = 0;
         }
 
@@ -338,14 +373,15 @@ namespace JanSharp
             // to save some performance specifically when loading into the world
             if (!isZero)
                 InitParticleSystem();
-            if (loop) // if it isn't initialized it won't enter this block
+            if (IsToggle) // if it isn't initialized it won't enter this block
             {
                 if (isZero)
-                    StopLoopEffectInternal();
+                    StopToggleEffectInternal();
                 else
                 {
                     PlayEffectInternal(syncedPositions[0], syncedRotations[0]);
-                    particleSystems[0].time = Mathf.Max(0f, -syncedStartTimes[0] - MaxLoopDelay);
+                    if (IsLoop)
+                        particleSystems[0].time = Mathf.Max(0f, -syncedStartTimes[0] - MaxLoopDelay);
                 }
                 return;
             }
