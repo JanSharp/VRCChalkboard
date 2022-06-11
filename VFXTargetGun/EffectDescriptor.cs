@@ -311,6 +311,7 @@ namespace JanSharp
         /// causes all of them to be negative values. 0 at best, never positive.
         /// </summary>
         [UdonSynced] private float[] syncedStartTimes;
+        [UdonSynced] private uint packageId;
         private const float MaxLoopDelay = 0.15f;
         private const float MaxDelay = 0.5f;
         private const float StaleEffectTime = 15f;
@@ -347,6 +348,8 @@ namespace JanSharp
 
         public override void OnPreSerialization()
         {
+            packageId++;
+            Debug.Log($"<vfx> {this.name} sending package {packageId} with size {stagedCount}. Is init: {particleSystemInitialized}");
             // nothing to sync yet
             if (!particleSystemInitialized)
                 return;
@@ -366,6 +369,7 @@ namespace JanSharp
 
         public override void OnDeserialization()
         {
+            Debug.Log($"<vfx> {this.name} receiving package {packageId} with size {(syncedPositions == null ? -1 : syncedPositions.Length)}");
             if (syncedPositions == null)
                 return;
             bool isZero = syncedPositions.Length == 0;
@@ -379,9 +383,12 @@ namespace JanSharp
                     StopToggleEffectInternal();
                 else
                 {
-                    PlayEffectInternal(syncedPositions[0], syncedRotations[0]);
-                    if (IsLoop)
-                        particleSystems[0].time = Mathf.Max(0f, -syncedStartTimes[0] - MaxLoopDelay);
+                    if (ActiveCount == 0)
+                    {
+                        PlayEffectInternal(syncedPositions[0], syncedRotations[0]);
+                        if (IsLoop)
+                            particleSystems[0].time = Mathf.Max(0f, -syncedStartTimes[0] - MaxLoopDelay);
+                    }
                 }
                 return;
             }
