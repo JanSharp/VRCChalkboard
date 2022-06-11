@@ -271,9 +271,14 @@ namespace JanSharp
         private int stagedCount;
         [UdonSynced] private Vector3[] syncedPositions;
         [UdonSynced] private Quaternion[] syncedRotations;
+        /// <summary>
+        /// holds values relative to the current Time.time which ultimately
+        /// causes all of them to be negative values. 0 at best, never positive.
+        /// </summary>
         [UdonSynced] private float[] syncedStartTimes;
         private const float MaxLoopDelay = 0.15f;
         private const float MaxDelay = 0.5f;
+        private const float StaleEffectTime = 15f;
         private Vector3[] delayedPositions;
         private Quaternion[] delayedRotations;
         private int delayedCount;
@@ -352,7 +357,10 @@ namespace JanSharp
             {
                 float startTime = syncedStartTimes[i] + delay;
                 if (startTime <= 0f)
-                    PlayEffectInternal(syncedPositions[i], syncedRotations[i]);
+                {
+                    if (effectDuration + StaleEffectTime + startTime > 0f) // prevent old effects from playing, specifically for late joiners
+                        PlayEffectInternal(syncedPositions[i], syncedRotations[i]);
+                }
                 else
                 {
                     if (delayedCount == delayedPositions.Length)
