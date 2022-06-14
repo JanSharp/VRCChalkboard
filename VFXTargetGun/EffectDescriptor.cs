@@ -11,6 +11,12 @@ namespace JanSharp
     {
         [SerializeField] private string effectName;
         public string EffectName => effectName;
+        [Tooltip(
+@"The effect will always face away from/be parallel to the object it is placed on,
+however by default the effect also faces away from the gun as much as possible.
+When this is true said second rotation is random."
+        )]
+        public bool randomizeRotation;
 
         private const int UnknownEffect = 0;
         private const int OnceEffect = 1;
@@ -197,6 +203,9 @@ namespace JanSharp
 
         public void PlayEffect(Vector3 position, Quaternion rotation)
         {
+            if (randomizeRotation)
+                rotation = rotation * Quaternion.AngleAxis(Random.Range(0f, 360f), Vector3.forward);
+
             PlayEffectInternal(position, rotation);
             if (IsToggle)
             {
