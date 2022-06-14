@@ -15,12 +15,12 @@ namespace JanSharp
         // 0: Default, 4: Water, 8: Interactive, 11: Environment, 13: Pickup
         [SerializeField] private LayerMask rayLayerMask = (1 << 0) | (1 << 4) | (1 << 8) | (1 << 11) | (1 << 13);
         private Color deselectedColor;
-        [SerializeField] private Color inactiveColor = new Color(0.8f, 0.8f, 0.8f);
-        [SerializeField] private Color activeColor = Color.white;
-        [SerializeField] private Color inactiveLoopColor = new Color(0.2f, 0.7f, 1f);
-        [SerializeField] private Color activeLoopColor = Color.cyan;
-        [SerializeField] private Color inactiveObjectColor = new Color(0.6f, 0.0f, 0f);
-        [SerializeField] private Color activeObjectColor = Color.red;
+        [SerializeField] private Color inactiveColor = new Color(0.73725f, 0.42353f, 0.85098f);
+        [SerializeField] private Color activeColor = new Color(0.89412f, 0.60000f, 1.00000f);
+        [SerializeField] private Color inactiveLoopColor = new Color(0.14118f, 0.69804f, 0.25882f);
+        [SerializeField] private Color activeLoopColor = new Color(0.09020f, 0.90196f, 0.26275f);
+        [SerializeField] private Color inactiveObjectColor = new Color(0.85098f, 0.54902f, 0.25490f);
+        [SerializeField] private Color activeObjectColor = new Color(0.94902f, 0.54510f, 0.14118f);
         [Header("Internal")]
         [SerializeField] private RectTransform buttonGrid;
         public RectTransform ButtonGrid => buttonGrid;
