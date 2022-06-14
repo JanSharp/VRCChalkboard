@@ -31,6 +31,16 @@
     "package.json": "package-lock.json, yarn.lock",
     // custom
     "*.cs": "${capture}.asset",
-    "*": "${capture}.meta",
   },
+  "files.exclude": {
+    // default
+    "**/.git": true,
+    "**/.svn": true,
+    "**/.hg": true,
+    "**/CVS": true,
+    "**/.DS_Store": true,
+    "**/Thumbs.db": true,
+    // custom
+    "**/*.meta": true,
+  }
 }
