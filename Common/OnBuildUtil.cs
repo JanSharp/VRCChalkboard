@@ -9,6 +9,7 @@ using VRC.SDKBase.Editor.BuildPipeline;
 using UnityEditor.Build;
 using UdonSharp;
 using UdonSharpEditor;
+using VRC.Udon;
 
 namespace JanSharp
 {
@@ -38,10 +39,15 @@ namespace JanSharp
         public static bool RunOnBuild()
         {
             foreach (GameObject obj in UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects())
-                foreach (Type type in typesToLookFor)
-                    foreach (UdonSharpBehaviour behaviour in obj.GetUdonSharpComponentsInChildren(type))
-                        if (!((IOnBuildCallback)behaviour).OnBuild())
+                foreach (UdonBehaviour udonBehaviour in obj.GetComponentsInChildren<UdonBehaviour>())
+                {
+                    if (UdonSharpEditorUtility.IsUdonSharpBehaviour(udonBehaviour))
+                    {
+                        UdonSharpBehaviour behaviour = UdonSharpEditorUtility.GetProxyBehaviour(udonBehaviour);
+                        if (typesToLookFor.Contains(behaviour.GetType()) && !((IOnBuildCallback)behaviour).OnBuild())
                             return false;
+                    }
+                }
             return true;
         }
     }
