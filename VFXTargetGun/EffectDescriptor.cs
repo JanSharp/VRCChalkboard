@@ -3,11 +3,19 @@ using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
 using VRC.Udon.Common;
+#if UNITY_EDITOR && !COMPILER_UDONSHARP
+using UnityEditor;
+using UdonSharpEditor;
+using System.Linq;
+#endif
 
 namespace JanSharp
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class EffectDescriptor : UdonSharpBehaviour
+    #if UNITY_EDITOR && !COMPILER_UDONSHARP
+        , IOnBuildCallback
+    #endif
     {
         [SerializeField] private string effectName;
         public string EffectName => effectName;
@@ -18,21 +26,25 @@ When this is true said second rotation is random."
         )]
         public bool randomizeRotation;
 
+        // set OnBuild
+        [SerializeField] [HideInInspector] private int effectType;
+        [SerializeField] [HideInInspector] private float effectDuration;
+
         private const int UnknownEffect = 0;
         private const int OnceEffect = 1;
         private const int LoopEffect = 2;
         private const int ObjectEffect = 3;
-        public int EffectType { get; private set; }
-        public bool IsUnknown => EffectType == UnknownEffect;
-        public bool IsOnce => EffectType == OnceEffect;
-        public bool IsLoop => EffectType == LoopEffect;
-        public bool IsObject => EffectType == ObjectEffect;
+        public int EffectType => effectType;
+        public bool IsUnknown => effectType == UnknownEffect;
+        public bool IsOnce => effectType == OnceEffect;
+        public bool IsLoop => effectType == LoopEffect;
+        public bool IsObject => effectType == ObjectEffect;
 
         public bool IsToggle => IsLoop || IsObject;
 
         private GameObject originalParticleSystemParent;
         private Transform[] particleSystemParents;
-        private ParticleSystem[] particleSystems;
+        private ParticleSystem[][] particleSystems;
         private int count;
         private bool[] activeEffects;
         private int[] activeEffectIndexes;
@@ -53,7 +65,6 @@ When this is true said second rotation is random."
                     activeCount = value;
             }
         }
-        private float effectDuration;
 
         private bool selected;
         public bool Selected
@@ -76,7 +87,7 @@ When this is true said second rotation is random."
             // update button color and style
             buttonData.text.text = Selected ? ("<u>" + effectName + "</u>") : effectName;
             bool active = ActiveCount != 0;
-            switch (EffectType)
+            switch (effectType)
             {
                 case LoopEffect:
                     buttonData.button.colors = active ? gun.ActiveLoopColor : gun.InactiveLoopColor;
@@ -105,6 +116,60 @@ When this is true said second rotation is random."
             MakeButton();
         }
 
+        #if UNITY_EDITOR && !COMPILER_UDONSHARP
+        [InitializeOnLoad]
+        public static class OnBuildRegister
+        {
+            static OnBuildRegister() => JanSharp.OnBuildUtil.RegisterType<EffectDescriptor>();
+        }
+        bool IOnBuildCallback.OnBuild()
+        {
+            var particleSystems = this.GetComponentsInChildren<ParticleSystem>();
+            effectDuration = 0f;
+            if (particleSystems.Length == 0)
+                effectType = ObjectEffect;
+            else
+            {
+                effectType = OnceEffect;
+                foreach (var particleSystem in particleSystems)
+                {
+                    var main = particleSystem.main;
+                    if (main.playOnAwake) // NOTE: this warning is nice and all but it instantly gets cleared if clear on play is enabled
+                        Debug.LogWarning($"Particle System '{particleSystem.name}' is playing on awake which is "
+                            + $"most likely undesired. (effect obj '{this.name}', effect name '{this.effectName}')");
+                    if (main.loop)
+                        effectType = LoopEffect;
+                    float lifetime;
+                    switch (main.startLifetime.mode)
+                    {
+                        case ParticleSystemCurveMode.Constant:
+                            lifetime = main.startLifetime.constant;
+                            break;
+                        case ParticleSystemCurveMode.TwoConstants:
+                            lifetime = main.startLifetime.constantMax;
+                            break;
+                        case ParticleSystemCurveMode.Curve:
+                            lifetime = main.startLifetime.curve.keys.Select(k => k.value).Max();
+                            break;
+                        case ParticleSystemCurveMode.TwoCurves:
+                            lifetime = main.startLifetime.curveMax.keys.Select(k => k.value).Max();
+                            break;
+                        default:
+                            lifetime = 0f; // to make the compiler happy
+                            break;
+                    }
+                    effectDuration = Mathf.Max(effectDuration, main.duration + lifetime);
+                    // I have no idea what `psMain.startLifetimeMultiplier` actually means. It clearly isn't a multiplier.
+                    // it might also only apply to curves, but I don't know what to do with that information
+                    // basically, it gives me a 5 when the lifetime is 5. I set it to 2, it gives me a 2 back, as expected, but it also set the constant lifetime to 2.
+                    // that is not how a multiplier works
+                }
+            }
+            this.ApplyProxyModifications();
+            return true;
+        }
+        #endif
+
         private bool particleSystemInitialized;
         private void InitParticleSystem()
         {
@@ -112,7 +177,7 @@ When this is true said second rotation is random."
                 return;
             particleSystemInitialized = true;
             particleSystemParents = new Transform[4];
-            particleSystems = new ParticleSystem[4];
+            particleSystems = new ParticleSystem[4][];
             activeEffects = new bool[4];
             activeEffectIndexes = new int[4];
             positionsStage = new Vector3[4];
@@ -120,28 +185,16 @@ When this is true said second rotation is random."
             startTimesStage = new float[4];
             var psParent = this.transform.GetChild(0);
             originalParticleSystemParent = psParent.gameObject;
-            var ps = psParent.GetChild(0).GetComponent<ParticleSystem>();
-            if (ps != null)
+            if (!IsObject)
             {
-                var psMain = ps.main;
-                // I have no idea what `psMain.startLifetimeMultiplier` actually means. It clearly isn't a multiplier.
-                // it might also only apply to curves, but I don't know what to do with that information
-                // basically, it gives me a 5 when the lifetime is 5. I set it to 2, it gives me a 2 back, as expected, but it also set the constant lifetime to 2.
-                // that is not how a multiplier works
-                effectDuration = psMain.duration + psMain.startLifetime.constantMax;
-                EffectType = ps.main.loop ? LoopEffect : OnceEffect;
                 if (IsLoop)
                 {
                     particleSystemParents[0] = psParent;
-                    particleSystems[0] = ps;
+                    particleSystems[0] = psParent.GetComponentsInChildren<ParticleSystem>();
                     count = 1;
                 }
                 else
                     count = 0;
-            }
-            else
-            {
-                EffectType = ObjectEffect;
             }
         }
 
@@ -167,7 +220,7 @@ When this is true said second rotation is random."
         {
             var newLength = particleSystemParents.Length * 2;
             var newParticleSystemParents = new Transform[newLength];
-            var newParticleSystems = new ParticleSystem[newLength];
+            var newParticleSystems = new ParticleSystem[newLength][];
             var newActiveEffects = new bool[newLength];
             var newActiveEffectIndexes = new int[newLength];
             for (int i = 0; i < count; i++)
@@ -198,7 +251,7 @@ When this is true said second rotation is random."
             var transform = obj.transform;
             transform.parent = this.transform;
             particleSystemParents[count] = transform;
-            particleSystems[count++] = transform.GetChild(0).GetComponent<ParticleSystem>();
+            particleSystems[count++] = transform.GetChild(0).GetComponentsInChildren<ParticleSystem>();
         }
 
         public void PlayEffect(Vector3 position, Quaternion rotation)
@@ -244,7 +297,8 @@ When this is true said second rotation is random."
             if (ActiveCount == 0)
                 return;
             if (IsLoop)
-                particleSystems[0].Stop();
+                foreach (var ps in particleSystems[0])
+                    ps.Stop();
             else
                 originalParticleSystemParent.SetActive(false);
             ActiveCount = 0;
@@ -261,7 +315,8 @@ When this is true said second rotation is random."
                     if (IsLoop)
                     {
                         particleSystemParents[0].SetPositionAndRotation(position, rotation);
-                        particleSystems[0].Play();
+                        foreach (var ps in particleSystems[0])
+                            ps.Play();
                     }
                     else
                     {
@@ -293,7 +348,8 @@ When this is true said second rotation is random."
             activeEffects[index] = true;
             activeEffectIndexes[ActiveCount++] = index;
             particleSystemParents[index].SetPositionAndRotation(position, rotation);
-            particleSystems[index].Play();
+            foreach (var ps in particleSystems[index])
+                ps.Play();
             this.SendCustomEventDelayedSeconds(nameof(FinishEffect), effectDuration);
         }
 
@@ -391,8 +447,10 @@ When this is true said second rotation is random."
                     if (ActiveCount == 0)
                     {
                         PlayEffectInternal(syncedPositions[0], syncedRotations[0]);
+                        var time = Mathf.Max(0f, -syncedStartTimes[0] - MaxLoopDelay);
                         if (IsLoop)
-                            particleSystems[0].time = Mathf.Max(0f, -syncedStartTimes[0] - MaxLoopDelay);
+                            foreach (var ps in particleSystems[0])
+                                ps.time = time;
                     }
                 }
                 return;
