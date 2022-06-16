@@ -36,8 +36,10 @@ public class ItemSyncDebugController : UdonSharpBehaviour
 
     private ItemSync[] items;
     private ItemSync[] nonIdleItems;
+    #if ItemSyncDebug
     private int itemCount = 0;
     private int nonIdleCount = 0;
+    #endif
 
     public void Start()
     {
