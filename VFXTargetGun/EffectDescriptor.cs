@@ -251,7 +251,7 @@ When this is true said second rotation is random."
             var transform = obj.transform;
             transform.parent = this.transform;
             particleSystemParents[count] = transform;
-            particleSystems[count++] = transform.GetChild(0).GetComponentsInChildren<ParticleSystem>();
+            particleSystems[count++] = transform.GetComponentsInChildren<ParticleSystem>();
         }
 
         public void PlayEffect(Vector3 position, Quaternion rotation)
