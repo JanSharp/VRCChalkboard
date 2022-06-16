@@ -47,13 +47,12 @@
 
 - toggle the UI off when someone else picks up the gun. still possible to be toggled on again afterwards while the other person is holding it
 - disable the Hide UI toggle to prevent any of the proximity issues in VR
+- scaling
+- some sort of rotation control like locking rotation, locking rotation on some around some axis, snapping
+- grid snapping
+- positioning, most notably up and down to be able to place thins on uneven ground without parts of it floating
 
 ## Other
-
-maybe nice to have:
-scaling
-some sort of rotation control like locking rotation, locking rotation on some around some axis, snapping
-grid snapping
 
 modes:
 - place mode
