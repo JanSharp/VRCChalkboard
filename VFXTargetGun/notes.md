@@ -38,11 +38,11 @@
 - flip selected effect text to the other side when held in the left hand
 - support non particle system effects. They really aren't effects anymore at that point, just objects that you can place in the world
 - option for random rotation or fixed effect rotation (forward being aligned with the hit normal, up facing away from the gun as well as possible)
+- disable the Hide UI toggle to prevent any of the proximity issues in VR
 
 ## Todo
 
 - preview selected effect at current target location
-- disable the Hide UI toggle to prevent any of the proximity issues in VR
 
 ## Maybe
 
