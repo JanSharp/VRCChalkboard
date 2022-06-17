@@ -39,6 +39,7 @@
 - support non particle system effects. They really aren't effects anymore at that point, just objects that you can place in the world
 - option for random rotation or fixed effect rotation (forward being aligned with the hit normal, up facing away from the gun as well as possible)
 - disable the Hide UI toggle to prevent any of the proximity issues in VR
+- disable ui box collider when it is hidden to remove the cursor while it's hidden
 
 ## Todo
 

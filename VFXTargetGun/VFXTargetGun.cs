@@ -29,7 +29,7 @@ namespace JanSharp
         public GameObject ButtonPrefab => buttonPrefab;
         [SerializeField] private float buttonHeight = 90f;
         [SerializeField] private Transform effectsParent;
-        [SerializeField] private GameObject uiCanvas;
+        [SerializeField] private BoxCollider uiCanvasCollider;
         [SerializeField] private UdonBehaviour uiToggle;
         [SerializeField] private GameObject gunMesh;
         [SerializeField] private VRC_Pickup pickup;
@@ -221,13 +221,14 @@ namespace JanSharp
                 CloseUI();
         }
 
-        public void ToggleUI() => SetUIActive(!uiCanvas.activeSelf);
+        public void ToggleUI() => SetUIActive(!uiCanvasCollider.gameObject.activeSelf);
         public void CloseUI() => SetUIActive(false);
         public void SetUIActive(bool active)
         {
             if (!initialized && active)
                 Init();
-            uiCanvas.SetActive(active);
+            uiCanvasCollider.gameObject.SetActive(active);
+            uiCanvasCollider.enabled = active;
             uiToggle.DisableInteractive = active;
             if (active)
                 BecomeOwner();
