@@ -10,6 +10,7 @@ using UnityEditor.Build;
 using UdonSharp;
 using UdonSharpEditor;
 using VRC.Udon;
+using System.Diagnostics;
 
 namespace JanSharp
 {
@@ -38,6 +39,8 @@ namespace JanSharp
 
         public static bool RunOnBuild()
         {
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
             foreach (GameObject obj in UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects())
                 foreach (UdonBehaviour udonBehaviour in obj.GetComponentsInChildren<UdonBehaviour>())
                 {
@@ -48,6 +51,8 @@ namespace JanSharp
                             return false;
                     }
                 }
+            sw.Stop();
+            UnityEngine.Debug.Log($"OnBuild handlers: {sw.Elapsed}.");
             return true;
         }
     }
