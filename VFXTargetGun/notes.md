@@ -61,3 +61,34 @@
 - stop absolutely everything button
 - some sort of rotation control like locking rotation, locking rotation on some around some axis, snapping
 - grid snapping
+
+## Version 2
+
+The main feature is going to be multiple toggle effects (so loop and obj) which ultimately requires place and delete mode.
+
+Preview mode is optional as described at the end.
+Edit mode won't be in, at least not as the first thing, but it is mentioned below because the UI needs to have support for it in the future.
+
+first, UI
+- Effect button effect count top right
+- Effect button "stop" becomes "stop/delete all"
+- Insert row of buttons at the bottom of the body
+- Place/Delete(/Edit) mode buttons in said button row, indicating active state using underlines just like effects
+- Nuke button at the end of said button row to delete absolutely everything
+- Cancel/Confirm popup UI for nuke button
+
+maybe the button row should be below the legend because the legend is related to the buttons above it. Then we don't have a footer, but I can just put an ending line there, or just see how it looks. Keeping things separated is important, reduces perceived clutter.
+
+mode colors: place blue, delete red, edit yellow.
+well, actually they shouldn't have colors. I just love colorful stuff. But no colors are boring... but yea it doesn't need it. Although it would be nice if the color of the entire gun changed depending on the mode you're in. that sounds dope. and useful. and just for completeness sake add a small little TMPro text below the gun with the mode name in it...
+or actually some text on the side of the gun, but that's covered by the hand. Below is probably fine and honestly not super necessary.
+Alright, yay, I get to use colors. I've decided. Which doesn't mean anything because I might change my mind 5 seconds later.
+
+a ball to toggle between delete and place mode probably positioned to the side and slightly below the gun to have it accessible but prevent accidental clicks. Proximity of ~0.15.
+
+what if the preview mode was actually a checkbox... but it only affects place mode. preview in delete... actually would kind of work, just be hard to implement and probably unnecessary. but not off the table. actually wait, not hard at all, just disable the GameObject, regardless of if it's an object or a loop. yea preview does actually work for delete as well.
+
+so what about preview in edit mode. I think edit mode is always going to use a preview. hm, edit mode might need a confirm button though, unless it updates in real time. Yea edit mode is a weird one. the thing is while preview in edit mode does make sense, like having 2 different versions of edit mode, one with a preview and one without, you might very well want to have preview enabled in place mode but disabled in edit mode, so having to hit the checkbox every time isn't great. although, that give me an idea. every button to switch to a mode can have its own preview toggle on it. Unfortunately preview really isn't intuitive, because it makes it non obvious what is local and what is synced. There could be a help button that explains it, but that's generally a bad solution. Preview being local could be indicated using transparency, that would actually work for all 3 modes. The only hard part is that transparency is anything but easy to switch to generically. I do like the idea though. But this is good, this makes preview a good optional feature to implement because it won't actually change the layout of the UI, only add to it. Regardless of how I'd end up implementing it. Well the help button might end up changing the layout a bit, but I'm sure I'd find a spot for that button.
+
+
+completely unrelated, what about a laser to assist with aiming. useful when trying to aim at some thin collider.
