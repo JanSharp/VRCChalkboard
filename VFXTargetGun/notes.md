@@ -42,20 +42,21 @@
 ## Todo
 
 - preview selected effect at current target location
+- disable the Hide UI toggle to prevent any of the proximity issues in VR
 
 ## Maybe
 
 - toggle the UI off when someone else picks up the gun. still possible to be toggled on again afterwards while the other person is holding it
-- disable the Hide UI toggle to prevent any of the proximity issues in VR
-- scaling
-- some sort of rotation control like locking rotation, locking rotation on some around some axis, snapping
-- grid snapping
 - positioning, most notably up and down to be able to place thins on uneven ground without parts of it floating
 
-## Other
+## Future Todo
 
-modes:
-- place mode
-- delete mode
-- preview mode
-- edit mode
+- modes:
+  - place mode
+  - delete mode
+  - preview mode
+  - edit mode
+- scaling
+- stop absolutely everything button
+- some sort of rotation control like locking rotation, locking rotation on some around some axis, snapping
+- grid snapping
