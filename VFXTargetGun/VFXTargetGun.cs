@@ -52,6 +52,7 @@ namespace JanSharp
         [SerializeField] private Button placeModeButton;
         [SerializeField] private Button deleteModeButton;
         [SerializeField] private Button editModeButton;
+        [SerializeField] private GameObject confirmationWindow;
 
         // set OnBuild
         [SerializeField] [HideInInspector] private MeshRenderer[] gunMeshRenderers;
@@ -330,6 +331,14 @@ namespace JanSharp
             SelectedEffect = null;
             if (!KeepOpenToggle.isOn)
                 CloseUI();
+        }
+
+        public void DeleteEverything() => confirmationWindow.SetActive(true);
+        public void CancelDeleteEverything() => confirmationWindow.SetActive(false);
+        public void ConfirmDeleteEverything()
+        {
+            confirmationWindow.SetActive(false);
+            // TODO: initialize deletion process of all effects, should probably be one by one to prevent lag spikes because Udon is slow
         }
 
         public void ToggleUI() => SetUIActive(!uiCanvasCollider.gameObject.activeSelf);
