@@ -4,11 +4,19 @@ using UnityEngine.UI;
 using VRC.SDKBase;
 using VRC.Udon;
 using TMPro;
+#if UNITY_EDITOR && !COMPILER_UDONSHARP
+using UnityEditor;
+using UdonSharpEditor;
+using System.Linq;
+#endif
 
 namespace JanSharp
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class VFXTargetGun : UdonSharpBehaviour
+    #if UNITY_EDITOR && !COMPILER_UDONSHARP
+        , IOnBuildCallback
+    #endif
     {
         [Header("Configuration")]
         [SerializeField] private float maxDistance = 250f;
@@ -41,6 +49,108 @@ namespace JanSharp
         [SerializeField] private TextMeshPro selectedEffectNameTextLeftHand;
         [SerializeField] private TextMeshPro selectedEffectNameTextRightHand;
         [SerializeField] private TextMeshProUGUI legendText;
+        [SerializeField] private Button placeModeButton;
+        [SerializeField] private Button deleteModeButton;
+        [SerializeField] private Button editModeButton;
+
+        // set OnBuild
+        [SerializeField] [HideInInspector] private MeshRenderer[] gunMeshRenderers;
+        [SerializeField] [HideInInspector] private TextMeshProUGUI placeModeButtonText;
+        [SerializeField] [HideInInspector] private TextMeshProUGUI deleteModeButtonText;
+        [SerializeField] [HideInInspector] private TextMeshProUGUI editModeButtonText;
+
+        #if UNITY_EDITOR && !COMPILER_UDONSHARP
+        [InitializeOnLoad]
+        public static class OnBuildRegister
+        {
+            static OnBuildRegister() => JanSharp.OnBuildUtil.RegisterType<VFXTargetGun>();
+        }
+        bool IOnBuildCallback.OnBuild()
+        {
+            if (gunMesh == null)
+            {
+                Debug.LogError("VFX Target gun requires all internal references to be set in the inspector.");
+                return false;
+            }
+            gunMeshRenderers = gunMesh.GetComponentsInChildren<MeshRenderer>();
+            TextMeshProUGUI GetButtonText(Transform button) => button.GetChild(0).GetComponent<TextMeshProUGUI>();
+            placeModeButtonText = GetButtonText(placeModeButton.transform);
+            deleteModeButtonText = GetButtonText(deleteModeButton.transform);
+            editModeButtonText = GetButtonText(editModeButton.transform);
+            this.ApplyProxyModifications();
+            return true;
+        }
+        #endif
+
+        private const int UnknownMode = 0;
+        private const int PlaceMode = 1;
+        private const int DeleteMode = 2;
+        private const int EditMode = 3;
+        private int mode = UnknownMode;
+        public int Mode
+        {
+            get => mode;
+            set
+            {
+                if (value == mode)
+                    return;
+                SetModeButtonTextUnderline(mode, false);
+                mode = value;
+                SetModeButtonTextUnderline(mode, true);
+                var color = GetModeColor(mode);
+                foreach (var renderer in gunMeshRenderers)
+                    foreach (var mat in renderer.materials)
+                        mat.color = color;
+            }
+        }
+        public bool IsPlaceMode => Mode == PlaceMode;
+        public bool IsDeleteMode => Mode == DeleteMode;
+        public bool IsEditMode => Mode == EditMode;
+
+        public void SwitchToPlaceMode() => Mode = PlaceMode;
+        public void SwitchToDeleteMode() => Mode = DeleteMode;
+        public void SwitchToEditMode() => Mode = EditMode;
+
+        /// <summary>
+        /// Simply does nothing if the given mode is UnknownMode.
+        /// </summary>
+        private void SetModeButtonTextUnderline(int mode, bool isUnderlined)
+        {
+            switch (mode)
+            {
+                case PlaceMode:
+                    SetModeButtonTextUnderlineInternal(placeModeButtonText, isUnderlined);
+                    break;
+                case DeleteMode:
+                    SetModeButtonTextUnderlineInternal(deleteModeButtonText, isUnderlined);
+                    break;
+                case EditMode:
+                    SetModeButtonTextUnderlineInternal(editModeButtonText, isUnderlined);
+                    break;
+            }
+        }
+        private void SetModeButtonTextUnderlineInternal(TextMeshProUGUI text, bool isUnderlined)
+        {
+            text.text = isUnderlined
+                ? $"<u>{text.text}</u>"
+                : text.text.Substring(3, text.text.Length - 7);
+        }
+
+        private Color GetModeColor(int mode)
+        {
+            switch (mode)
+            {
+                case PlaceMode:
+                    return placeModeButton.colors.normalColor;
+                case DeleteMode:
+                    return deleteModeButton.colors.normalColor;
+                case EditMode:
+                    return editModeButton.colors.normalColor;
+                default:
+                    return Color.white;
+            }
+        }
+        private Color GetCurrentModeColor() => GetModeColor(Mode);
 
         // for UpdateManager
         private int customUpdateInternalIndex;
@@ -171,6 +281,7 @@ namespace JanSharp
         private void Init()
         {
             initialized = true;
+            Mode = PlaceMode;
             deselectedColor = uiToggleRenderer.material.color;
             InactiveColor = MakeColorBlock(inactiveColor);
             ActiveColor = MakeColorBlock(activeColor);
