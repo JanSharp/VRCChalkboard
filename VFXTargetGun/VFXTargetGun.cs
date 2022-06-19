@@ -236,6 +236,7 @@ namespace JanSharp
                 }
             }
         }
+        private int deletionTargetIndex;
         private bool isTargetIndicatorActive;
         private bool IsTargetIndicatorActive
         {
@@ -369,7 +370,10 @@ namespace JanSharp
         {
             if (SelectedEffect == null || !IsTargetIndicatorActive)
                 return;
-            SelectedEffect.PlayEffect(targetIndicator.position, targetIndicator.rotation);
+            if (IsPlaceMode)
+                SelectedEffect.PlayEffect(targetIndicator.position, targetIndicator.rotation);
+            else if (IsDeleteMode)
+                SelectedEffect.StopToggleEffect(deletionTargetIndex);
         }
 
         public void UpdateColors()
@@ -396,13 +400,30 @@ namespace JanSharp
             RaycastHit hit;
             if (Physics.Raycast(aimPoint.position, aimPoint.forward, out hit, maxDistance, rayLayerMask.value))
             {
-                targetIndicator.SetPositionAndRotation(hit.point, Quaternion.LookRotation(hit.normal, aimPoint.forward));
-                IsTargetIndicatorActive = true;
+                if (IsPlaceMode)
+                {
+                    targetIndicator.SetPositionAndRotation(hit.point, Quaternion.LookRotation(hit.normal, aimPoint.forward));
+                    IsTargetIndicatorActive = true;
+                }
+                else if (IsDeleteMode)
+                {
+                    // NOTE: this whole logic is very most likely a big performance concern, mostly because of GetNearestActiveEffect
+                    if (SelectedEffect == null || !SelectedEffect.IsToggle || SelectedEffect.ActiveCount == 0)
+                    {
+                        IsTargetIndicatorActive = false;
+                        return;
+                    }
+                    deletionTargetIndex = SelectedEffect.GetNearestActiveEffect(hit.point);
+                    Vector3 position = SelectedEffect.effectParents[deletionTargetIndex].position;
+                    if (Physics.Raycast(aimPoint.position, (position - aimPoint.position).normalized, out hit, maxDistance, rayLayerMask.value))
+                        targetIndicator.SetPositionAndRotation(hit.point, Quaternion.LookRotation(hit.normal, aimPoint.forward));
+                    else
+                        targetIndicator.SetPositionAndRotation(position, Quaternion.identity);
+                    IsTargetIndicatorActive = true;
+                }
             }
             else
-            {
                 IsTargetIndicatorActive = false;
-            }
         }
 
 

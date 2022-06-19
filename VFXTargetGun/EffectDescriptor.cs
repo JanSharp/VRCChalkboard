@@ -44,7 +44,7 @@ When this is true said second rotation is random."
         public bool IsToggle => !IsOnce;
         private bool HasParticleSystems => !IsObject;
 
-        private Transform[] effectParents;
+        public Transform[] effectParents;
         private ParticleSystem[][] particleSystems;
         private bool[] activeEffects;
         private bool[] fadingOut;
@@ -325,6 +325,30 @@ When this is true said second rotation is random."
             if (HasParticleSystems)
                 particleSystems[index] = effectTransform.GetComponentsInChildren<ParticleSystem>();
             return effectTransform;
+        }
+
+        public int GetNearestActiveEffect(Vector3 pos)
+        {
+            if (ActiveCount == 0)
+                return -1;
+            int result = -1;
+            float resultDistance = float.MaxValue;
+            int count = 0;
+            for (int i = 0; i < maxCount; i++)
+            {
+                if (activeEffects[i])
+                {
+                    float distance = (effectParents[i].position - pos).magnitude;
+                    if (distance < resultDistance)
+                    {
+                        resultDistance = distance;
+                        result = i;
+                        if (++count == ActiveCount)
+                            break;
+                    }
+                }
+            }
+            return result;
         }
 
         public void PlayEffect(Vector3 position, Quaternion rotation)
