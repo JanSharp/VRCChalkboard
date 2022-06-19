@@ -458,8 +458,6 @@ When this is true said second rotation is random."
 
 
         // FIXME: when a loop effect is still fading out syncing (placing new ones) just doesn't seem work at all
-        // FIXME: delete all toggle effects doesn't sync if you're not already the owner even though RequestSync sets owner [...]
-        // this probably means that RequestSync _somehow_ doesn't get run at all in this case, because the receiving side's logic is identical
 
         // incremental syncing
         private uint[] effectOrder;
@@ -559,6 +557,8 @@ When this is true said second rotation is random."
                 if (effectOrder[effectIndex] >= order)
                     continue;
                 effectOrder[effectIndex] = order;
+                if (order > currentTopOrder)
+                    currentTopOrder = order;
                 float time = delay - syncedTimes[i];
                 if (!HasParticleSystems || !active || time <= 0f)
                 {
