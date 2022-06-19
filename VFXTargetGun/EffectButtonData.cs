@@ -18,6 +18,6 @@ namespace JanSharp
 
         public void OnClick() => descriptor.SelectThisEffect();
 
-        public void OnStopClick() => descriptor.StopLoopEffect();
+        public void OnStopClick() => descriptor.StopAllEffects();
     }
 }

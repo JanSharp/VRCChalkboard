@@ -338,7 +338,9 @@ namespace JanSharp
         public void ConfirmDeleteEverything()
         {
             confirmationWindow.SetActive(false);
-            // TODO: initialize deletion process of all effects, should probably be one by one to prevent lag spikes because Udon is slow
+            // TODO: spread work out across frames (probably)
+            foreach (var descriptor in descriptors)
+                descriptor.StopAllEffects();
         }
 
         public void ToggleUI() => SetUIActive(!uiCanvasCollider.gameObject.activeSelf);
@@ -365,18 +367,9 @@ namespace JanSharp
 
         public void UseSelectedEffect()
         {
-            if (selectedEffect == null)
+            if (SelectedEffect == null || !IsTargetIndicatorActive)
                 return;
-            if (!IsTargetIndicatorActive)
-            {
-                // allow disabling of loop effects without pointing at any object
-                if (selectedEffect.IsToggle && selectedEffect.ActiveCount != 0)
-                    selectedEffect.StopLoopEffect();
-                return;
-            }
-            selectedEffect.PlayEffect(targetIndicator.position, targetIndicator.rotation);
-            if (selectedEffect.IsToggle)
-                IsTargetIndicatorActive = false;
+            SelectedEffect.PlayEffect(targetIndicator.position, targetIndicator.rotation);
         }
 
         public void UpdateColors()
@@ -400,9 +393,6 @@ namespace JanSharp
 
         public void CustomUpdate()
         {
-            // don't show an indicator if the toggle is currently active
-            if (selectedEffect.IsToggle && selectedEffect.ActiveCount != 0)
-                return;
             RaycastHit hit;
             if (Physics.Raycast(aimPoint.position, aimPoint.forward, out hit, maxDistance, rayLayerMask.value))
             {
