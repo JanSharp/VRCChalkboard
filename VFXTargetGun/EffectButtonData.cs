@@ -13,8 +13,9 @@ namespace JanSharp
         public TextMeshProUGUI text;
         public Button button;
         public GameObject stopButton;
-        [HideInInspector]
-        public EffectDescriptor descriptor;
+        public TextMeshProUGUI stopButtonText;
+        public TextMeshProUGUI activeCountText;
+        [HideInInspector] public EffectDescriptor descriptor;
 
         public void OnClick() => descriptor.SelectThisEffect();
 

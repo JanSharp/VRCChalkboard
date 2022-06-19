@@ -64,6 +64,8 @@ When this is true said second rotation is random."
                 }
                 else
                     fadingOutCount = value;
+                if (gun != null)
+                    SetActiveCountText();
             }
         }
         private int[] toFinishIndexes;
@@ -83,6 +85,8 @@ When this is true said second rotation is random."
                 }
                 else
                     activeCount = value;
+                if (gun != null)
+                    SetActiveCountText();
             }
         }
 
@@ -106,7 +110,7 @@ When this is true said second rotation is random."
         {
             // update button color and style
             buttonData.text.text = Selected ? ("<u>" + effectName + "</u>") : effectName;
-            bool active = ActiveCount != 0 || fadingOutCount != 0;
+            bool active = ActiveCount != 0 || FadingOutCount != 0;
             switch (effectType)
             {
                 case LoopEffect:
@@ -126,6 +130,12 @@ When this is true said second rotation is random."
             // update the gun if this is the currently selected effect
             if (Selected)
                 gun.UpdateColors();
+        }
+
+        private void SetActiveCountText()
+        {
+            var totalCount = ActiveCount + FadingOutCount;
+            buttonData.activeCountText.text = totalCount == 0 ? "" : totalCount.ToString();
         }
 
         public void Init(VFXTargetGun gun, int index)
@@ -235,7 +245,9 @@ When this is true said second rotation is random."
             buttonData = (EffectButtonData)button.GetComponent(typeof(UdonBehaviour));
             buttonData.descriptor = this;
             buttonData.text.text = effectName;
+            buttonData.stopButtonText.text = HasParticleSystems ? "Stop All" : "Delete All";
             UpdateColors();
+            SetActiveCountText();
         }
 
         public void SelectThisEffect()
