@@ -42,13 +42,14 @@ When this is true said second rotation is random."
         public bool IsObject => effectType == ObjectEffect;
 
         public bool IsToggle => !IsOnce;
-        private bool HasParticleSystems => !IsObject;
+        public bool HasParticleSystems => !IsObject;
 
-        public Transform[] effectParents;
-        private ParticleSystem[][] particleSystems;
-        private bool[] activeEffects;
+        public int InstantiatedEffectCount { get; private set; }
+        public Transform[] EffectParents { get; private set; }
+        public ParticleSystem[][] ParticleSystems { get; private set; }
+        public bool[] ActiveEffects { get; private set; }
         private bool[] fadingOut;
-        private int maxCount;
+        public int MaxCount { get; private set; }
         private int fadingOutCount;
         private int FadingOutCount
         {
@@ -223,18 +224,18 @@ When this is true said second rotation is random."
             if (effectInitialized)
                 return;
             effectInitialized = true;
-            effectParents = new Transform[4];
+            EffectParents = new Transform[4];
             if (HasParticleSystems)
-                particleSystems = new ParticleSystem[4][];
-            activeEffects = new bool[4];
+                ParticleSystems = new ParticleSystem[4][];
+            ActiveEffects = new bool[4];
             if (IsLoop)
                 fadingOut = new bool[4];
             toFinishIndexes = new int[4];
             // syncing
-            effectOrder = new uint[4];
+            EffectOrder = new uint[4];
             requestedSyncs = new bool[4];
             requestedIndexes = new int[4];
-            maxCount = 4;
+            MaxCount = 4;
         }
 
         private void MakeButton()
@@ -259,20 +260,21 @@ When this is true said second rotation is random."
 
         private void GrowArrays(int newLength)
         {
-            maxCount = newLength;
+            MaxCount = newLength;
             // since this is making the C# VM perform the loops and copying this is most likely faster than having our own loop
             var newEffectParents = new Transform[newLength];
-            effectParents.CopyTo(newEffectParents, 0);
-            effectParents = newEffectParents;
+            EffectParents.CopyTo(newEffectParents, 0);
+            EffectParents = newEffectParents;
             if (HasParticleSystems)
             {
                 var newParticleSystems = new ParticleSystem[newLength][];
-                particleSystems.CopyTo(newParticleSystems, 0);
-                particleSystems = newParticleSystems;
+                var temp = ParticleSystems; // UdonSharp...
+                temp.CopyTo(newParticleSystems, 0);
+                ParticleSystems = newParticleSystems;
             }
             var newActiveEffects = new bool[newLength];
-            activeEffects.CopyTo(newActiveEffects, 0);
-            activeEffects = newActiveEffects;
+            ActiveEffects.CopyTo(newActiveEffects, 0);
+            ActiveEffects = newActiveEffects;
             if (IsLoop)
             {
                 var newFadingOut = new bool[newLength];
@@ -284,8 +286,8 @@ When this is true said second rotation is random."
             toFinishIndexes = newToFinishIndexes;
             // syncing
             var newEffectOrder = new uint[newLength];
-            effectOrder.CopyTo(newEffectOrder, 0);
-            effectOrder = newEffectOrder;
+            EffectOrder.CopyTo(newEffectOrder, 0);
+            EffectOrder = newEffectOrder;
             var newRequestedSyncs = new bool[newLength];
             requestedSyncs.CopyTo(newRequestedSyncs, 0);
             requestedSyncs = newRequestedSyncs;
@@ -296,18 +298,18 @@ When this is true said second rotation is random."
 
         private void EnsureIsInRange(int index)
         {
-            if (index >= maxCount)
+            if (index >= MaxCount)
             {
-                while (index >= maxCount)
-                    maxCount *= 2;
-                GrowArrays(maxCount);
+                while (index >= MaxCount)
+                    MaxCount *= 2;
+                GrowArrays(MaxCount);
             }
         }
 
         private Transform GetEffectAtIndex(int index)
         {
             EnsureIsInRange(index);
-            var effectTransform = effectParents[index];
+            var effectTransform = EffectParents[index];
             if (effectTransform != null)
                 return effectTransform;
             // HACK: workaround for VRChat's weird behaviour when instantiating a copy of an existing object in the world.
@@ -320,9 +322,9 @@ When this is true said second rotation is random."
             var obj = VRCInstantiate(originalEffectObject);
             effectTransform = obj.transform;
             effectTransform.parent = this.transform;
-            effectParents[index] = effectTransform;
+            EffectParents[index] = effectTransform;
             if (HasParticleSystems)
-                particleSystems[index] = effectTransform.GetComponentsInChildren<ParticleSystem>();
+                ParticleSystems[index] = effectTransform.GetComponentsInChildren<ParticleSystem>();
             return effectTransform;
         }
 
@@ -333,11 +335,11 @@ When this is true said second rotation is random."
             int result = -1;
             float resultDistance = float.MaxValue;
             int count = 0;
-            for (int i = 0; i < maxCount; i++)
+            for (int i = 0; i < MaxCount; i++)
             {
-                if (activeEffects[i])
+                if (ActiveEffects[i])
                 {
-                    float distance = (effectParents[i].position - pos).magnitude;
+                    float distance = (EffectParents[i].position - pos).magnitude;
                     if (distance < resultDistance)
                     {
                         resultDistance = distance;
@@ -356,15 +358,15 @@ When this is true said second rotation is random."
                 rotation = rotation * Quaternion.AngleAxis(Random.Range(0f, 360f), Vector3.forward);
 
             int index;
-            if (ActiveCount == maxCount)
-                index = maxCount; // this will end up growing the arrays and creating a new effect
+            if (ActiveCount == MaxCount)
+                index = MaxCount; // this will end up growing the arrays and creating a new effect
             else
             {
                 // TODO: think about better solutions for this that don't require a loop
                 index = 0; // just to make C# compile, since the below loop should always find an index anyway
                 // find first inactive effect
-                for (int i = 0; i < maxCount; i++)
-                    if (!activeEffects[i] && (!IsLoop || !fadingOut[i]))
+                for (int i = 0; i < MaxCount; i++)
+                    if (!ActiveEffects[i] && (!IsLoop || !fadingOut[i]))
                     {
                         index = i;
                         break;
@@ -378,8 +380,8 @@ When this is true said second rotation is random."
         {
             if (ActiveCount == 0)
                 return;
-            for (int i = 0; i < maxCount; i++)
-                if (activeEffects[i])
+            for (int i = 0; i < MaxCount; i++)
+                if (ActiveEffects[i])
                 {
                     if (IsToggle)
                         StopToggleEffect(i);
@@ -398,36 +400,36 @@ When this is true said second rotation is random."
 
         private void StopToggleEffectInternal(int index)
         {
-            if (!activeEffects[index])
+            if (!ActiveEffects[index])
                 return;
-            activeEffects[index] = false;
+            ActiveEffects[index] = false;
             ActiveCount--;
             if (IsLoop)
             {
                 fadingOut[index] = true;
                 FadingOutCount++;
-                foreach (var ps in particleSystems[index])
+                foreach (var ps in ParticleSystems[index])
                     ps.Stop();
                 toFinishIndexes[toFinishCount++] = index;
                 this.SendCustomEventDelayedSeconds(nameof(EffectRanOut), effectDuration);
             }
             else // IsObject
-                effectParents[index].gameObject.SetActive(false);
+                EffectParents[index].gameObject.SetActive(false);
         }
 
         private void PlayEffectInternal(int index, Vector3 position, Quaternion rotation)
         {
             var effectTransform = GetEffectAtIndex(index);
-            if (activeEffects[index])
+            if (ActiveEffects[index])
                 return;
             ActiveCount++;
-            activeEffects[index] = true;
+            ActiveEffects[index] = true;
             effectTransform.SetPositionAndRotation(position, rotation);
             if (IsObject)
                 effectTransform.gameObject.SetActive(true);
             else
             {
-                foreach (var ps in particleSystems[index])
+                foreach (var ps in ParticleSystems[index])
                     ps.Play();
                 if (IsOnce)
                 {
@@ -451,7 +453,7 @@ When this is true said second rotation is random."
             else // IsOnce
             {
                 ActiveCount--;
-                activeEffects[index] = false;
+                ActiveEffects[index] = false;
             }
         }
 
@@ -460,16 +462,16 @@ When this is true said second rotation is random."
         // FIXME: when a loop effect is still fading out syncing (placing new ones) just doesn't seem work at all
 
         // incremental syncing
-        private uint[] effectOrder;
+        public uint[] EffectOrder { get; private set; }
         private uint currentTopOrder;
         private bool[] requestedSyncs;
         private int[] requestedIndexes;
         private int requestedCount;
-        [UdonSynced] private int[] syncedIndexes;
-        [UdonSynced] private uint[] syncedOrder;
-        [UdonSynced] private Vector3[] syncedPositions;
-        [UdonSynced] private Quaternion[] syncedRotations;
-        [UdonSynced] private float[] syncedTimes;
+        [UdonSynced] [HideInInspector] public int[] syncedIndexes;
+        [UdonSynced] [HideInInspector] public uint[] syncedOrder;
+        [UdonSynced] [HideInInspector] public Vector3[] syncedPositions;
+        [UdonSynced] [HideInInspector] public Quaternion[] syncedRotations;
+        [UdonSynced] [HideInInspector] public float[] syncedTimes;
         private const uint ActiveBit = 0x80000000;
         private const float MaxLoopDelay = 0.15f;
         private const float MaxDelay = 0.5f;
@@ -496,7 +498,7 @@ When this is true said second rotation is random."
                 return;
             requestedSyncs[index] = true;
             requestedIndexes[requestedCount++] = index;
-            effectOrder[index] = ++currentTopOrder;
+            EffectOrder[index] = ++currentTopOrder;
             Networking.SetOwner(Networking.LocalPlayer, this.gameObject);
             RequestSerialization();
         }
@@ -518,16 +520,16 @@ When this is true said second rotation is random."
             for (int i = 0; i < requestedCount; i++)
             {
                 var requestIndex = requestedIndexes[i];
-                var effectTransform = effectParents[requestIndex];
+                var effectTransform = EffectParents[requestIndex];
                 syncedIndexes[i] = requestIndex;
-                var order = effectOrder[requestIndex];
-                if (IsToggle && activeEffects[i])
+                var order = EffectOrder[requestIndex];
+                if (IsToggle && ActiveEffects[i])
                     order |= ActiveBit;
                 syncedOrder[i] = order;
                 syncedPositions[i] = effectTransform.position;
                 syncedRotations[i] = effectTransform.rotation;
                 if (HasParticleSystems)
-                    syncedTimes[i] = particleSystems[requestIndex][0].time;
+                    syncedTimes[i] = ParticleSystems[requestIndex][0].time;
                 requestedSyncs[requestIndex] = false;
             }
             requestedCount = 0;
@@ -554,9 +556,9 @@ When this is true said second rotation is random."
                 else
                     active = true;
                 EnsureIsInRange(effectIndex);
-                if (effectOrder[effectIndex] >= order)
+                if (EffectOrder[effectIndex] >= order)
                     continue;
-                effectOrder[effectIndex] = order;
+                EffectOrder[effectIndex] = order;
                 if (order > currentTopOrder)
                     currentTopOrder = order;
                 float time = delay - syncedTimes[i];
@@ -570,7 +572,7 @@ When this is true said second rotation is random."
                             if (IsLoop)
                             {
                                 time = Mathf.Max(0f, syncedTimes[i] - MaxLoopDelay);
-                                foreach (var ps in particleSystems[0])
+                                foreach (var ps in ParticleSystems[0])
                                     ps.time = time;
                             }
                         }

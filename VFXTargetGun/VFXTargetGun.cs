@@ -420,7 +420,7 @@ namespace JanSharp
                         return;
                     }
                     deletionTargetIndex = SelectedEffect.GetNearestActiveEffect(hit.point);
-                    Vector3 position = SelectedEffect.effectParents[deletionTargetIndex].position;
+                    Vector3 position = SelectedEffect.EffectParents[deletionTargetIndex].position;
                     if (Physics.Raycast(aimPoint.position, (position - aimPoint.position).normalized, out hit, maxDistance, rayLayerMask.value))
                         targetIndicator.SetPositionAndRotation(hit.point, Quaternion.LookRotation(hit.normal, aimPoint.forward));
                     else
