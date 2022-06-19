@@ -134,8 +134,7 @@ When this is true said second rotation is random."
 
         private void SetActiveCountText()
         {
-            var totalCount = ActiveCount + FadingOutCount;
-            buttonData.activeCountText.text = totalCount == 0 ? "" : totalCount.ToString();
+            buttonData.activeCountText.text = ActiveCount == 0 ? "" : ActiveCount.ToString();
         }
 
         public void Init(VFXTargetGun gun, int index)
