@@ -108,9 +108,15 @@ namespace JanSharp
         public bool IsDeleteMode => Mode == DeleteMode;
         public bool IsEditMode => Mode == EditMode;
 
-        public void SwitchToPlaceMode() => Mode = PlaceMode;
-        public void SwitchToDeleteMode() => Mode = DeleteMode;
-        public void SwitchToEditMode() => Mode = EditMode;
+        private void SwitchToMode(int mode)
+        {
+            Mode = mode;
+            if (!keepOpenToggle.isOn)
+                SetUIActive(false);
+        }
+        public void SwitchToPlaceMode() => SwitchToMode(PlaceMode);
+        public void SwitchToDeleteMode() => SwitchToMode(DeleteMode);
+        public void SwitchToEditMode() => SwitchToMode(EditMode);
 
         /// <summary>
         /// Simply does nothing if the given mode is UnknownMode.
