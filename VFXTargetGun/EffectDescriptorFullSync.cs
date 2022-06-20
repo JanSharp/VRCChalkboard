@@ -20,18 +20,17 @@ namespace JanSharp
         public override void OnPreSerialization()
         {
             var isToggle = descriptor.IsToggle;
-            var count = isToggle ? descriptor.InstantiatedEffectCount : descriptor.ActiveCount;
+            var count = descriptor.ActiveCount;
             syncedIndexes = new int[count];
             syncedOrder = new uint[count];
             syncedPositions = new Vector3[count];
             syncedRotations = new Quaternion[count];
             syncedTimes = new float[count];
-            // syncedOrder = descriptor.EffectOrder;
 
             int syncedI = 0;
             for (int i = 0; i < descriptor.MaxCount; i++)
             {
-                if (isToggle ? descriptor.EffectParents[i] != null : descriptor.ActiveEffects[i])
+                if (descriptor.ActiveEffects[i])
                 {
                     syncedIndexes[syncedI] = i;
                     var order = descriptor.EffectOrder[i];

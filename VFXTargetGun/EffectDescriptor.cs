@@ -44,7 +44,6 @@ When this is true said second rotation is random."
         public bool IsToggle => !IsOnce;
         public bool HasParticleSystems => !IsObject;
 
-        public int InstantiatedEffectCount { get; private set; }
         public Transform[] EffectParents { get; private set; }
         public ParticleSystem[][] ParticleSystems { get; private set; }
         public bool[] ActiveEffects { get; private set; }
@@ -214,6 +213,7 @@ When this is true said second rotation is random."
                 effectDuration = particleSystems[0].main.duration + effectLifetime;
             }
             this.ApplyProxyModifications();
+            fullSync.ApplyProxyModifications();
             return true;
         }
         #endif
@@ -498,6 +498,7 @@ When this is true said second rotation is random."
             requestedIndexes[requestedCount++] = index;
             EffectOrder[index] = ++currentTopOrder;
             Networking.SetOwner(Networking.LocalPlayer, this.gameObject);
+            Networking.SetOwner(Networking.LocalPlayer, fullSync.gameObject);
             RequestSerialization();
         }
 
