@@ -39,6 +39,7 @@ namespace JanSharp
         [SerializeField] private Transform effectsParent;
         [SerializeField] private BoxCollider uiCanvasCollider;
         [SerializeField] private UdonBehaviour uiToggle;
+        [SerializeField] private UdonBehaviour placeDeleteModeToggle;
         [SerializeField] private GameObject gunMesh;
         [SerializeField] private VRC_Pickup pickup;
         [SerializeField] private Transform aimPoint;
@@ -102,6 +103,7 @@ namespace JanSharp
                 foreach (var renderer in gunMeshRenderers)
                     foreach (var mat in renderer.materials)
                         mat.color = color;
+                placeDeleteModeToggle.InteractionText = IsPlaceMode ? "Switch to Delete" : "Switch to Place";
             }
         }
         public bool IsPlaceMode => Mode == PlaceMode;
@@ -117,6 +119,9 @@ namespace JanSharp
         public void SwitchToPlaceMode() => SwitchToMode(PlaceMode);
         public void SwitchToDeleteMode() => SwitchToMode(DeleteMode);
         public void SwitchToEditMode() => SwitchToMode(EditMode);
+        public void SwitchToPlaceModeKeepingUIOpen() => Mode = PlaceMode;
+        public void SwitchToDeleteModeKeepingUIOpen() => Mode = DeleteMode;
+        public void SwitchToEditModeKeepingUIOpen() => Mode = EditMode;
 
         /// <summary>
         /// Simply does nothing if the given mode is UnknownMode.
@@ -224,16 +229,20 @@ namespace JanSharp
                     if (SelectedEffect != null)
                         UManager.Register(this);
                     BecomeOwner(); // preemptive transfer to spread ownership of objects out between players
+                    Vector3 togglePos = placeDeleteModeToggle.transform.localPosition;
                     if (pickup.currentHand == VRC_Pickup.PickupHand.Left)
                     {
                         selectedEffectNameTextLeftHand.gameObject.SetActive(true);
                         selectedEffectNameTextRightHand.gameObject.SetActive(false);
+                        togglePos.x = Mathf.Abs(togglePos.x);
                     }
                     else
                     {
                         selectedEffectNameTextLeftHand.gameObject.SetActive(false);
                         selectedEffectNameTextRightHand.gameObject.SetActive(true);
+                        togglePos.x = -Mathf.Abs(togglePos.x);
                     }
+                    placeDeleteModeToggle.transform.localPosition = togglePos;
                 }
                 else
                 {
@@ -270,6 +279,8 @@ namespace JanSharp
                 pickup.pickupable = value;
                 gunMesh.SetActive(value);
                 uiToggle.gameObject.SetActive(value);
+                if (!value || initialized) // only turn _on_ if if the gun is initialized
+                    placeDeleteModeToggle.gameObject.SetActive(value);
                 selectedEffectNameTextRightHand.gameObject.SetActive(value);
             }
         }
@@ -317,6 +328,8 @@ namespace JanSharp
             buttonGrid.sizeDelta = new Vector2(buttonGrid.sizeDelta.x, buttonHeight * rows);
             if (selectedEffectIndex != -1)
                 SelectedEffect = descriptors[selectedEffectIndex];
+            if (IsVisible)
+                placeDeleteModeToggle.gameObject.SetActive(true);
         }
 
         private ColorBlock MakeColorBlock(Color color)
