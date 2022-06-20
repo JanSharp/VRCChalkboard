@@ -459,8 +459,6 @@ When this is true said second rotation is random."
 
 
 
-        // FIXME: when a loop effect is still fading out syncing (placing new ones) just doesn't seem work at all
-
         // incremental syncing
         public uint[] EffectOrder { get; private set; }
         private uint currentTopOrder;
@@ -523,7 +521,7 @@ When this is true said second rotation is random."
                 var effectTransform = EffectParents[requestIndex];
                 syncedIndexes[i] = requestIndex;
                 var order = EffectOrder[requestIndex];
-                if (IsToggle && ActiveEffects[i])
+                if (IsToggle && ActiveEffects[requestIndex])
                     order |= ActiveBit;
                 syncedOrder[i] = order;
                 syncedPositions[i] = effectTransform.position;
