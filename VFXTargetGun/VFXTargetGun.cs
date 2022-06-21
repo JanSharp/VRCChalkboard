@@ -44,6 +44,8 @@ namespace JanSharp
         [SerializeField] private VRC_Pickup pickup;
         [SerializeField] private Transform aimPoint;
         [SerializeField] private Transform targetIndicator;
+        [SerializeField] private Transform laser;
+        private float laserBaseScale;
         [SerializeField] private Renderer uiToggleRenderer;
         [SerializeField] private Toggle keepOpenToggle;
         public Toggle KeepOpenToggle => keepOpenToggle;
@@ -199,12 +201,15 @@ namespace JanSharp
                     selectedEffectNameTextLeftHand.text = "";
                     selectedEffectNameTextRightHand.text = "";
                     IsTargetIndicatorActive = false;
+                    laser.gameObject.SetActive(false);
                 }
                 else
                 {
                     value.Selected = true;
                     selectedEffectNameTextLeftHand.text = value.EffectName;
                     selectedEffectNameTextRightHand.text = value.EffectName;
+                    if (IsHeld)
+                        laser.gameObject.SetActive(true);
                 }
                 if (!isReceiving)
                 {
@@ -227,7 +232,10 @@ namespace JanSharp
                     if (!initialized && selectedEffectIndex != -1)
                         Init();
                     if (SelectedEffect != null)
+                    {
                         UManager.Register(this);
+                        laser.gameObject.SetActive(true);
+                    }
                     BecomeOwner(); // preemptive transfer to spread ownership of objects out between players
                     Vector3 togglePos = placeDeleteModeToggle.transform.localPosition;
                     if (pickup.currentHand == VRC_Pickup.PickupHand.Left)
@@ -248,6 +256,7 @@ namespace JanSharp
                 {
                     IsTargetIndicatorActive = false;
                     UManager.Deregister(this);
+                    laser.gameObject.SetActive(false);
                 }
             }
         }
@@ -330,6 +339,7 @@ namespace JanSharp
                 SelectedEffect = descriptors[selectedEffectIndex];
             if (IsVisible)
                 placeDeleteModeToggle.gameObject.SetActive(true);
+            laserBaseScale = laser.localScale.z;
         }
 
         private ColorBlock MakeColorBlock(Color color)
@@ -419,6 +429,7 @@ namespace JanSharp
             RaycastHit hit;
             if (Physics.Raycast(aimPoint.position, aimPoint.forward, out hit, maxDistance, rayLayerMask.value))
             {
+                laser.localScale = new Vector3(1f, 1f, (aimPoint.position - hit.point).magnitude * laserBaseScale);
                 if (IsPlaceMode)
                 {
                     targetIndicator.SetPositionAndRotation(hit.point, Quaternion.LookRotation(hit.normal, aimPoint.forward));
@@ -442,7 +453,10 @@ namespace JanSharp
                 }
             }
             else
+            {
+                laser.localScale = new Vector3(1f, 1f, maxDistance * laserBaseScale);
                 IsTargetIndicatorActive = false;
+            }
         }
 
 
