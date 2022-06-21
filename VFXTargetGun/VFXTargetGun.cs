@@ -46,6 +46,7 @@ namespace JanSharp
         [SerializeField] private Transform placeIndicator;
         [SerializeField] private Transform deleteIndicator;
         [SerializeField] private Transform laser;
+        [SerializeField] private Transform secondLaser;
         private float laserBaseScale;
         [SerializeField] private Renderer uiToggleRenderer;
         [SerializeField] private Toggle keepOpenToggle;
@@ -275,6 +276,7 @@ namespace JanSharp
                     return;
                 isDeleteIndicatorActive = value;
                 deleteIndicator.gameObject.SetActive(value);
+                secondLaser.gameObject.SetActive(value);
             }
         }
         private bool isPlaceIndicatorActive;
@@ -480,6 +482,8 @@ namespace JanSharp
                         return;
                     }
                     deleteIndicator.position = position;
+                    secondLaser.localScale = new Vector3(1f, 1f, (aimPoint.position - position).magnitude * laserBaseScale);
+                    secondLaser.LookAt(position);
                     IsDeleteIndicatorActive = true;
                 }
             }
