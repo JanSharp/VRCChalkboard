@@ -212,6 +212,7 @@ namespace JanSharp
                     selectedEffectNameTextRightHand.text = value.EffectName;
                     if (IsHeld)
                         laser.gameObject.SetActive(true);
+                    deleteIndicator.localScale = SelectedEffect.scale;
                 }
                 if (!isReceiving)
                 {
@@ -417,12 +418,18 @@ namespace JanSharp
             if (IsPlaceMode)
             {
                 if (IsPlaceIndicatorActive)
+                {
                     SelectedEffect.PlayEffect(placeIndicator.position, placeIndicator.rotation);
+                    IsPlaceIndicatorActive = false;
+                }
             }
             else if (IsDeleteMode)
             {
                 if (IsDeleteIndicatorActive)
+                {
                     SelectedEffect.StopToggleEffect(deleteTargetIndex);
+                    IsDeleteIndicatorActive = false;
+                }
             }
         }
 
@@ -465,11 +472,9 @@ namespace JanSharp
                         return;
                     }
                     deleteTargetIndex = SelectedEffect.GetNearestActiveEffect(hit.point);
-                    Vector3 position = SelectedEffect.EffectParents[deleteTargetIndex].position;
-                    if (Physics.Raycast(aimPoint.position, (position - aimPoint.position).normalized, out hit, maxDistance, rayLayerMask.value))
-                        deleteIndicator.SetPositionAndRotation(hit.point, Quaternion.LookRotation(hit.normal, aimPoint.forward));
-                    else
-                        deleteIndicator.SetPositionAndRotation(position, Quaternion.identity);
+                    Transform effectParent = SelectedEffect.EffectParents[deleteTargetIndex];
+                    Vector3 position = effectParent.position + effectParent.TransformDirection(SelectedEffect.localCenter);
+                    deleteIndicator.position = position;
                     IsDeleteIndicatorActive = true;
                 }
             }

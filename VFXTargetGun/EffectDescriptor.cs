@@ -32,6 +32,8 @@ When this is true said second rotation is random."
         [SerializeField] [HideInInspector] private float effectLifetime; // used by loop effects
         [SerializeField] [HideInInspector] private EffectDescriptorFullSync fullSync;
         [SerializeField] [HideInInspector] private GameObject originalEffectObject;
+        [SerializeField] [HideInInspector] public Vector3 localCenter;
+        [SerializeField] [HideInInspector] public Vector3 scale;
 
         private const int OnceEffect = 0;
         private const int LoopEffect = 1;
@@ -162,7 +164,8 @@ When this is true said second rotation is random."
                 LogErrMsg();
                 return false;
             }
-            originalEffectObject = this.transform.GetChild(0).gameObject;
+            Transform effectParent = this.transform.GetChild(0);
+            originalEffectObject = effectParent.gameObject;
             fullSync = this.transform.GetChild(1)?.GetUdonSharpComponent<EffectDescriptorFullSync>();
             if (fullSync == null)
             {
@@ -170,7 +173,7 @@ When this is true said second rotation is random."
                 return false;
             }
             fullSync.descriptor = this;
-            var particleSystems = this.transform.GetChild(0).GetComponentsInChildren<ParticleSystem>();
+            var particleSystems = effectParent.GetComponentsInChildren<ParticleSystem>();
             effectDuration = 0f;
             if (particleSystems.Length == 0)
                 effectType = ObjectEffect;
@@ -212,6 +215,38 @@ When this is true said second rotation is random."
                 }
                 effectDuration = particleSystems[0].main.duration + effectLifetime;
             }
+
+            if (IsObject)
+            {
+                var renderers = effectParent.GetComponentsInChildren<Renderer>();
+                Vector3 min = renderers.FirstOrDefault()?.bounds.min ?? effectParent.position - Vector3.one * 0.5f;
+                Vector3 max = renderers.FirstOrDefault()?.bounds.max ?? effectParent.position + Vector3.one * 0.5f;
+                foreach (Renderer renderer in renderers.Skip(1))
+                {
+                    var bounds = renderer.bounds;
+                    min.x = Mathf.Min(min.x, bounds.min.x);
+                    min.y = Mathf.Min(min.y, bounds.min.y);
+                    min.z = Mathf.Min(min.z, bounds.min.z);
+                    max.x = Mathf.Max(max.x, bounds.max.x);
+                    max.y = Mathf.Max(max.y, bounds.max.y);
+                    max.z = Mathf.Max(max.z, bounds.max.z);
+                }
+                var center = (max + min) / 2;
+                localCenter = effectParent.InverseTransformDirection(center - effectParent.position);
+                // this can overshoot by a lot because the renderer bounds are world space and their min and max points are effectively
+                // the 2 corner points for a cube that isn't rotated, which means if you have a long and thin object that's rotated
+                // 45 degrees (at build time since that's when this code runs) its bounding box will be much much larger than it would be
+                // if the object was rotated 0 degrees. However while this might overshoot, it will never undershoot, which means the
+                // target indicators will always fully contain the object they are targeting
+                scale = Vector3.one * (max - min).magnitude * 1.0025f;
+            }
+            else
+            {
+                // TODO: figure out the size of a particle system
+                localCenter = Vector3.zero;
+                scale = Vector3.one;
+            }
+
             this.ApplyProxyModifications();
             fullSync.ApplyProxyModifications();
             return true;
@@ -339,7 +374,8 @@ When this is true said second rotation is random."
             {
                 if (ActiveEffects[i])
                 {
-                    float distance = (EffectParents[i].position - pos).magnitude;
+                    var effectTransform = EffectParents[i];
+                    float distance = (effectTransform.position + effectTransform.TransformDirection(localCenter) - pos).magnitude;
                     if (distance < resultDistance)
                     {
                         resultDistance = distance;
