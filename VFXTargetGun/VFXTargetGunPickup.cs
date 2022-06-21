@@ -14,7 +14,7 @@ namespace JanSharp
         public override void OnPickupUseDown()
         {
             var time = Time.time;
-            if (time - lastUseTime >= 0.175f)
+            if (time - lastUseTime >= 0.075f) // high enough to hopefully prevent scuff but low enough to allow intentional double clicks
             {
                 lastUseTime = time;
                 gun.UseSelectedEffect();
