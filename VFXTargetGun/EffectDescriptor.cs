@@ -156,11 +156,11 @@ When this is true said second rotation is random."
         }
         bool IOnBuildCallback.OnBuild()
         {
-            void LogErrMsg() => Debug.LogError($"The {nameof(EffectDescriptor)} requires 2 children."
+            void LogErrMsg() => Debug.LogError($"The {nameof(EffectDescriptor)} must have exactly 2 children."
                 + $" The first child must be the 'EffectParent' which is either the parent for a collection of particle systems,"
                 + $" or the parent for an object. To be exact it is considered to be an object whenever there are no particle systems."
                 + $" The second child must have the {nameof(EffectDescriptorFullSync)} Udon Behaviour on it");
-            if (this.transform.childCount < 2)
+            if (this.transform.childCount != 2)
             {
                 LogErrMsg();
                 return false;

@@ -473,8 +473,25 @@ namespace JanSharp
                         IsDeleteIndicatorActive = false;
                         return;
                     }
-                    deleteTargetIndex = SelectedEffect.GetNearestActiveEffect(hit.point);
-                    Transform effectParent = SelectedEffect.EffectParents[deleteTargetIndex];
+                    Transform effectParent;
+                    Transform mainEffectTransform = ((Component)SelectedEffect).transform; // UdonSharp being picky
+                    if (hit.transform.IsChildOf(mainEffectTransform))
+                    {
+                        effectParent = hit.transform;
+                        while (true)
+                        {
+                            var parent = effectParent.parent;
+                            if (parent == mainEffectTransform)
+                                break;
+                            effectParent = parent;
+                        }
+                        deleteTargetIndex = effectParent.GetSiblingIndex() - 2;
+                    }
+                    else
+                    {
+                        deleteTargetIndex = SelectedEffect.GetNearestActiveEffect(hit.point);
+                        effectParent = SelectedEffect.EffectParents[deleteTargetIndex];
+                    }
                     Vector3 position = effectParent.position + effectParent.TransformDirection(SelectedEffect.effectLocalCenter);
                     if (SelectedEffect.doLimitDistance && (position - hit.point).magnitude > Mathf.Max(1f, SelectedEffect.effectScale.x * 0.65f))
                     {
