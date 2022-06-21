@@ -43,7 +43,8 @@ namespace JanSharp
         [SerializeField] private GameObject gunMesh;
         [SerializeField] private VRC_Pickup pickup;
         [SerializeField] private Transform aimPoint;
-        [SerializeField] private Transform targetIndicator;
+        [SerializeField] private Transform placeIndicator;
+        [SerializeField] private Transform deleteIndicator;
         [SerializeField] private Transform laser;
         private float laserBaseScale;
         [SerializeField] private Renderer uiToggleRenderer;
@@ -200,7 +201,8 @@ namespace JanSharp
                     UpdateColors();
                     selectedEffectNameTextLeftHand.text = "";
                     selectedEffectNameTextRightHand.text = "";
-                    IsTargetIndicatorActive = false;
+                    IsPlaceIndicatorActive = false;
+                    IsDeleteIndicatorActive = false;
                     laser.gameObject.SetActive(false);
                 }
                 else
@@ -254,23 +256,36 @@ namespace JanSharp
                 }
                 else
                 {
-                    IsTargetIndicatorActive = false;
+                    IsPlaceIndicatorActive = false;
+                    IsDeleteIndicatorActive = false;
                     UManager.Deregister(this);
                     laser.gameObject.SetActive(false);
                 }
             }
         }
-        private int deletionTargetIndex;
-        private bool isTargetIndicatorActive;
-        private bool IsTargetIndicatorActive
+        private int deleteTargetIndex;
+        private bool isDeleteIndicatorActive;
+        private bool IsDeleteIndicatorActive
         {
-            get => isTargetIndicatorActive;
+            get => isDeleteIndicatorActive;
             set
             {
-                if (isTargetIndicatorActive == value)
+                if (isDeleteIndicatorActive == value)
                     return;
-                isTargetIndicatorActive = value;
-                targetIndicator.gameObject.SetActive(value);
+                isDeleteIndicatorActive = value;
+                deleteIndicator.gameObject.SetActive(value);
+            }
+        }
+        private bool isPlaceIndicatorActive;
+        private bool IsPlaceIndicatorActive
+        {
+            get => isPlaceIndicatorActive;
+            set
+            {
+                if (isPlaceIndicatorActive == value)
+                    return;
+                isPlaceIndicatorActive = value;
+                placeIndicator.gameObject.SetActive(value);
             }
         }
         private bool isVisible;
@@ -397,12 +412,18 @@ namespace JanSharp
 
         public void UseSelectedEffect()
         {
-            if (SelectedEffect == null || !IsTargetIndicatorActive)
+            if (SelectedEffect == null)
                 return;
             if (IsPlaceMode)
-                SelectedEffect.PlayEffect(targetIndicator.position, targetIndicator.rotation);
+            {
+                if (IsPlaceIndicatorActive)
+                    SelectedEffect.PlayEffect(placeIndicator.position, placeIndicator.rotation);
+            }
             else if (IsDeleteMode)
-                SelectedEffect.StopToggleEffect(deletionTargetIndex);
+            {
+                if (IsDeleteIndicatorActive)
+                    SelectedEffect.StopToggleEffect(deleteTargetIndex);
+            }
         }
 
         public void UpdateColors()
@@ -432,30 +453,31 @@ namespace JanSharp
                 laser.localScale = new Vector3(1f, 1f, (aimPoint.position - hit.point).magnitude * laserBaseScale);
                 if (IsPlaceMode)
                 {
-                    targetIndicator.SetPositionAndRotation(hit.point, Quaternion.LookRotation(hit.normal, aimPoint.forward));
-                    IsTargetIndicatorActive = true;
+                    placeIndicator.SetPositionAndRotation(hit.point, Quaternion.LookRotation(hit.normal, aimPoint.forward));
+                    IsPlaceIndicatorActive = true;
                 }
                 else if (IsDeleteMode)
                 {
                     // NOTE: this whole logic is very most likely a big performance concern, mostly because of GetNearestActiveEffect
                     if (SelectedEffect == null || !SelectedEffect.IsToggle || SelectedEffect.ActiveCount == 0)
                     {
-                        IsTargetIndicatorActive = false;
+                        IsDeleteIndicatorActive = false;
                         return;
                     }
-                    deletionTargetIndex = SelectedEffect.GetNearestActiveEffect(hit.point);
-                    Vector3 position = SelectedEffect.EffectParents[deletionTargetIndex].position;
+                    deleteTargetIndex = SelectedEffect.GetNearestActiveEffect(hit.point);
+                    Vector3 position = SelectedEffect.EffectParents[deleteTargetIndex].position;
                     if (Physics.Raycast(aimPoint.position, (position - aimPoint.position).normalized, out hit, maxDistance, rayLayerMask.value))
-                        targetIndicator.SetPositionAndRotation(hit.point, Quaternion.LookRotation(hit.normal, aimPoint.forward));
+                        deleteIndicator.SetPositionAndRotation(hit.point, Quaternion.LookRotation(hit.normal, aimPoint.forward));
                     else
-                        targetIndicator.SetPositionAndRotation(position, Quaternion.identity);
-                    IsTargetIndicatorActive = true;
+                        deleteIndicator.SetPositionAndRotation(position, Quaternion.identity);
+                    IsDeleteIndicatorActive = true;
                 }
             }
             else
             {
                 laser.localScale = new Vector3(1f, 1f, maxDistance * laserBaseScale);
-                IsTargetIndicatorActive = false;
+                IsPlaceIndicatorActive = false;
+                IsDeleteIndicatorActive = false;
             }
         }
 
