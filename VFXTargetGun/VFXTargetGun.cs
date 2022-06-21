@@ -212,7 +212,7 @@ namespace JanSharp
                     selectedEffectNameTextRightHand.text = value.EffectName;
                     if (IsHeld)
                         laser.gameObject.SetActive(true);
-                    deleteIndicator.localScale = SelectedEffect.scale;
+                    deleteIndicator.localScale = SelectedEffect.effectScale;
                 }
                 if (!isReceiving)
                 {
@@ -473,7 +473,12 @@ namespace JanSharp
                     }
                     deleteTargetIndex = SelectedEffect.GetNearestActiveEffect(hit.point);
                     Transform effectParent = SelectedEffect.EffectParents[deleteTargetIndex];
-                    Vector3 position = effectParent.position + effectParent.TransformDirection(SelectedEffect.localCenter);
+                    Vector3 position = effectParent.position + effectParent.TransformDirection(SelectedEffect.effectLocalCenter);
+                    if (SelectedEffect.doLimitDistance && (position - hit.point).magnitude > Mathf.Max(1f, SelectedEffect.effectScale.x * 0.65f))
+                    {
+                        IsDeleteIndicatorActive = false;
+                        return;
+                    }
                     deleteIndicator.position = position;
                     IsDeleteIndicatorActive = true;
                 }

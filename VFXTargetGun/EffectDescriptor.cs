@@ -32,8 +32,9 @@ When this is true said second rotation is random."
         [SerializeField] [HideInInspector] private float effectLifetime; // used by loop effects
         [SerializeField] [HideInInspector] private EffectDescriptorFullSync fullSync;
         [SerializeField] [HideInInspector] private GameObject originalEffectObject;
-        [SerializeField] [HideInInspector] public Vector3 localCenter;
-        [SerializeField] [HideInInspector] public Vector3 scale;
+        [SerializeField] [HideInInspector] public Vector3 effectLocalCenter;
+        [SerializeField] [HideInInspector] public Vector3 effectScale;
+        [SerializeField] [HideInInspector] public bool doLimitDistance;
 
         private const int OnceEffect = 0;
         private const int LoopEffect = 1;
@@ -232,19 +233,21 @@ When this is true said second rotation is random."
                     max.z = Mathf.Max(max.z, bounds.max.z);
                 }
                 var center = (max + min) / 2;
-                localCenter = effectParent.InverseTransformDirection(center - effectParent.position);
+                effectLocalCenter = effectParent.InverseTransformDirection(center - effectParent.position);
                 // this can overshoot by a lot because the renderer bounds are world space and their min and max points are effectively
                 // the 2 corner points for a cube that isn't rotated, which means if you have a long and thin object that's rotated
                 // 45 degrees (at build time since that's when this code runs) its bounding box will be much much larger than it would be
                 // if the object was rotated 0 degrees. However while this might overshoot, it will never undershoot, which means the
                 // target indicators will always fully contain the object they are targeting
-                scale = Vector3.one * (max - min).magnitude * 1.0025f;
+                effectScale = Vector3.one * (max - min).magnitude * 1.0025f;
+                doLimitDistance = effectParent.GetComponentsInChildren<Collider>().Any();
             }
             else
             {
                 // TODO: figure out the size of a particle system
-                localCenter = Vector3.zero;
-                scale = Vector3.one;
+                effectLocalCenter = Vector3.zero;
+                effectScale = Vector3.one;
+                doLimitDistance = false;
             }
 
             this.ApplyProxyModifications();
@@ -375,7 +378,7 @@ When this is true said second rotation is random."
                 if (ActiveEffects[i])
                 {
                     var effectTransform = EffectParents[i];
-                    float distance = (effectTransform.position + effectTransform.TransformDirection(localCenter) - pos).magnitude;
+                    float distance = (effectTransform.position + effectTransform.TransformDirection(effectLocalCenter) - pos).magnitude;
                     if (distance < resultDistance)
                     {
                         resultDistance = distance;
