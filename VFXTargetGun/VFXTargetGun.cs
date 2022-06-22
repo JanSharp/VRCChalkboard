@@ -42,6 +42,7 @@ namespace JanSharp
         [SerializeField] private RectTransform screenUIContainer;
         [SerializeField] private RectTransform mainWindow;
         [SerializeField] private RectTransform confirmationWindow;
+        [SerializeField] private ScrollRect scrollRect;
         [SerializeField] private UdonBehaviour uiToggle;
         [SerializeField] private UdonBehaviour placeDeleteModeToggle;
         [SerializeField] private GameObject gunMesh;
@@ -469,6 +470,58 @@ namespace JanSharp
             uiToggleRenderer.material.color = color;
         }
 
+        private void ScrollToSelectedEffect()
+        {
+            if (SelectedEffect == null)
+                return;
+
+            /*
+            logic behind keeping the selected effect withing the 2nd or 3rd row
+
+            we need to calculate the distance from the selected effect button to the center of the scroll view.
+            if that distance exceeds a certain value (45) then the distance must be clamped to 45 and the new content position
+            can be calculated from there.
+
+            so what do we need?
+
+            the current position of the content
+            the current position of the selected effect button
+
+            the position in the content that is the current center of the scroll view
+            is half the scroll view height (so 180) + the current position of the content
+
+            the position of the button is its current row * the button height (so 90) + half the button height (so 45)
+
+            the distance from the button to the center is the position of the button - the current center position of the content
+
+            if the value is positive the button is above the center, if the value is negative the button is underneath the center
+
+            if the absolute value of the distance is > half the button height (so 45) we have to clamp it, calculate the ultimate
+            difference between 45 and the current distance and then apply that inverted difference to the content position,
+            while making sure to clamp the contents position to 0 and the largest valid number, which is calculated somehow
+            */
+
+            var currentContentPosition = scrollRect.content.anchoredPosition.y;
+
+            // selected button position in content
+            var currentRow = SelectedEffect.Index / columnCount;
+            var currentButtonPosition = ((float)currentRow + 0.5f) * buttonHeight;
+
+            var contentPositionScrollViewCenter = currentContentPosition + buttonHeight * 2f;
+
+            var buttonDistanceFromCenter = currentButtonPosition - contentPositionScrollViewCenter;
+
+            if (Mathf.Abs(buttonDistanceFromCenter) > buttonHeight / 2f)
+            {
+                var clampedPositionFromCenter = buttonDistanceFromCenter < 0f ? buttonHeight / -2f : buttonHeight / 2f;
+                var positionDiff = buttonDistanceFromCenter - clampedPositionFromCenter;
+
+                var rows = (descriptors.Length + columnCount - 1) / columnCount;
+                Canvas.ForceUpdateCanvases();
+                scrollRect.content.anchoredPosition = Vector2.up * Mathf.Clamp(currentContentPosition + positionDiff, 0f, Mathf.Max(0f, ((float)(rows - 4)) * buttonHeight));
+            }
+        }
+
         public void CustomUpdate()
         {
             if (Input.anyKeyDown) // since Udon is slow, check if anything was even pressed first before figuring out which one it was
@@ -492,6 +545,7 @@ namespace JanSharp
                             SelectedEffect = descriptors[descriptors.Length - 1];
                         else
                             SelectedEffect = descriptors[(SelectedEffect.Index - 1 + descriptors.Length) % descriptors.Length];
+                        ScrollToSelectedEffect();
                     }
                     else
                     {
@@ -499,6 +553,7 @@ namespace JanSharp
                             SelectedEffect = descriptors[0];
                         else
                             SelectedEffect = descriptors[(SelectedEffect.Index + 1) % descriptors.Length];
+                        ScrollToSelectedEffect();
                     }
                 }
                 // if (Input.GetKeyDown(KeyCode.R)) // can't use R
