@@ -100,6 +100,8 @@ namespace JanSharp
             {
                 if (value == mode)
                     return;
+                IsPlaceIndicatorActive = false;
+                IsDeleteIndicatorActive = false;
                 SetModeButtonTextUnderline(mode, false);
                 mode = value;
                 SetModeButtonTextUnderline(mode, true);
@@ -193,12 +195,9 @@ namespace JanSharp
                     return;
                 if (selectedEffect != null)
                     selectedEffect.Selected = false;
-                else if (IsHeld)
-                    UManager.Register(this);
                 selectedEffect = value; // update `selectedEffect` before setting `Selected` to true on an effect descriptor
                 if (value == null)
                 {
-                    UManager.Deregister(this);
                     UpdateColors();
                     selectedEffectNameTextLeftHand.text = "";
                     selectedEffectNameTextRightHand.text = "";
@@ -235,11 +234,9 @@ namespace JanSharp
                 {
                     if (!initialized && selectedEffectIndex != -1)
                         Init();
+                    UManager.Register(this);
                     if (SelectedEffect != null)
-                    {
-                        UManager.Register(this);
                         laser.gameObject.SetActive(true);
-                    }
                     BecomeOwner(); // preemptive transfer to spread ownership of objects out between players
                     Vector3 togglePos = placeDeleteModeToggle.transform.localPosition;
                     if (pickup.currentHand == VRC_Pickup.PickupHand.Left)
@@ -456,6 +453,26 @@ namespace JanSharp
 
         public void CustomUpdate()
         {
+            if (Input.anyKeyDown) // since Udon is slow, check if anything was even pressed first before figuring out which one it was
+            {
+                if (Input.GetKeyDown(KeyCode.Q))
+                    SelectedEffect = null;
+                if (Input.GetKeyDown(KeyCode.E))
+                    ToggleUI();
+                if (Input.GetKeyDown(KeyCode.F))
+                {
+                    if (IsPlaceMode)
+                        Mode = DeleteMode;
+                    else
+                        Mode = PlaceMode;
+                }
+                // else if (Input.GetKeyDown(KeyCode.R))
+                //     SwitchToEditMode();
+            }
+
+            if (SelectedEffect == null)
+                return;
+
             RaycastHit hit;
             if (Physics.Raycast(aimPoint.position, aimPoint.forward, out hit, maxDistance, rayLayerMask.value))
             {
@@ -468,7 +485,7 @@ namespace JanSharp
                 else if (IsDeleteMode)
                 {
                     // NOTE: this whole logic is very most likely a big performance concern, mostly because of GetNearestActiveEffect
-                    if (SelectedEffect == null || !SelectedEffect.IsToggle || SelectedEffect.ActiveCount == 0)
+                    if (!SelectedEffect.IsToggle || SelectedEffect.ActiveCount == 0)
                     {
                         IsDeleteIndicatorActive = false;
                         return;
