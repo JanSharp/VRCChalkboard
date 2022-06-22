@@ -471,7 +471,7 @@ namespace JanSharp
 
         public void CustomUpdate()
         {
-            // if (Input.anyKeyDown) // since Udon is slow, check if anything was even pressed first before figuring out which one it was
+            if (Input.anyKeyDown) // since Udon is slow, check if anything was even pressed first before figuring out which one it was
             {
                 if (Input.GetKeyDown(KeyCode.Q))
                     SelectedEffect = null;
@@ -484,45 +484,21 @@ namespace JanSharp
                     else
                         Mode = PlaceMode;
                 }
-                // if (Input.GetKeyDown(KeyCode.LeftShift))
-                // {
-                //     Debug.Log("Input.GetKeyDown(KeyCode.LeftShift)");
-                // }
-                // if (Input.GetKey(KeyCode.LeftShift))
-                // {
-                //     Debug.Log("Input.GetKey(KeyCode.LeftShift)");
-                // }
-                // if (Input.GetKeyDown(KeyCode.Tab))
-                // {
-                //     Debug.Log("Input.GetKeyDown(KeyCode.Tab)");
-                // }
-                // if (Input.GetKey(KeyCode.Tab))
-                // {
-                //     Debug.Log("Input.GetKey(KeyCode.Tab)");
-                // }
                 if (Input.GetKeyDown(KeyCode.Tab))
                 {
-                    // if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
-                    // {
-                    //     if (SelectedEffect == null)
-                    //     {
-                    //         SelectedEffect = descriptors[descriptors.Length - 1];
-                    //     }
-                    //     else
-                    //     {
-                    //         SelectedEffect = descriptors[(SelectedEffect.Index - 1 + descriptors.Length) % descriptors.Length];
-                    //     }
-                    // }
-                    // else
+                    if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl))
                     {
                         if (SelectedEffect == null)
-                        {
-                            SelectedEffect = descriptors[0];
-                        }
+                            SelectedEffect = descriptors[descriptors.Length - 1];
                         else
-                        {
+                            SelectedEffect = descriptors[(SelectedEffect.Index - 1 + descriptors.Length) % descriptors.Length];
+                    }
+                    else
+                    {
+                        if (SelectedEffect == null)
+                            SelectedEffect = descriptors[0];
+                        else
                             SelectedEffect = descriptors[(SelectedEffect.Index + 1) % descriptors.Length];
-                        }
                     }
                 }
                 // if (Input.GetKeyDown(KeyCode.R)) // can't use R
