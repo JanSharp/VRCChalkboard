@@ -539,6 +539,8 @@ namespace JanSharp
                 }
                 if (Input.GetKeyDown(KeyCode.Tab))
                 {
+                    if (!initialized)
+                        Init();
                     if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl))
                     {
                         if (SelectedEffect == null)
