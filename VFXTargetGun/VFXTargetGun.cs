@@ -545,6 +545,8 @@ namespace JanSharp
                 // mode selection
                 if (Input.GetKeyDown(KeyCode.F))
                 {
+                    if (!initialized)
+                        Init();
                     if (IsPlaceMode)
                         Mode = DeleteMode;
                     else
