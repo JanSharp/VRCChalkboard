@@ -522,14 +522,27 @@ namespace JanSharp
             }
         }
 
+        private void ProcessAlphaNumericKeyDown(int key)
+        {
+            int index = (key - 1 + 10) % 10; // make 1 => 0, ..., 0 => 9 (and the rest in between is also moved down 1)
+            if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
+                index += 10;
+            if (Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt))
+                index += 20;
+            if (!initialized)
+                Init();
+            SelectedEffect = index >= descriptors.Length ? null : descriptors[index];
+        }
+
         public void CustomUpdate()
         {
             if (Input.anyKeyDown) // since Udon is slow, check if anything was even pressed first before figuring out which one it was
             {
-                if (Input.GetKeyDown(KeyCode.Q))
-                    SelectedEffect = null;
+                // misc
                 if (Input.GetKeyDown(KeyCode.E))
                     ToggleUI();
+
+                // mode selection
                 if (Input.GetKeyDown(KeyCode.F))
                 {
                     if (IsPlaceMode)
@@ -537,7 +550,13 @@ namespace JanSharp
                     else
                         Mode = PlaceMode;
                 }
-                if (Input.GetKeyDown(KeyCode.Tab))
+                // if (Input.GetKeyDown(KeyCode.R)) // can't use R
+                //     SwitchToEditMode();
+
+                // effect selection
+                if (Input.GetKeyDown(KeyCode.Q))
+                    SelectedEffect = null;
+                else if (Input.GetKeyDown(KeyCode.Tab))
                 {
                     if (!initialized)
                         Init();
@@ -558,8 +577,26 @@ namespace JanSharp
                         ScrollToSelectedEffect();
                     }
                 }
-                // if (Input.GetKeyDown(KeyCode.R)) // can't use R
-                //     SwitchToEditMode();
+                else if (Input.GetKeyDown(KeyCode.Alpha1))
+                    ProcessAlphaNumericKeyDown(1);
+                else if (Input.GetKeyDown(KeyCode.Alpha2))
+                    ProcessAlphaNumericKeyDown(2);
+                else if (Input.GetKeyDown(KeyCode.Alpha3))
+                    ProcessAlphaNumericKeyDown(3);
+                else if (Input.GetKeyDown(KeyCode.Alpha4))
+                    ProcessAlphaNumericKeyDown(4);
+                else if (Input.GetKeyDown(KeyCode.Alpha5))
+                    ProcessAlphaNumericKeyDown(5);
+                else if (Input.GetKeyDown(KeyCode.Alpha6))
+                    ProcessAlphaNumericKeyDown(6);
+                else if (Input.GetKeyDown(KeyCode.Alpha7))
+                    ProcessAlphaNumericKeyDown(7);
+                else if (Input.GetKeyDown(KeyCode.Alpha8))
+                    ProcessAlphaNumericKeyDown(8);
+                else if (Input.GetKeyDown(KeyCode.Alpha9))
+                    ProcessAlphaNumericKeyDown(9);
+                else if (Input.GetKeyDown(KeyCode.Alpha0))
+                    ProcessAlphaNumericKeyDown(0);
             }
 
             if (SelectedEffect == null)
