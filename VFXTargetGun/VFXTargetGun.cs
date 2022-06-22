@@ -38,6 +38,10 @@ namespace JanSharp
         [SerializeField] private float buttonHeight = 90f;
         [SerializeField] private Transform effectsParent;
         [SerializeField] private BoxCollider uiCanvasCollider;
+        [SerializeField] private RectTransform itemUIContainer;
+        [SerializeField] private RectTransform screenUIContainer;
+        [SerializeField] private RectTransform mainWindow;
+        [SerializeField] private RectTransform confirmationWindow;
         [SerializeField] private UdonBehaviour uiToggle;
         [SerializeField] private UdonBehaviour placeDeleteModeToggle;
         [SerializeField] private GameObject gunMesh;
@@ -57,7 +61,6 @@ namespace JanSharp
         [SerializeField] private Button placeModeButton;
         [SerializeField] private Button deleteModeButton;
         [SerializeField] private Button editModeButton;
-        [SerializeField] private GameObject confirmationWindow;
 
         // set OnBuild
         [SerializeField] [HideInInspector] private MeshRenderer[] gunMeshRenderers;
@@ -232,6 +235,12 @@ namespace JanSharp
                 isHeld = value;
                 if (value)
                 {
+                    if (!Networking.LocalPlayer.IsUserInVR())
+                    {
+                        mainWindow.SetParent(screenUIContainer, false);
+                        confirmationWindow.SetParent(screenUIContainer, false);
+                        uiCanvasCollider.enabled = false;
+                    }
                     if (!initialized && selectedEffectIndex != -1)
                         Init();
                     UManager.Register(this);
@@ -255,6 +264,13 @@ namespace JanSharp
                 }
                 else
                 {
+                    if (!Networking.LocalPlayer.IsUserInVR())
+                    {
+                        mainWindow.SetParent(itemUIContainer, false);
+                        confirmationWindow.SetParent(itemUIContainer, false);
+                        if (itemUIContainer.gameObject.activeSelf)
+                            uiCanvasCollider.enabled = true;
+                    }
                     IsPlaceIndicatorActive = false;
                     IsDeleteIndicatorActive = false;
                     UManager.Deregister(this);
@@ -378,24 +394,26 @@ namespace JanSharp
                 CloseUI();
         }
 
-        public void DeleteEverything() => confirmationWindow.SetActive(true);
-        public void CancelDeleteEverything() => confirmationWindow.SetActive(false);
+        public void DeleteEverything() => confirmationWindow.gameObject.SetActive(true);
+        public void CancelDeleteEverything() => confirmationWindow.gameObject.SetActive(false);
         public void ConfirmDeleteEverything()
         {
-            confirmationWindow.SetActive(false);
+            confirmationWindow.gameObject.SetActive(false);
             // TODO: spread work out across frames (probably)
             foreach (var descriptor in descriptors)
                 descriptor.StopAllEffects();
         }
 
-        public void ToggleUI() => SetUIActive(!uiCanvasCollider.gameObject.activeSelf);
+        public void ToggleUI() => SetUIActive(!itemUIContainer.gameObject.activeSelf);
         public void CloseUI() => SetUIActive(false);
         public void SetUIActive(bool active)
         {
             if (!initialized && active)
                 Init();
-            uiCanvasCollider.gameObject.SetActive(active);
-            uiCanvasCollider.enabled = active;
+            itemUIContainer.gameObject.SetActive(active);
+            screenUIContainer.gameObject.SetActive(active);
+            if (!Networking.LocalPlayer.IsUserInVR() && !IsHeld)
+                uiCanvasCollider.enabled = active;
             uiToggle.DisableInteractive = active;
             if (active)
                 BecomeOwner();
