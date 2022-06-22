@@ -532,6 +532,7 @@ namespace JanSharp
             if (!initialized)
                 Init();
             SelectedEffect = index >= descriptors.Length ? null : descriptors[index];
+            ScrollToSelectedEffect();
         }
 
         public void CustomUpdate()
