@@ -426,7 +426,7 @@ namespace JanSharp
                 Init();
             itemUIContainer.gameObject.SetActive(active);
             screenUIContainer.gameObject.SetActive(active);
-            if (!Networking.LocalPlayer.IsUserInVR() && !IsHeld)
+            if (Networking.LocalPlayer != null && !Networking.LocalPlayer.IsUserInVR() && !IsHeld)
                 uiCanvasCollider.enabled = active;
             uiToggle.DisableInteractive = active;
             if (active)
