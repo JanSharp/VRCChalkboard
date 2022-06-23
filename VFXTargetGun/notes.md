@@ -98,7 +98,7 @@ pretty much a must for v2:
 
 -[x] info button for keybinds
 -[x] workaround the local player not existing during the upload process to prevent that annoying error
--[ ] better styling to fit the theme, kind of
+-[x] better styling to fit the theme, kind of
 -[ ] outline for selected effect
 -[ ] figure out exact gun grips and fix the vertical position of the gun in desktop and perfectly fix the position in VR such that the gun is always exactly in your hand and you get instant feedback when moving it.
 
