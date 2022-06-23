@@ -111,8 +111,8 @@ When this is true said second rotation is random."
 
         private void UpdateColors()
         {
-            // update button color and style
-            buttonData.text.text = Selected ? ("<u>" + effectName + "</u>") : effectName;
+            // update button sprite and color
+            buttonData.button.image.sprite = Selected ? buttonData.selectedSprite : buttonData.normalSprite;
             bool active = ActiveCount != 0 || FadingOutCount != 0;
             switch (effectType)
             {
