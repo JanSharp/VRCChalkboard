@@ -63,12 +63,11 @@ namespace JanSharp
         [SerializeField] private Button placeModeButton;
         [SerializeField] private Button deleteModeButton;
         [SerializeField] private Button editModeButton;
+        [SerializeField] private Sprite selectedSprite;
 
         // set OnBuild
         [SerializeField] [HideInInspector] private MeshRenderer[] gunMeshRenderers;
-        [SerializeField] [HideInInspector] private TextMeshProUGUI placeModeButtonText;
-        [SerializeField] [HideInInspector] private TextMeshProUGUI deleteModeButtonText;
-        [SerializeField] [HideInInspector] private TextMeshProUGUI editModeButtonText;
+        [SerializeField] [HideInInspector] private Sprite normalSprite;
 
         #if UNITY_EDITOR && !COMPILER_UDONSHARP
         [InitializeOnLoad]
@@ -78,16 +77,13 @@ namespace JanSharp
         }
         bool IOnBuildCallback.OnBuild()
         {
-            if (gunMesh == null)
+            if (gunMesh == null || placeModeButton == null)
             {
                 Debug.LogError("VFX Target gun requires all internal references to be set in the inspector.");
                 return false;
             }
             gunMeshRenderers = gunMesh.GetComponentsInChildren<MeshRenderer>();
-            TextMeshProUGUI GetButtonText(Transform button) => button.GetChild(0).GetComponent<TextMeshProUGUI>();
-            placeModeButtonText = GetButtonText(placeModeButton.transform);
-            deleteModeButtonText = GetButtonText(deleteModeButton.transform);
-            editModeButtonText = GetButtonText(editModeButton.transform);
+            normalSprite = placeModeButton.image.sprite;
             this.ApplyProxyModifications();
             return true;
         }
@@ -137,26 +133,24 @@ namespace JanSharp
         /// <summary>
         /// Simply does nothing if the given mode is UnknownMode.
         /// </summary>
-        private void SetModeButtonTextUnderline(int mode, bool isUnderlined)
+        private void SetModeButtonTextUnderline(int mode, bool isSelected)
         {
             switch (mode)
             {
                 case PlaceMode:
-                    SetModeButtonTextUnderlineInternal(placeModeButtonText, isUnderlined);
+                    SetModeButtonTextUnderlineInternal(placeModeButton, isSelected);
                     break;
                 case DeleteMode:
-                    SetModeButtonTextUnderlineInternal(deleteModeButtonText, isUnderlined);
+                    SetModeButtonTextUnderlineInternal(deleteModeButton, isSelected);
                     break;
                 case EditMode:
-                    SetModeButtonTextUnderlineInternal(editModeButtonText, isUnderlined);
+                    SetModeButtonTextUnderlineInternal(editModeButton, isSelected);
                     break;
             }
         }
-        private void SetModeButtonTextUnderlineInternal(TextMeshProUGUI text, bool isUnderlined)
+        private void SetModeButtonTextUnderlineInternal(Button button, bool isSelected)
         {
-            text.text = isUnderlined
-                ? $"<u>{text.text}</u>"
-                : text.text.Substring(3, text.text.Length - 7);
+            button.image.sprite = isSelected ? selectedSprite : normalSprite;
         }
 
         private Color GetModeColor(int mode)
