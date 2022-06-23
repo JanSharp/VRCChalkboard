@@ -42,6 +42,7 @@ namespace JanSharp
         [SerializeField] private RectTransform screenUIContainer;
         [SerializeField] private RectTransform mainWindow;
         [SerializeField] private RectTransform confirmationWindow;
+        [SerializeField] private RectTransform helpWindow;
         [SerializeField] private ScrollRect scrollRect;
         [SerializeField] private UdonBehaviour uiToggle;
         [SerializeField] private UdonBehaviour placeDeleteModeToggle;
@@ -240,6 +241,7 @@ namespace JanSharp
                     {
                         mainWindow.SetParent(screenUIContainer, false);
                         confirmationWindow.SetParent(screenUIContainer, false);
+                        helpWindow.SetParent(screenUIContainer, false);
                         uiCanvasCollider.enabled = false;
                     }
                     if (!initialized && selectedEffectIndex != -1)
@@ -269,6 +271,7 @@ namespace JanSharp
                     {
                         mainWindow.SetParent(itemUIContainer, false);
                         confirmationWindow.SetParent(itemUIContainer, false);
+                        helpWindow.SetParent(itemUIContainer, false);
                         if (itemUIContainer.gameObject.activeSelf)
                             uiCanvasCollider.enabled = true;
                     }
@@ -403,6 +406,16 @@ namespace JanSharp
             // TODO: spread work out across frames (probably)
             foreach (var descriptor in descriptors)
                 descriptor.StopAllEffects();
+        }
+
+        public void ShowHelp() => helpWindow.gameObject.SetActive(true);
+        public void HideHelp() => helpWindow.gameObject.SetActive(false);
+        private void ToggleHelp()
+        {
+            if (helpWindow.gameObject.activeSelf)
+                HideHelp();
+            else
+                ShowHelp();
         }
 
         public void ToggleUI() => SetUIActive(!itemUIContainer.gameObject.activeSelf);
