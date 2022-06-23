@@ -353,9 +353,9 @@ namespace JanSharp
             InactiveObjectColor = MakeColorBlock(inactiveObjectColor);
             ActiveObjectColor = MakeColorBlock(activeObjectColor);
             legendText.text = $"[<b><u>Selected</u></b>] "
-                + $"[<b><color=#{ToHex(inactiveColor, false):X6}>once</color>: <color=#{ToHex(activeColor, false):X6}>on</color>/<color=#{ToHex(inactiveColor, false):X6}>off</color></b>] "
-                + $"[<b><color=#{ToHex(inactiveLoopColor, false):X6}>loop</color>: <color=#{ToHex(activeLoopColor, false):X6}>on</color>/<color=#{ToHex(inactiveLoopColor, false):X6}>off</color></b>] "
-                + $"[<b><color=#{ToHex(inactiveObjectColor, false):X6}>object</color>: <color=#{ToHex(activeObjectColor, false):X6}>on</color>/<color=#{ToHex(inactiveObjectColor, false):X6}>off</color></b>]";
+                + $"[<b><color=#{ToHex(activeColor, false):X6}>once</color>: <color=#{ToHex(activeColor, false):X6}>on</color>/<color=#{ToHex(inactiveColor, false):X6}>off</color></b>] "
+                + $"[<b><color=#{ToHex(activeLoopColor, false):X6}>loop</color>: <color=#{ToHex(activeLoopColor, false):X6}>on</color>/<color=#{ToHex(inactiveLoopColor, false):X6}>off</color></b>] "
+                + $"[<b><color=#{ToHex(activeObjectColor, false):X6}>object</color>: <color=#{ToHex(activeObjectColor, false):X6}>on</color>/<color=#{ToHex(inactiveObjectColor, false):X6}>off</color></b>]";
             int count = effectsParent.childCount;
             descriptors = new EffectDescriptor[count];
             for (int i = 0; i < count; i++)

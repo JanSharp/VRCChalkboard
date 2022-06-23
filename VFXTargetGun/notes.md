@@ -92,3 +92,19 @@ so what about preview in edit mode. I think edit mode is always going to use a p
 
 
 completely unrelated, what about a laser to assist with aiming. useful when trying to aim at some thin collider.
+
+
+pretty much a must for v2:
+
+-[x] info button for keybinds
+-[x] workaround the local player not existing during the upload process to prevent that annoying error
+-[ ] better styling to fit the theme, kind of
+-[ ] outline for selected effect
+-[ ] figure out exact gun grips and fix the vertical position of the gun in desktop and perfectly fix the position in VR such that the gun is always exactly in your hand and you get instant feedback when moving it.
+
+after that:
+
+- refactor effects for combined pooling and performance
+- Q picking like Factorio (requires effect refactor)
+- preview
+- edit mode
