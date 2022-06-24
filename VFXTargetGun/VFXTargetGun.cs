@@ -1,4 +1,4 @@
-using UdonSharp;
+﻿using UdonSharp;
 using UnityEngine;
 using UnityEngine.UI;
 using VRC.SDKBase;
@@ -44,7 +44,7 @@ namespace JanSharp
         [SerializeField] private RectTransform confirmationWindow;
         [SerializeField] private RectTransform helpWindow;
         [SerializeField] private ScrollRect scrollRect;
-        [SerializeField] private UdonBehaviour uiToggle;
+        [SerializeField] private GameObject uiToggle;
         [SerializeField] private UdonBehaviour placeDeleteModeToggle;
         [SerializeField] private GameObject gunMesh;
         [SerializeField] private VRC_Pickup pickup;
@@ -315,12 +315,7 @@ namespace JanSharp
                     if (IsHeld) // Only drop if the local player is holding this gun otherwise I believe turning visibility off
                         pickup.Drop(); // would make every currently held gun get dropped
                 }
-                pickup.pickupable = value;
-                gunMesh.SetActive(value);
-                uiToggle.gameObject.SetActive(value);
-                if (!value || initialized) // only turn _on_ if if the gun is initialized
-                    placeDeleteModeToggle.gameObject.SetActive(value);
-                selectedEffectNameTextRightHand.gameObject.SetActive(value);
+                pickup.gameObject.SetActive(value);
             }
         }
 
@@ -366,8 +361,7 @@ namespace JanSharp
             buttonGrid.sizeDelta = new Vector2(buttonGrid.sizeDelta.x, buttonHeight * rows);
             if (selectedEffectIndex != -1)
                 SelectedEffect = descriptors[selectedEffectIndex];
-            if (IsVisible)
-                placeDeleteModeToggle.gameObject.SetActive(true);
+            placeDeleteModeToggle.gameObject.SetActive(true);
             laserBaseScale = laser.localScale.z;
         }
 
@@ -422,7 +416,7 @@ namespace JanSharp
             screenUIContainer.gameObject.SetActive(active);
             if (Networking.LocalPlayer != null && !Networking.LocalPlayer.IsUserInVR() && !IsHeld)
                 uiCanvasCollider.enabled = active;
-            uiToggle.DisableInteractive = active;
+            uiToggle.gameObject.SetActive(!active);
             if (active)
                 BecomeOwner();
         }
