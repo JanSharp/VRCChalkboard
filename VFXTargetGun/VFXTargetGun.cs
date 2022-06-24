@@ -398,7 +398,10 @@ namespace JanSharp
                         pickup.UseText = $"Place {SelectedEffect.EffectName}";
                         break;
                     case DeleteMode:
-                        pickup.UseText = IsDeleteIndicatorActive ? $"Delete {SelectedEffect.EffectName}" : "";
+                        if (SelectedEffect.IsToggle)
+                            pickup.UseText = IsDeleteIndicatorActive ? $"Delete {SelectedEffect.EffectName}" : "";
+                        else
+                            pickup.UseText = ""; // once effects currently cannot be deleted
                         break;
                     case EditMode:
                         pickup.UseText = $"Edit {SelectedEffect.EffectName}";
