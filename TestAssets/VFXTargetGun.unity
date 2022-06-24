@@ -5650,7 +5650,7 @@ MonoBehaviour:
   orientation: 2
   AutoHold: 1
   InteractionText: 
-  UseText: Play Effect
+  UseText: 
   useEventBroadcastType: 0
   UseDownEventName: 
   UseUpEventName: 

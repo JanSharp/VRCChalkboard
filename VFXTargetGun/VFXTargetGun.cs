@@ -111,6 +111,7 @@ namespace JanSharp
                     foreach (var mat in renderer.materials)
                         mat.color = color;
                 placeDeleteModeToggle.InteractionText = IsPlaceMode ? "Switch to Delete" : "Switch to Place";
+                UpdateUseText();
             }
         }
         public bool IsPlaceMode => Mode == PlaceMode;
@@ -213,6 +214,7 @@ namespace JanSharp
                         laser.gameObject.SetActive(true);
                     deleteIndicator.localScale = SelectedEffect.effectScale;
                 }
+                UpdateUseText();
                 if (!isReceiving)
                 {
                     Networking.SetOwner(Networking.LocalPlayer, this.gameObject);
@@ -288,6 +290,7 @@ namespace JanSharp
                 isDeleteIndicatorActive = value;
                 deleteIndicator.gameObject.SetActive(value);
                 secondLaser.gameObject.SetActive(value);
+                UpdateUseText();
             }
         }
         private bool isPlaceIndicatorActive;
@@ -377,6 +380,30 @@ namespace JanSharp
             colors.fadeDuration = 0.1f;
             // Debug.Log($"colors.normalColor: {colors.normalColor}, colors.highlightedColor: {colors.highlightedColor}, colors.pressedColor: {colors.pressedColor}, colors.selectedColor: {colors.selectedColor}, colors.disabledColor: {colors.disabledColor}");
             return colors;
+        }
+
+        private void UpdateUseText()
+        {
+            if (SelectedEffect == null)
+                pickup.UseText = "";
+            else
+            {
+                switch (Mode)
+                {
+                    case PlaceMode:
+                        pickup.UseText = $"Place {SelectedEffect.EffectName}";
+                        break;
+                    case DeleteMode:
+                        pickup.UseText = IsDeleteIndicatorActive ? $"Delete {SelectedEffect.EffectName}" : "";
+                        break;
+                    case EditMode:
+                        pickup.UseText = $"Edit {SelectedEffect.EffectName}";
+                        break;
+                    default:
+                        pickup.UseText = "";
+                        break;
+                }
+            }
         }
 
         public void DeselectEffect()
