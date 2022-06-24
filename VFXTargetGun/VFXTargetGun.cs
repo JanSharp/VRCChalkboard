@@ -48,6 +48,7 @@ namespace JanSharp
         [SerializeField] private UdonBehaviour placeDeleteModeToggle;
         [SerializeField] private GameObject gunMesh;
         [SerializeField] private VRC_Pickup pickup;
+        public VRC_Pickup Pickup => pickup;
         [SerializeField] private Transform aimPoint;
         [SerializeField] private Transform placeIndicator;
         [SerializeField] private GameObject placeIndicatorForwardsArrow;
@@ -262,6 +263,9 @@ namespace JanSharp
                         togglePos.x = -Mathf.Abs(togglePos.x);
                     }
                     placeDeleteModeToggle.transform.localPosition = togglePos;
+                    lastHoldingPlayerId = Networking.LocalPlayer.playerId;
+                    lastHeldTime = Time.time;
+                    RequestSerialization();
                 }
                 else
                 {
@@ -727,12 +731,18 @@ namespace JanSharp
 
 
 
+        public int LastHoldingPlayerId => lastHoldingPlayerId;
+        private float lastHeldTime = float.NaN;
+        public float LastHeldTime => lastHeldTime;
+        [UdonSynced] private int lastHoldingPlayerId;
+        [UdonSynced] private float lastHeldTimeOffset;
         [UdonSynced] private int selectedEffectIndex = -1;
         private bool isReceiving;
 
         public override void OnPreSerialization()
         {
             selectedEffectIndex = SelectedEffect == null ? -1 : SelectedEffect.Index;
+            lastHeldTimeOffset = lastHeldTime - Time.time;
         }
 
         public override void OnDeserialization()
@@ -742,6 +752,7 @@ namespace JanSharp
                 Init();
             if (initialized)
                 SelectedEffect = selectedEffectIndex == -1 ? null : descriptors[selectedEffectIndex];
+            lastHeldTime = lastHeldTimeOffset + Time.time;
             isReceiving = false;
         }
     }
