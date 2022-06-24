@@ -1445,9 +1445,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   interactTextPlacement: {fileID: 0}
-  interactText: Select Effect
+  interactText: Open UI
   interactTextGO: {fileID: 0}
-  proximity: 0.75
+  proximity: 0.2
   SynchronizePosition: 0
   AllowCollisionOwnershipTransfer: 0
   Reliable: 0
