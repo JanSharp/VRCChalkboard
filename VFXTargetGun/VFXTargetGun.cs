@@ -318,7 +318,11 @@ namespace JanSharp
                     if (IsHeld) // Only drop if the local player is holding this gun otherwise I believe turning visibility off
                         pickup.Drop(); // would make every currently held gun get dropped
                 }
-                pickup.gameObject.SetActive(value);
+                pickup.pickupable = value;
+                // don't toggle the GameObject the pickup and object sync are on because it quite literally breaks VRChat
+                // (it throws a null reference exception internally somewhere). So instead this this is using a child that
+                // then has all the actual children as its children
+                pickup.transform.GetChild(0).gameObject.SetActive(value);
             }
         }
 
