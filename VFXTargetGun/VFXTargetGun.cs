@@ -50,6 +50,7 @@ namespace JanSharp
         [SerializeField] private VRC_Pickup pickup;
         [SerializeField] private Transform aimPoint;
         [SerializeField] private Transform placeIndicator;
+        [SerializeField] private GameObject placeIndicatorForwardsArrow;
         [SerializeField] private Transform deleteIndicator;
         [SerializeField] private Transform laser;
         [SerializeField] private Transform secondLaser;
@@ -212,7 +213,8 @@ namespace JanSharp
                     selectedEffectNameTextRightHand.text = value.EffectName;
                     if (IsHeld)
                         laser.gameObject.SetActive(true);
-                    deleteIndicator.localScale = SelectedEffect.effectScale;
+                    deleteIndicator.localScale = value.effectScale;
+                    placeIndicatorForwardsArrow.SetActive(!value.randomizeRotation);
                 }
                 UpdateUseText();
                 if (!isReceiving)
