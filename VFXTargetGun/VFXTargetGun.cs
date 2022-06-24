@@ -290,7 +290,7 @@ namespace JanSharp
         }
         private void AssignLocalPlayerToThisGunInternal()
         {
-            lastHoldingPlayerId = Networking.LocalPlayer.playerId;
+            lastHoldingPlayerDisplayName = Networking.LocalPlayer.displayName;
             lastHeldTime = Time.time;
             RequestSerialization();
         }
@@ -742,10 +742,10 @@ namespace JanSharp
 
 
 
-        public int LastHoldingPlayerId => lastHoldingPlayerId;
+        public string LastHoldingPlayerDisplayName => lastHoldingPlayerDisplayName;
         private float lastHeldTime = float.NaN;
         public float LastHeldTime => lastHeldTime;
-        [UdonSynced] private int lastHoldingPlayerId;
+        [UdonSynced] private string lastHoldingPlayerDisplayName;
         [UdonSynced] private float lastHeldTimeOffset;
         [UdonSynced] private int selectedEffectIndex = -1;
         private bool isReceiving;

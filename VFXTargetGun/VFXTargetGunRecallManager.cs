@@ -16,7 +16,7 @@ namespace JanSharp
             VFXTargetGunVisibilityManager firstUntouchedGunGroup = null;
             VFXTargetGun lastHeldGun = null;
             VFXTargetGunVisibilityManager lastHeldGunGroup = null;
-            var localPlayerId = Networking.LocalPlayer.playerId;
+            var localPlayerDisplayName = Networking.LocalPlayer.displayName;
             foreach (var manager in gunGroupsToManage)
                 foreach (var gun in manager.guns)
                 {
@@ -30,7 +30,7 @@ namespace JanSharp
                     }
                     else
                     {
-                        if (gun.LastHoldingPlayerId == localPlayerId)
+                        if (gun.LastHoldingPlayerDisplayName == localPlayerDisplayName)
                         {
                             if (lastHeldGun == null || gun.LastHeldTime > lastHeldGun.LastHeldTime)
                             {
