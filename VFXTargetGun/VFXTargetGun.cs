@@ -328,6 +328,11 @@ namespace JanSharp
             }
         }
 
+        private bool holdingTab;
+        private const float HoldingTabDelay = 0.6f;
+        private const float RepeatingTabDelay = 1f / 25f;
+        private float nextTabTime;
+
         public ColorBlock InactiveColor { get; private set; }
         public ColorBlock ActiveColor { get; private set; }
         public ColorBlock InactiveLoopColor { get; private set; }
@@ -572,8 +577,43 @@ namespace JanSharp
             ScrollToSelectedEffect();
         }
 
+        private void ProcessTab()
+        {
+            if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl))
+            {
+                if (SelectedEffect == null)
+                    SelectedEffect = descriptors[descriptors.Length - 1];
+                else
+                    SelectedEffect = descriptors[(SelectedEffect.Index - 1 + descriptors.Length) % descriptors.Length];
+                ScrollToSelectedEffect();
+            }
+            else
+            {
+                if (SelectedEffect == null)
+                    SelectedEffect = descriptors[0];
+                else
+                    SelectedEffect = descriptors[(SelectedEffect.Index + 1) % descriptors.Length];
+                ScrollToSelectedEffect();
+            }
+        }
+
         public void CustomUpdate()
         {
+            if (holdingTab)
+            {
+                if (Input.GetKey(KeyCode.Tab))
+                {
+                    var time = Time.time;
+                    if (time >= nextTabTime)
+                    {
+                        ProcessTab();
+                        nextTabTime = time + RepeatingTabDelay;
+                    }
+                }
+                else
+                    holdingTab = false;
+            }
+
             if (Input.anyKeyDown) // since Udon is slow, check if anything was even pressed first before figuring out which one it was
             {
                 // misc
@@ -600,22 +640,9 @@ namespace JanSharp
                 {
                     if (!initialized)
                         Init();
-                    if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl))
-                    {
-                        if (SelectedEffect == null)
-                            SelectedEffect = descriptors[descriptors.Length - 1];
-                        else
-                            SelectedEffect = descriptors[(SelectedEffect.Index - 1 + descriptors.Length) % descriptors.Length];
-                        ScrollToSelectedEffect();
-                    }
-                    else
-                    {
-                        if (SelectedEffect == null)
-                            SelectedEffect = descriptors[0];
-                        else
-                            SelectedEffect = descriptors[(SelectedEffect.Index + 1) % descriptors.Length];
-                        ScrollToSelectedEffect();
-                    }
+                    ProcessTab();
+                    holdingTab = true;
+                    nextTabTime = Time.time + HoldingTabDelay;
                 }
                 else if (Input.GetKeyDown(KeyCode.Alpha1))
                     ProcessAlphaNumericKeyDown(1);
