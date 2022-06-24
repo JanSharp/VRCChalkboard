@@ -263,9 +263,7 @@ namespace JanSharp
                         togglePos.x = -Mathf.Abs(togglePos.x);
                     }
                     placeDeleteModeToggle.transform.localPosition = togglePos;
-                    lastHoldingPlayerId = Networking.LocalPlayer.playerId;
-                    lastHeldTime = Time.time;
-                    RequestSerialization();
+                    AssignLocalPlayerToThisGunInternal();
                 }
                 else
                 {
@@ -284,6 +282,19 @@ namespace JanSharp
                 }
             }
         }
+
+        public void AssignLocalPlayerToThisGun()
+        {
+            BecomeOwner();
+            AssignLocalPlayerToThisGunInternal();
+        }
+        private void AssignLocalPlayerToThisGunInternal()
+        {
+            lastHoldingPlayerId = Networking.LocalPlayer.playerId;
+            lastHeldTime = Time.time;
+            RequestSerialization();
+        }
+
         private int deleteTargetIndex;
         private bool isDeleteIndicatorActive;
         private bool IsDeleteIndicatorActive

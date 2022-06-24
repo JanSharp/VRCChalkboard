@@ -54,7 +54,10 @@ namespace JanSharp
             var gun = FindGun(true);
             if (gun == null)
                 return;
+            gun.AssignLocalPlayerToThisGun();
             var player = Networking.LocalPlayer;
+            var pickup = gun.Pickup; // UdonSharp being picky
+            Networking.SetOwner(player, pickup.gameObject);
             // if (player.GetPickupInHand(VRC_Pickup.PickupHand.Right) == null)
             //     player.SetPickupInHand(gun.Pickup, VRC_Pickup.PickupHand.Right);
             // else if (player.IsUserInVR() && player.GetPickupInHand(VRC_Pickup.PickupHand.Left) == null)
@@ -62,7 +65,6 @@ namespace JanSharp
             // else
             {
                 var data = player.GetTrackingData(VRCPlayerApi.TrackingDataType.RightHand);
-                var pickup = gun.Pickup; // UdonSharp being picky
                 pickup.transform.position = data.position;
             }
         }
