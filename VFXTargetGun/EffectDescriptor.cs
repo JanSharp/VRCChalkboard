@@ -500,7 +500,7 @@ When this is true said second rotation is random."
 
         // incremental syncing
         public uint[] EffectOrder { get; private set; }
-        private uint currentTopOrder;
+        [HideInInspector] public uint currentTopOrder;
         private bool[] requestedSyncs;
         private int[] requestedIndexes;
         private int requestedCount;

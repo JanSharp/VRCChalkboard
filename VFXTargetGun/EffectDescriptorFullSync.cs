@@ -16,6 +16,7 @@ namespace JanSharp
         [UdonSynced] private Vector3[] syncedPositions;
         [UdonSynced] private Quaternion[] syncedRotations;
         [UdonSynced] private float[] syncedTimes;
+        [UdonSynced] private uint currentTopOrder;
 
         public override void OnPreSerialization()
         {
@@ -26,6 +27,7 @@ namespace JanSharp
             syncedPositions = new Vector3[count];
             syncedRotations = new Quaternion[count];
             syncedTimes = new float[count];
+            currentTopOrder = descriptor.currentTopOrder;
 
             int syncedI = 0;
             for (int i = 0; i < descriptor.MaxCount; i++)
@@ -54,6 +56,7 @@ namespace JanSharp
             descriptor.syncedPositions = syncedPositions;
             descriptor.syncedRotations = syncedRotations;
             descriptor.syncedTimes = syncedTimes;
+            descriptor.currentTopOrder = currentTopOrder;
             descriptor.OnDeserialization();
         }
     }
