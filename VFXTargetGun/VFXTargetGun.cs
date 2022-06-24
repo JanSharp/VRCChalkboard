@@ -1,4 +1,4 @@
-﻿using UdonSharp;
+using UdonSharp;
 using UnityEngine;
 using UnityEngine.UI;
 using VRC.SDKBase;
@@ -312,7 +312,8 @@ namespace JanSharp
                 if (!value)
                 {
                     SetUIActive(false);
-                    pickup.Drop();
+                    if (IsHeld) // Only drop if the local player is holding this gun otherwise I believe turning visibility off
+                        pickup.Drop(); // would make every currently held gun get dropped
                 }
                 pickup.pickupable = value;
                 gunMesh.SetActive(value);
