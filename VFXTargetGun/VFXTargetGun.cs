@@ -386,8 +386,6 @@ namespace JanSharp
                 else
                     descriptor.Init(this, i);
             }
-            int rows = (count + columnCount - 1) / columnCount;
-            buttonGrid.sizeDelta = new Vector2(buttonGrid.sizeDelta.x, buttonHeight * rows);
             if (selectedEffectIndex != -1)
                 SelectedEffect = descriptors[selectedEffectIndex];
             placeDeleteModeToggle.gameObject.SetActive(true);
