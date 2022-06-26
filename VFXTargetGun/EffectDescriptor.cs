@@ -645,7 +645,7 @@ When this is true said second rotation is random."
                     delayedIndexes[delayedCount] = effectIndex;
                     delayedPositions[delayedCount] = syncedPositions[i];
                     delayedRotations[delayedCount++] = syncedRotations[i];
-                    SendCustomEventDelayedSeconds(nameof(PlayEffectDelayed), time);
+                    SendCustomEventDelayedSeconds(nameof(PlayEffectDelayed), delay);
                 }
             }
         }
