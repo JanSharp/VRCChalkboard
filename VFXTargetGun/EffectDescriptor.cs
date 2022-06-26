@@ -30,7 +30,7 @@ When this is true said second rotation is random."
         [SerializeField] [HideInInspector] private int effectType;
         [SerializeField] [HideInInspector] private float effectDuration; // used by once effects
         [SerializeField] [HideInInspector] private float effectLifetime; // used by loop effects
-        [SerializeField] [HideInInspector] private EffectDescriptorFullSync fullSync;
+        [SerializeField] [HideInInspector] private VFXTargetGunEffectsFullSync fullSync;
         [SerializeField] [HideInInspector] private GameObject originalEffectObject;
         [SerializeField] [HideInInspector] public Vector3 effectLocalCenter;
         [SerializeField] [HideInInspector] public Vector3 effectScale;
@@ -159,7 +159,7 @@ When this is true said second rotation is random."
             void LogErrMsg() => Debug.LogError($"The {nameof(EffectDescriptor)} must have exactly 2 children."
                 + $" The first child must be the 'EffectParent' which is either the parent for a collection of particle systems,"
                 + $" or the parent for an object. To be exact it is considered to be an object whenever there are no particle systems."
-                + $" The second child must have the {nameof(EffectDescriptorFullSync)} Udon Behaviour on it");
+                + $" The second child must have the {nameof(VFXTargetGunEffectsFullSync)} Udon Behaviour on it");
             if (this.transform.childCount != 2)
             {
                 LogErrMsg();
@@ -167,7 +167,7 @@ When this is true said second rotation is random."
             }
             Transform effectParent = this.transform.GetChild(0);
             originalEffectObject = effectParent.gameObject;
-            fullSync = this.transform.GetChild(1)?.GetUdonSharpComponent<EffectDescriptorFullSync>();
+            fullSync = this.transform.GetChild(1)?.GetUdonSharpComponent<VFXTargetGunEffectsFullSync>();
             if (fullSync == null)
             {
                 LogErrMsg();

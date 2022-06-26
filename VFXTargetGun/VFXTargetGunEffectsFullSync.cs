@@ -6,7 +6,7 @@ using VRC.Udon;
 namespace JanSharp
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
-    public class EffectDescriptorFullSync : UdonSharpBehaviour
+    public class VFXTargetGunEffectsFullSync : UdonSharpBehaviour
     {
         // set by EffectDescriptor's OnBuild
         [SerializeField] [HideInInspector] public EffectDescriptor descriptor;
