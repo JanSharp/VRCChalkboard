@@ -1,4 +1,4 @@
-﻿using UdonSharp;
+using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
@@ -546,6 +546,21 @@ When this is true said second rotation is random."
             // nothing to sync yet
             if (!effectInitialized)
                 return;
+            if (requestedCount == 0)
+            {
+                // NOTE: setting any array to null causes the serialization request to be dropped completely.
+                // not sure if this is intended however it works nicely for this use case where I quite literally
+                // do not want it to sync anything. If this is a bug and it gets fixed at some point then
+                // the synced variables need to be moved to a separate script (I think anyway) and then that game
+                // object needs to be disabled to prevent any syncing from happening (I only _think_ it needs to be
+                // on a separate script because I really do not know how inactive UdonBehaviours behave in general)
+                syncedIndexes = null;
+                syncedOrder = null;
+                syncedPositions = null;
+                syncedRotations = null;
+                syncedTimes = null;
+                return;
+            }
             if (syncedPositions == null || syncedPositions.Length != requestedCount)
             {
                 syncedIndexes = new int[requestedCount];
