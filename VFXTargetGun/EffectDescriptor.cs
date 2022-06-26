@@ -1,4 +1,4 @@
-using UdonSharp;
+﻿using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
@@ -340,6 +340,8 @@ When this is true said second rotation is random."
             {
                 while (index >= MaxCount)
                     MaxCount *= 2;
+                if (MaxCount > ushort.MaxValue)
+                    Debug.LogError($"There can only be up to {ushort.MaxValue} active effects in the world (effect name: {EffectName}).");
                 GrowArrays(MaxCount);
             }
         }
@@ -504,12 +506,29 @@ When this is true said second rotation is random."
         private bool[] requestedSyncs;
         private int[] requestedIndexes;
         private int requestedCount;
-        [UdonSynced] [HideInInspector] public int[] syncedIndexes;
-        [UdonSynced] [HideInInspector] public uint[] syncedOrder;
+        /// <summary>
+        /// <para>bytes from left to right (big endian):</para>
+        /// <para>1: gun effect index / id (only used for late joiner syncing)</para>
+        /// <para>2, 3: effect index</para>
+        /// <para>4, 5: time (fixed point, need to determine where the "point" is)</para>
+        /// <para>the first bit of byte 6: active</para>
+        /// <para>the rest of 6, 7, 8: order</para>
+        /// </summary>
+        [UdonSynced] [HideInInspector] public ulong[] syncedData;
+        // [UdonSynced] [HideInInspector] public int[] syncedIndexes;
+        // [UdonSynced] [HideInInspector] public uint[] syncedOrder;
         [UdonSynced] [HideInInspector] public Vector3[] syncedPositions;
         [UdonSynced] [HideInInspector] public Quaternion[] syncedRotations;
-        [UdonSynced] [HideInInspector] public float[] syncedTimes;
-        private const uint ActiveBit = 0x80000000;
+        // [UdonSynced] [HideInInspector] public float[] syncedTimes;
+        private const ulong GunEffectIndexBits = 0xff00000000000000UL;
+        private const ulong    EffectIndexBits = 0x00ffff0000000000UL;
+        private const ulong           TimeBits = 0x000000ffff000000UL;
+        private const ulong          ActiveBit = 0x0000000000800000UL;
+        private const ulong          OrderBits = 0x00000000007fffffUL;
+        private const int GunEffectIndexBitShift = 8 * 7;
+        private const int EffectIndexBitShift = 8 * 5;
+        private const int TimeBitShift = 8 * 3;
+        private const float TimePointShift = 256f; // like a shift of 8 bits
         private const float MaxLoopDelay = 0.15f;
         private const float MaxDelay = 0.5f;
         private const float StaleEffectTime = 15f;
@@ -541,6 +560,15 @@ When this is true said second rotation is random."
             RequestSerialization();
         }
 
+        public ulong CombineSyncedData(byte gunEffectIndex, int effectIndex, float time, bool active, uint order)
+        {
+            return ((((ulong)gunEffectIndex) << GunEffectIndexBitShift) & GunEffectIndexBits) // gun effect index is not used here
+                | ((((ulong)effectIndex) << EffectIndexBitShift) & EffectIndexBits) // effect index
+                | (HasParticleSystems ? ((((ulong)(time * TimePointShift)) << TimeBitShift) & TimeBits) : 0UL) // time
+                | (IsToggle && active ? ActiveBit : 0UL) // active
+                | (((ulong)order) & OrderBits); // order
+        }
+
         public override void OnPreSerialization()
         {
             // nothing to sync yet
@@ -554,67 +582,68 @@ When this is true said second rotation is random."
                 // the synced variables need to be moved to a separate script (I think anyway) and then that game
                 // object needs to be disabled to prevent any syncing from happening (I only _think_ it needs to be
                 // on a separate script because I really do not know how inactive UdonBehaviours behave in general)
-                syncedIndexes = null;
-                syncedOrder = null;
+                syncedData = null;
+                // syncedIndexes = null;
+                // syncedOrder = null;
                 syncedPositions = null;
                 syncedRotations = null;
-                syncedTimes = null;
+                // syncedTimes = null;
                 return;
             }
             if (syncedPositions == null || syncedPositions.Length != requestedCount)
             {
-                syncedIndexes = new int[requestedCount];
-                syncedOrder = new uint[requestedCount];
+                syncedData = new ulong[requestedCount];
+                // syncedIndexes = new int[requestedCount];
+                // syncedOrder = new uint[requestedCount];
                 syncedPositions = new Vector3[requestedCount];
                 syncedRotations = new Quaternion[requestedCount];
-                syncedTimes = new float[requestedCount];
+                // syncedTimes = new float[requestedCount];
             }
             var time = Time.time;
             for (int i = 0; i < requestedCount; i++)
             {
-                var requestIndex = requestedIndexes[i];
-                var effectTransform = EffectParents[requestIndex];
-                syncedIndexes[i] = requestIndex;
-                var order = EffectOrder[requestIndex];
-                if (IsToggle && ActiveEffects[requestIndex])
-                    order |= ActiveBit;
-                syncedOrder[i] = order;
+                var effectIndex = requestedIndexes[i];
+                var effectTransform = EffectParents[effectIndex];
+                byte one = 0;
+                var two = effectIndex;
+                var three = HasParticleSystems ? ParticleSystems[effectIndex][0].time : 0f;
+                var four = ActiveEffects[effectIndex];
+                var five = EffectOrder[effectIndex];
+                syncedData[i] = CombineSyncedData(one, two, three, four, five);
                 syncedPositions[i] = effectTransform.position;
                 syncedRotations[i] = effectTransform.rotation;
-                if (HasParticleSystems)
-                    syncedTimes[i] = ParticleSystems[requestIndex][0].time;
-                requestedSyncs[requestIndex] = false;
+                requestedSyncs[effectIndex] = false;
             }
             requestedCount = 0;
+        }
+
+        public override void OnPostSerialization(SerializationResult result)
+        {
+            Debug.Log($"<dlt> OnPostSerialization {this.name}; success {result.success}, byteCount {result.byteCount}");
         }
 
         public override void OnDeserialization()
         {
             int syncedCount;
-            if (syncedPositions == null || (syncedCount = syncedIndexes.Length) == 0)
+            if (syncedPositions == null || (syncedCount = syncedData.Length) == 0) // should never be 0 but I don't want to think about it right now
                 return;
             InitEffect();
             InitIncrementalSyncing();
-            float delay = Mathf.Min(syncedTimes[syncedCount - 1], MaxDelay);
             for (int i = 0; i < syncedCount; i++)
             {
-                var effectIndex = syncedIndexes[i];
-                var order = syncedOrder[i];
-                bool active;
-                if (IsToggle)
-                {
-                    active = (order & ActiveBit) != 0;
-                    order &= ~ActiveBit;
-                }
-                else
-                    active = true;
+                ulong data = syncedData[i];
+                int effectIndex = (int)((data & EffectIndexBits) >> EffectIndexBitShift);
+                uint order = (uint)(data & OrderBits);
                 EnsureIsInRange(effectIndex);
                 if (EffectOrder[effectIndex] >= order)
                     continue;
                 EffectOrder[effectIndex] = order;
                 if (order > currentTopOrder)
                     currentTopOrder = order;
-                float time = delay - syncedTimes[i];
+                bool active = IsToggle ? ((data & ActiveBit) != 0UL) : true;
+                float rawSyncedTime = ((float)((data & TimeBits) >> TimeBitShift)) / TimePointShift;
+                float delay = Mathf.Min(rawSyncedTime, MaxDelay);
+                float time = delay - rawSyncedTime;
                 if (!HasParticleSystems || !active || time <= 0f)
                 {
                     if (IsToggle)
@@ -624,7 +653,7 @@ When this is true said second rotation is random."
                             PlayEffectInternal(effectIndex, syncedPositions[i], syncedRotations[i]);
                             if (IsLoop)
                             {
-                                time = Mathf.Max(0f, syncedTimes[i] - MaxLoopDelay);
+                                time = Mathf.Max(0f, rawSyncedTime - MaxLoopDelay);
                                 foreach (var ps in ParticleSystems[0])
                                     ps.time = time;
                             }
