@@ -504,11 +504,8 @@ When this is true said second rotation is random."
         /// <para>the rest of 6, 7, 8: order</para>
         /// </summary>
         [UdonSynced] [HideInInspector] public ulong[] syncedData;
-        // [UdonSynced] [HideInInspector] public int[] syncedIndexes;
-        // [UdonSynced] [HideInInspector] public uint[] syncedOrder;
         [UdonSynced] [HideInInspector] public Vector3[] syncedPositions;
         [UdonSynced] [HideInInspector] public Quaternion[] syncedRotations;
-        // [UdonSynced] [HideInInspector] public float[] syncedTimes;
         private const ulong GunEffectIndexBits = 0xff00000000000000UL;
         private const ulong    EffectIndexBits = 0x00ffff0000000000UL;
         private const ulong           TimeBits = 0x000000ffff000000UL;
@@ -571,21 +568,15 @@ When this is true said second rotation is random."
                 // object needs to be disabled to prevent any syncing from happening (I only _think_ it needs to be
                 // on a separate script because I really do not know how inactive UdonBehaviours behave in general)
                 syncedData = null;
-                // syncedIndexes = null;
-                // syncedOrder = null;
                 syncedPositions = null;
                 syncedRotations = null;
-                // syncedTimes = null;
                 return;
             }
             if (syncedPositions == null || syncedPositions.Length != requestedCount)
             {
                 syncedData = new ulong[requestedCount];
-                // syncedIndexes = new int[requestedCount];
-                // syncedOrder = new uint[requestedCount];
                 syncedPositions = new Vector3[requestedCount];
                 syncedRotations = new Quaternion[requestedCount];
-                // syncedTimes = new float[requestedCount];
             }
             var time = Time.time;
             for (int i = 0; i < requestedCount; i++)
