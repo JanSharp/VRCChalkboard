@@ -30,7 +30,6 @@ When this is true said second rotation is random."
         [SerializeField] [HideInInspector] private int effectType;
         [SerializeField] [HideInInspector] private float effectDuration; // used by once effects
         [SerializeField] [HideInInspector] private float effectLifetime; // used by loop effects
-        [SerializeField] [HideInInspector] private VFXTargetGunEffectsFullSync fullSync;
         [SerializeField] [HideInInspector] private GameObject originalEffectObject;
         [SerializeField] [HideInInspector] public Vector3 effectLocalCenter;
         [SerializeField] [HideInInspector] public Vector3 effectScale;
@@ -156,24 +155,15 @@ When this is true said second rotation is random."
         }
         bool IOnBuildCallback.OnBuild()
         {
-            void LogErrMsg() => Debug.LogError($"The {nameof(EffectDescriptor)} must have exactly 2 children."
-                + $" The first child must be the 'EffectParent' which is either the parent for a collection of particle systems,"
-                + $" or the parent for an object. To be exact it is considered to be an object whenever there are no particle systems."
-                + $" The second child must have the {nameof(VFXTargetGunEffectsFullSync)} Udon Behaviour on it");
-            if (this.transform.childCount != 2)
+            if (this.transform.childCount != 1)
             {
-                LogErrMsg();
+                Debug.LogError($"The {nameof(EffectDescriptor)} must have exactly 1 child."
+                    + $" Said child must be the 'EffectParent' which is either the parent for a collection of particle systems,"
+                    + $" or the parent for an object. To be exact it is considered to be an object whenever there are no particle systems.");
                 return false;
             }
             Transform effectParent = this.transform.GetChild(0);
             originalEffectObject = effectParent.gameObject;
-            fullSync = this.transform.GetChild(1)?.GetUdonSharpComponent<VFXTargetGunEffectsFullSync>();
-            if (fullSync == null)
-            {
-                LogErrMsg();
-                return false;
-            }
-            fullSync.descriptor = this;
             var particleSystems = effectParent.GetComponentsInChildren<ParticleSystem>();
             effectDuration = 0f;
             if (particleSystems.Length == 0)
@@ -251,7 +241,6 @@ When this is true said second rotation is random."
             }
 
             this.ApplyProxyModifications();
-            fullSync.ApplyProxyModifications();
             return true;
         }
         #endif
@@ -556,13 +545,12 @@ When this is true said second rotation is random."
             requestedIndexes[requestedCount++] = index;
             EffectOrder[index] = ++currentTopOrder;
             Networking.SetOwner(Networking.LocalPlayer, this.gameObject);
-            Networking.SetOwner(Networking.LocalPlayer, fullSync.gameObject);
             RequestSerialization();
         }
 
         public ulong CombineSyncedData(byte gunEffectIndex, int effectIndex, float time, bool active, uint order)
         {
-            return ((((ulong)gunEffectIndex) << GunEffectIndexBitShift) & GunEffectIndexBits) // gun effect index is not used here
+            return ((((ulong)gunEffectIndex) << GunEffectIndexBitShift) & GunEffectIndexBits) // gun effect index
                 | ((((ulong)effectIndex) << EffectIndexBitShift) & EffectIndexBits) // effect index
                 | (HasParticleSystems ? ((((ulong)(time * TimePointShift)) << TimeBitShift) & TimeBits) : 0UL) // time
                 | (IsToggle && active ? ActiveBit : 0UL) // active
@@ -619,7 +607,7 @@ When this is true said second rotation is random."
 
         public override void OnPostSerialization(SerializationResult result)
         {
-            Debug.Log($"<dlt> OnPostSerialization {this.name}; success {result.success}, byteCount {result.byteCount}");
+            Debug.Log($"<dlt> EffectDescriptor OnPostSerialization {this.name}; success: {result.success}, byteCount: {result.byteCount}");
         }
 
         public override void OnDeserialization()
@@ -627,55 +615,57 @@ When this is true said second rotation is random."
             int syncedCount;
             if (syncedPositions == null || (syncedCount = syncedData.Length) == 0) // should never be 0 but I don't want to think about it right now
                 return;
+            for (int i = 0; i < syncedCount; i++)
+                ProcessReceivedData(syncedData[i], syncedPositions[i], syncedRotations[i]);
+        }
+
+        public void ProcessReceivedData(ulong data, Vector3 position, Quaternion rotation)
+        {
             InitEffect();
             InitIncrementalSyncing();
-            for (int i = 0; i < syncedCount; i++)
+            int effectIndex = (int)((data & EffectIndexBits) >> EffectIndexBitShift);
+            uint order = (uint)(data & OrderBits);
+            EnsureIsInRange(effectIndex);
+            if (EffectOrder[effectIndex] >= order)
+                return;
+            EffectOrder[effectIndex] = order;
+            if (order > currentTopOrder)
+                currentTopOrder = order;
+            bool active = IsToggle ? ((data & ActiveBit) != 0UL) : true;
+            float rawSyncedTime = ((float)((data & TimeBits) >> TimeBitShift)) / TimePointShift;
+            float delay = Mathf.Min(rawSyncedTime, MaxDelay);
+            float time = delay - rawSyncedTime;
+            if (!HasParticleSystems || !active || time <= 0f)
             {
-                ulong data = syncedData[i];
-                int effectIndex = (int)((data & EffectIndexBits) >> EffectIndexBitShift);
-                uint order = (uint)(data & OrderBits);
-                EnsureIsInRange(effectIndex);
-                if (EffectOrder[effectIndex] >= order)
-                    continue;
-                EffectOrder[effectIndex] = order;
-                if (order > currentTopOrder)
-                    currentTopOrder = order;
-                bool active = IsToggle ? ((data & ActiveBit) != 0UL) : true;
-                float rawSyncedTime = ((float)((data & TimeBits) >> TimeBitShift)) / TimePointShift;
-                float delay = Mathf.Min(rawSyncedTime, MaxDelay);
-                float time = delay - rawSyncedTime;
-                if (!HasParticleSystems || !active || time <= 0f)
+                if (IsToggle)
                 {
-                    if (IsToggle)
+                    if (active)
                     {
-                        if (active)
+                        PlayEffectInternal(effectIndex, position, rotation);
+                        if (IsLoop)
                         {
-                            PlayEffectInternal(effectIndex, syncedPositions[i], syncedRotations[i]);
-                            if (IsLoop)
-                            {
-                                time = Mathf.Max(0f, rawSyncedTime - MaxLoopDelay);
-                                foreach (var ps in ParticleSystems[0])
-                                    ps.time = time;
-                            }
+                            time = Mathf.Max(0f, rawSyncedTime - MaxLoopDelay);
+                            foreach (var ps in ParticleSystems[0])
+                                ps.time = time;
                         }
-                        else
-                            StopToggleEffectInternal(effectIndex);
                     }
-                    else // IsOnce
-                    {
-                        if (effectDuration + StaleEffectTime + time > 0f) // prevent old effects from playing, specifically for late joiners
-                            PlayEffectInternal(effectIndex, syncedPositions[i], syncedRotations[i]);
-                    }
+                    else
+                        StopToggleEffectInternal(effectIndex);
                 }
-                else // only for effects with particle systems when they get activated
+                else // IsOnce
                 {
-                    if (delayedCount == delayedPositions.Length)
-                        GrowDelayedArrays();
-                    delayedIndexes[delayedCount] = effectIndex;
-                    delayedPositions[delayedCount] = syncedPositions[i];
-                    delayedRotations[delayedCount++] = syncedRotations[i];
-                    SendCustomEventDelayedSeconds(nameof(PlayEffectDelayed), delay);
+                    if (effectDuration + StaleEffectTime + time > 0f) // prevent old effects from playing, specifically for late joiners
+                        PlayEffectInternal(effectIndex, position, rotation);
                 }
+            }
+            else // only for effects with particle systems when they get activated
+            {
+                if (delayedCount == delayedPositions.Length)
+                    GrowDelayedArrays();
+                delayedIndexes[delayedCount] = effectIndex;
+                delayedPositions[delayedCount] = position;
+                delayedRotations[delayedCount++] = rotation;
+                SendCustomEventDelayedSeconds(nameof(PlayEffectDelayed), delay);
             }
         }
 

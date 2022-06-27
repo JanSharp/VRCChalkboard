@@ -66,6 +66,7 @@ namespace JanSharp
         [SerializeField] private Button deleteModeButton;
         [SerializeField] private Button editModeButton;
         [SerializeField] private Sprite selectedSprite;
+        [SerializeField] private VFXTargetGunEffectsFullSync fullSync;
 
         // set OnBuild
         [SerializeField] [HideInInspector] private MeshRenderer[] gunMeshRenderers;
@@ -186,7 +187,7 @@ namespace JanSharp
             }
         }
         private bool initialized;
-        private EffectDescriptor[] descriptors;
+        [HideInInspector] public EffectDescriptor[] descriptors;
         private EffectDescriptor selectedEffect;
         public EffectDescriptor SelectedEffect
         {
@@ -360,8 +361,10 @@ namespace JanSharp
             return ((uint)c32.r << 24) | ((uint)c32.g << 16) | ((uint)c32.b << 8) | (uint)c32.a;
         }
 
-        private void Init()
+        public void Init()
         {
+            if (initialized) // HACK: init array of descriptors OnBuild
+                return;
             initialized = true;
             Mode = PlaceMode;
             deselectedColor = uiToggleRenderer.material.color;
@@ -479,6 +482,7 @@ namespace JanSharp
         {
             var localPlayer = Networking.LocalPlayer;
             Networking.SetOwner(localPlayer, this.gameObject);
+            Networking.SetOwner(localPlayer, fullSync.gameObject);
             if (initialized)
                 foreach (var descriptor in descriptors)
                     Networking.SetOwner(localPlayer, descriptor.gameObject);
@@ -711,7 +715,7 @@ namespace JanSharp
                                 break;
                             effectParent = parent;
                         }
-                        deleteTargetIndex = effectParent.GetSiblingIndex() - 2;
+                        deleteTargetIndex = effectParent.GetSiblingIndex() - 1;
                     }
                     else
                     {

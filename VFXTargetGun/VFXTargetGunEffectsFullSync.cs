@@ -2,56 +2,87 @@
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
+using VRC.Udon.Common;
 
 namespace JanSharp
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class VFXTargetGunEffectsFullSync : UdonSharpBehaviour
     {
-        // set by EffectDescriptor's OnBuild
-        [SerializeField] [HideInInspector] public EffectDescriptor descriptor;
+        [SerializeField] private VFXTargetGun gun;
 
         [UdonSynced] private ulong[] syncedData;
         [UdonSynced] private Vector3[] syncedPositions;
         [UdonSynced] private Quaternion[] syncedRotations;
-        [UdonSynced] private uint currentTopOrder;
+        // [UdonSynced] private uint currentTopOrder; // TODO: sync this differently, probably through yet another script
 
         public override void OnPreSerialization()
         {
-            var isToggle = descriptor.IsToggle;
-            var count = descriptor.ActiveCount;
-            syncedData = new ulong[count];
-            syncedPositions = new Vector3[count];
-            syncedRotations = new Quaternion[count];
-            currentTopOrder = descriptor.currentTopOrder;
+            int totalCount = 0;
+            var descriptors = gun.descriptors;
+            foreach (var descriptor in descriptors)
+                totalCount += descriptor.ActiveCount;
+            if (totalCount == 0)
+            {
+                syncedData = null;
+                syncedPositions = null;
+                syncedRotations = null;
+                return;
+            }
+            if (syncedData == null || syncedData.Length != totalCount)
+            {
+                syncedData = new ulong[totalCount];
+                syncedPositions = new Vector3[totalCount];
+                syncedRotations = new Quaternion[totalCount];
+            }
 
             int syncedI = 0;
-            for (int i = 0; i < descriptor.MaxCount; i++)
+            for (int descriptorIndex = 0; descriptorIndex < descriptors.Length; descriptorIndex++)
             {
-                if (descriptor.ActiveEffects[i])
+                var descriptor = descriptors[descriptorIndex];
+                var activeCount = descriptor.ActiveCount;
+                if (activeCount == 0)
+                    continue;
+                var isToggle = descriptor.IsToggle;
+                int currentActiveCount = 0;
+                for (int i = 0; i < descriptor.MaxCount; i++)
                 {
-                    syncedData[syncedI] = descriptor.CombineSyncedData(
-                        0,
-                        i,
-                        descriptor.HasParticleSystems ? descriptor.ParticleSystems[i][0].time : 0f,
-                        descriptor.ActiveEffects[i],
-                        descriptor.EffectOrder[i]
-                    );
-                    syncedPositions[syncedI] = descriptor.EffectParents[i].position;
-                    syncedRotations[syncedI] = descriptor.EffectParents[i].rotation;
-                    if (++syncedI == count)
-                        break;
+                    if (descriptor.ActiveEffects[i])
+                    {
+                        syncedData[syncedI] = descriptor.CombineSyncedData(
+                            (byte)descriptorIndex,
+                            i,
+                            descriptor.HasParticleSystems ? descriptor.ParticleSystems[i][0].time : 0f,
+                            descriptor.ActiveEffects[i],
+                            descriptor.EffectOrder[i]
+                        );
+                        syncedPositions[syncedI] = descriptor.EffectParents[i].position;
+                        syncedRotations[syncedI++] = descriptor.EffectParents[i].rotation;
+                        if (++currentActiveCount == activeCount)
+                            break;
+                    }
                 }
+                if (syncedI == totalCount)
+                    break;
             }
+        }
+
+        public override void OnPostSerialization(SerializationResult result)
+        {
+            Debug.Log($"<dlt> VFXTargetGunEffectsFullSync OnPostSerialization {this.name}; success: {result.success}, byteCount: {result.byteCount}");
         }
 
         public override void OnDeserialization()
         {
-            descriptor.syncedData = syncedData;
-            descriptor.syncedPositions = syncedPositions;
-            descriptor.syncedRotations = syncedRotations;
-            descriptor.currentTopOrder = currentTopOrder;
-            descriptor.OnDeserialization();
+            gun.Init(); // HACK: init array of descriptors OnBuild
+            for (int i = 0; i < syncedData.Length; i++)
+            {
+                var data = syncedData[i];
+                Debug.Log($"<dlt> {i} raw data: {data:X}");
+                int effectIndex = (int)((data & 0xff00000000000000UL) >> (8 * 7));
+                Debug.Log($"<dlt> {i} effectIndex: {effectIndex}");
+                gun.descriptors[effectIndex].ProcessReceivedData(data, syncedPositions[i], syncedRotations[i]);
+            }
         }
     }
 }
