@@ -71,6 +71,7 @@ namespace JanSharp
         // set OnBuild
         [SerializeField] [HideInInspector] private MeshRenderer[] gunMeshRenderers;
         [SerializeField] [HideInInspector] private Sprite normalSprite;
+        [SerializeField] [HideInInspector] public EffectDescriptor[] descriptors;
 
         #if UNITY_EDITOR && !COMPILER_UDONSHARP
         [InitializeOnLoad]
@@ -80,13 +81,22 @@ namespace JanSharp
         }
         bool IOnBuildCallback.OnBuild()
         {
-            if (gunMesh == null || placeModeButton == null)
+            if (gunMesh == null || placeModeButton == null || effectsParent == null)
             {
                 Debug.LogError("VFX Target gun requires all internal references to be set in the inspector.");
                 return false;
             }
             gunMeshRenderers = gunMesh.GetComponentsInChildren<MeshRenderer>();
             normalSprite = placeModeButton.image.sprite;
+            descriptors = new EffectDescriptor[effectsParent.childCount];
+            for (int i = 0; i < effectsParent.childCount; i++)
+            {
+                var descriptor = effectsParent.GetChild(i).GetUdonSharpComponent<EffectDescriptor>();
+                descriptors[i] = descriptor;
+                if (descriptor == null)
+                    Debug.LogError($"The child #{i + 1} ({effectsParent.GetChild(i).name}) "
+                        + $"of the effects descriptor parent does not have an {nameof(EffectDescriptor)}.");
+            }
             this.ApplyProxyModifications();
             return true;
         }
@@ -187,7 +197,6 @@ namespace JanSharp
             }
         }
         private bool initialized;
-        [HideInInspector] public EffectDescriptor[] descriptors;
         private EffectDescriptor selectedEffect;
         public EffectDescriptor SelectedEffect
         {
@@ -361,10 +370,8 @@ namespace JanSharp
             return ((uint)c32.r << 24) | ((uint)c32.g << 16) | ((uint)c32.b << 8) | (uint)c32.a;
         }
 
-        public void Init()
+        private void Init()
         {
-            if (initialized) // HACK: init array of descriptors OnBuild
-                return;
             initialized = true;
             Mode = PlaceMode;
             deselectedColor = uiToggleRenderer.material.color;
@@ -377,16 +384,10 @@ namespace JanSharp
             legendText.text = $"[<b><color=#{ToHex(activeColor, false):X6}>once</color>: <color=#{ToHex(activeColor, false):X6}>on</color>/<color=#{ToHex(inactiveColor, false):X6}>off</color></b>] "
                 + $"[<b><color=#{ToHex(activeLoopColor, false):X6}>loop</color>: <color=#{ToHex(activeLoopColor, false):X6}>on</color>/<color=#{ToHex(inactiveLoopColor, false):X6}>off</color></b>] "
                 + $"[<b><color=#{ToHex(activeObjectColor, false):X6}>object</color>: <color=#{ToHex(activeObjectColor, false):X6}>on</color>/<color=#{ToHex(inactiveObjectColor, false):X6}>off</color></b>]";
-            int count = effectsParent.childCount;
-            descriptors = new EffectDescriptor[count];
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < descriptors.Length; i++)
             {
-                var descriptor = (EffectDescriptor)effectsParent.GetChild(i).GetComponent(typeof(UdonBehaviour));
-                descriptors[i] = descriptor;
-                if (descriptors[i] == null)
-                    Debug.LogError($"The child #{i + 1} ({effectsParent.GetChild(i).name}) "
-                        + "of the effects descriptor parent does not have an EffectDescriptor.");
-                else
+                var descriptor = descriptors[i];
+                if (descriptor != null)
                     descriptor.Init(this, i);
             }
             if (selectedEffectIndex != -1)

@@ -69,7 +69,6 @@ namespace JanSharp
 
         public override void OnDeserialization()
         {
-            gun.Init(); // HACK: init array of descriptors OnBuild
             for (int i = 0; i < syncedData.Length; i++)
             {
                 var data = syncedData[i];
