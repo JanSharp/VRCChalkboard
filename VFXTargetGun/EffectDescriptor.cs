@@ -1,4 +1,4 @@
-﻿using UdonSharp;
+using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
@@ -503,9 +503,9 @@ When this is true said second rotation is random."
         /// <para>the first bit of byte 6: active</para>
         /// <para>the rest of 6, 7, 8: order</para>
         /// </summary>
-        [UdonSynced] [HideInInspector] private ulong[] syncedData;
-        [UdonSynced] [HideInInspector] private Vector3[] syncedPositions;
-        [UdonSynced] [HideInInspector] private Quaternion[] syncedRotations;
+        [UdonSynced] private ulong[] syncedData;
+        [UdonSynced] private Vector3[] syncedPositions;
+        [UdonSynced] private Quaternion[] syncedRotations;
         private const ulong GunEffectIndexBits = 0xff00000000000000UL;
         private const ulong    EffectIndexBits = 0x00ffff0000000000UL;
         private const ulong           TimeBits = 0x000000ffff000000UL;
