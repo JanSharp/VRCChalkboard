@@ -503,9 +503,9 @@ When this is true said second rotation is random."
         /// <para>the first bit of byte 6: active</para>
         /// <para>the rest of 6, 7, 8: order</para>
         /// </summary>
-        [UdonSynced] [HideInInspector] public ulong[] syncedData;
-        [UdonSynced] [HideInInspector] public Vector3[] syncedPositions;
-        [UdonSynced] [HideInInspector] public Quaternion[] syncedRotations;
+        [UdonSynced] [HideInInspector] private ulong[] syncedData;
+        [UdonSynced] [HideInInspector] private Vector3[] syncedPositions;
+        [UdonSynced] [HideInInspector] private Quaternion[] syncedRotations;
         private const ulong GunEffectIndexBits = 0xff00000000000000UL;
         private const ulong    EffectIndexBits = 0x00ffff0000000000UL;
         private const ulong           TimeBits = 0x000000ffff000000UL;
@@ -556,11 +556,15 @@ When this is true said second rotation is random."
 
         public override void OnPreSerialization()
         {
-            // nothing to sync yet
-            if (!effectInitialized)
-                return;
-            if (requestedCount == 0)
+            // nothing to sync
+            if (!effectInitialized || requestedCount == 0)
             {
+                // if they haven't been initialized the arrays should already be null
+                // but when they are public unity seems to make them empty arrays by default
+                // and there could be some ownership transfer which could then cause it to resync
+                // everything every time someone joins, so setting them to null even if it's not
+                // been initialized yet is the safe way and potentially even correct way
+
                 // NOTE: setting any array to null causes the serialization request to be dropped completely.
                 // not sure if this is intended however it works nicely for this use case where I quite literally
                 // do not want it to sync anything. If this is a bug and it gets fixed at some point then
