@@ -14,7 +14,6 @@ namespace JanSharp
         [UdonSynced] private ulong[] syncedData;
         [UdonSynced] private Vector3[] syncedPositions;
         [UdonSynced] private Quaternion[] syncedRotations;
-        // [UdonSynced] private uint currentTopOrder; // TODO: sync this differently, probably through yet another script
 
         public override void OnPreSerialization()
         {

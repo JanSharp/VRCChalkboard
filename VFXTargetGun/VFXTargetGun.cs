@@ -66,6 +66,8 @@ namespace JanSharp
         [SerializeField] private Button deleteModeButton;
         [SerializeField] private Button editModeButton;
         [SerializeField] private Sprite selectedSprite;
+        [SerializeField] private EffectOrderSync orderSync;
+        public EffectOrderSync OrderSync => orderSync;
         [SerializeField] private VFXTargetGunEffectsFullSync fullSync;
 
         // set OnBuild
@@ -81,7 +83,7 @@ namespace JanSharp
         }
         bool IOnBuildCallback.OnBuild()
         {
-            if (gunMesh == null || placeModeButton == null || effectsParent == null)
+            if (gunMesh == null || placeModeButton == null || effectsParent == null || orderSync == null)
             {
                 Debug.LogError("VFX Target gun requires all internal references to be set in the inspector.");
                 return false;
@@ -89,16 +91,22 @@ namespace JanSharp
             gunMeshRenderers = gunMesh.GetComponentsInChildren<MeshRenderer>();
             normalSprite = placeModeButton.image.sprite;
             descriptors = new EffectDescriptor[effectsParent.childCount];
+            bool result = true;
             for (int i = 0; i < effectsParent.childCount; i++)
             {
                 var descriptor = effectsParent.GetChild(i).GetUdonSharpComponent<EffectDescriptor>();
                 descriptors[i] = descriptor;
                 if (descriptor == null)
+                {
                     Debug.LogError($"The child #{i + 1} ({effectsParent.GetChild(i).name}) "
                         + $"of the effects descriptor parent does not have an {nameof(EffectDescriptor)}.");
+                    result = false;
+                }
+                else
+                    descriptor.InitAtBuildTime(this, i);
             }
             this.ApplyProxyModifications();
-            return true;
+            return result;
         }
         #endif
 
@@ -388,7 +396,7 @@ namespace JanSharp
             {
                 var descriptor = descriptors[i];
                 if (descriptor != null)
-                    descriptor.Init(this, i);
+                    descriptor.Init();
             }
             if (selectedEffectIndex != -1)
                 SelectedEffect = descriptors[selectedEffectIndex];

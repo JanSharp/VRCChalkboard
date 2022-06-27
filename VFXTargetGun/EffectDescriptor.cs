@@ -1,4 +1,4 @@
-using UdonSharp;
+﻿using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
@@ -34,6 +34,10 @@ When this is true said second rotation is random."
         [SerializeField] [HideInInspector] public Vector3 effectLocalCenter;
         [SerializeField] [HideInInspector] public Vector3 effectScale;
         [SerializeField] [HideInInspector] public bool doLimitDistance;
+        [SerializeField] [HideInInspector] private EffectOrderSync orderSync;
+        [SerializeField] [HideInInspector] private VFXTargetGun gun;
+        [SerializeField] [HideInInspector] private int index;
+        public int Index => index;
 
         private const int OnceEffect = 0;
         private const int LoopEffect = 1;
@@ -61,12 +65,12 @@ When this is true said second rotation is random."
                 {
                     fadingOutCount = value;
                     // only update colors if the references to the gun and the UI even exists
-                    if (gun != null)
+                    if (buttonData != null)
                         UpdateColors();
                 }
                 else
                     fadingOutCount = value;
-                if (gun != null)
+                if (buttonData != null)
                     SetActiveCountText();
             }
         }
@@ -82,12 +86,12 @@ When this is true said second rotation is random."
                 {
                     activeCount = value;
                     // only update colors if the references to the gun and the UI even exists
-                    if (gun != null)
+                    if (buttonData != null)
                         UpdateColors();
                 }
                 else
                     activeCount = value;
-                if (gun != null)
+                if (buttonData != null)
                     SetActiveCountText();
             }
         }
@@ -105,8 +109,6 @@ When this is true said second rotation is random."
 
         // these 3 are only set for people who have opened the UI at some point
         private EffectButtonData buttonData;
-        private VFXTargetGun gun;
-        public int Index { get; private set; }
 
         private void UpdateColors()
         {
@@ -139,15 +141,20 @@ When this is true said second rotation is random."
             buttonData.activeCountText.text = ActiveCount == 0 ? "" : ActiveCount.ToString();
         }
 
-        public void Init(VFXTargetGun gun, int index)
+        public void Init()
         {
-            this.gun = gun;
-            Index = index;
             InitEffect();
             MakeButton();
         }
 
         #if UNITY_EDITOR && !COMPILER_UDONSHARP
+        public void InitAtBuildTime(VFXTargetGun gun, int index)
+        {
+            this.gun = gun;
+            this.orderSync = gun.OrderSync;
+            this.index = index;
+            this.ApplyProxyModifications();
+        }
         [InitializeOnLoad]
         public static class OnBuildRegister
         {
@@ -491,7 +498,6 @@ When this is true said second rotation is random."
 
         // incremental syncing
         public uint[] EffectOrder { get; private set; }
-        [HideInInspector] public uint currentTopOrder;
         private bool[] requestedSyncs;
         private int[] requestedIndexes;
         private int requestedCount;
@@ -540,8 +546,10 @@ When this is true said second rotation is random."
                 return;
             requestedSyncs[index] = true;
             requestedIndexes[requestedCount++] = index;
-            EffectOrder[index] = ++currentTopOrder;
-            Networking.SetOwner(Networking.LocalPlayer, this.gameObject);
+            EffectOrder[index] = ++orderSync.currentTopOrder;
+            var localPlayer = Networking.LocalPlayer;
+            Networking.SetOwner(localPlayer, orderSync.gameObject);
+            Networking.SetOwner(localPlayer, this.gameObject);
             RequestSerialization();
         }
 
@@ -619,8 +627,12 @@ When this is true said second rotation is random."
             if (EffectOrder[effectIndex] >= order)
                 return;
             EffectOrder[effectIndex] = order;
-            if (order > currentTopOrder)
-                currentTopOrder = order;
+            if (order > orderSync.currentTopOrder)
+            {
+                // doesn't need to set owner because someone else is already guaranteed to be the owner
+                // of the orderSync object who has the same or a higher currentTopOrder
+                orderSync.currentTopOrder = order;
+            }
             bool active = IsToggle ? ((data & ActiveBit) != 0UL) : true;
             float rawSyncedTime = ((float)((data & TimeBits) >> TimeBitShift)) / TimePointShift;
             float delay = Mathf.Min(rawSyncedTime, MaxDelay);
