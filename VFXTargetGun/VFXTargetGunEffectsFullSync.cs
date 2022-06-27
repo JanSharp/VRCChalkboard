@@ -67,20 +67,13 @@ namespace JanSharp
             }
         }
 
-        public override void OnPostSerialization(SerializationResult result)
-        {
-            Debug.Log($"<dlt> VFXTargetGunEffectsFullSync OnPostSerialization {this.name}; success: {result.success}, byteCount: {result.byteCount}");
-        }
-
         public override void OnDeserialization()
         {
             gun.Init(); // HACK: init array of descriptors OnBuild
             for (int i = 0; i < syncedData.Length; i++)
             {
                 var data = syncedData[i];
-                Debug.Log($"<dlt> {i} raw data: {data:X}");
                 int effectIndex = (int)((data & 0xff00000000000000UL) >> (8 * 7));
-                Debug.Log($"<dlt> {i} effectIndex: {effectIndex}");
                 gun.descriptors[effectIndex].ProcessReceivedData(data, syncedPositions[i], syncedRotations[i]);
             }
         }

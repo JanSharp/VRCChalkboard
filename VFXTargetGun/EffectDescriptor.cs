@@ -605,11 +605,6 @@ When this is true said second rotation is random."
             requestedCount = 0;
         }
 
-        public override void OnPostSerialization(SerializationResult result)
-        {
-            Debug.Log($"<dlt> EffectDescriptor OnPostSerialization {this.name}; success: {result.success}, byteCount: {result.byteCount}");
-        }
-
         public override void OnDeserialization()
         {
             int syncedCount;
