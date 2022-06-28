@@ -714,7 +714,10 @@ namespace JanSharp
                     }
                     Transform effectParent;
                     Transform mainEffectTransform = ((Component)SelectedEffect).transform; // UdonSharp being picky
-                    if (hit.transform.IsChildOf(mainEffectTransform))
+                    // the `hit.transform` can be null when pointing at VRChat's internal things such as the VRChat menu
+                    // or VRChat players. I'm assuming it is an udon specific thing where they null out any transform/component you're
+                    // trying to get if it is one of their internal ones
+                    if (hit.transform != null && hit.transform.IsChildOf(mainEffectTransform))
                     {
                         effectParent = hit.transform;
                         while (true)
