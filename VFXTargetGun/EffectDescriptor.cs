@@ -466,8 +466,13 @@ When this is true said second rotation is random."
                 effectTransform.gameObject.SetActive(true);
             else
             {
-                foreach (var ps in ParticleSystems[index])
-                    ps.Play();
+                var pss = ParticleSystems[index];
+                for (int i = 0; i < pss.Length; i++)
+                    if (pss[i] != null)
+                        pss[i].Play(); // FIXME: this can somehow be a null reference exception where `pss[i]` is null. Idk how so for now it's just logging to gather information
+                    else
+                        Debug.Log($"<dlt> <{nameof(EffectDescriptor)}> EffectName: '{EffectName}', Gun: '{gun.name}':"
+                            + $" Did not play particle system at (effect index: {index}, particle system index: {i}) because it was null.");
                 if (IsOnce)
                 {
                     toFinishIndexes[toFinishCount++] = index;
