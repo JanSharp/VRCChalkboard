@@ -1,7 +1,7 @@
 
 # Syncing
 
-TODO: organize and summarize notes
+bytes synced by effects full sync with x amount of active effects
 
 10: 456
 9: 424
@@ -9,6 +9,8 @@ TODO: organize and summarize notes
 7: 352
 6: 312
 5: 280
+
+calculated diffs showing how many bytes each individual effect added, extended calculation past the tested values down to 0
 
 10-9: 32
 9-8: 40
@@ -33,49 +35,33 @@ It's just weird, but let's just take the average:
 late joiner sync byte count for effects:
 96 per gun with any active effects + 36 per effect
 
-so you can now have about 657.7777777777778 active effects spread accross 5 guns for it to get as bad as it was yesterday with 12 effects (although the fact that it was 12 yesterday doesn't really matter, it was all of the accumulated overhead of arrays, really)
+so you can now have about 657.7777777777778 active effects spread across 5 guns for it to get as bad as it was in `0.2.0` with 12 active effects (although the fact that it was 12 doesn't really matter, it was all of the accumulated overhead of arrays, really).
+however in reality I'd say 100 to 200 active effects is a much more practical limit than 650.
 
 
 
-raw values:
-(
-    old system, first join
-    steam:
-    25224
-    proton caller:
-    0
+This test came before the one above however there were very few changes affecting the amount of bytes being synced between the 2. I don't remember exactly if I changed anything in between them unfortunately but I'm fairly certain because I wouldn't setup the entire test setup just to test something I'm going to change anyway.
 
-    old system, second join
-    steam:
-    49384
-    proton caller:
-    0
+raw values (total bytes synced by both EffectDescriptor and effect full sync (which is a different script between the 2 tests) since instance launch, which means it doesn't reset between joins):
 
-    new system, first join for real this time
-    steam:
-    1112
-    proton caller:
-    0
+`0.2.0` first join: 25224
+`0.2.0` second join: 49384
 
-    new system, second join for real this time
-    steam:
-    1568
-    proton caller:
-    0
-)
+`0.2.1` first join: 1112
+`0.2.1` second join: 1568
 
 
 the first join is bigger because everything that requested serialization ends up syncing twice. This won't happen in the real world because there are pretty much always at least 2 people in the map already.
 the second join is what matters
 
-test with 6, 3, 1 active effects
+test with 6, 3, 1 active effects (so 10 total effects spread out across 3 effects)
 
-old system:
+`0.2.0`:
 (first join: 25224)
 second join: 24160
 
-new system:
+`0.2.1`:
 (first join: 1112)
 second join: 456
 
-GG! Not done yet, need to clean up, but it's break time :D
+gigantic improvement
