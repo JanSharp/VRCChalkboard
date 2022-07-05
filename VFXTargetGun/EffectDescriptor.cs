@@ -31,6 +31,7 @@ When this is true said second rotation is random."
         [SerializeField] [HideInInspector] private float effectDuration; // used by once effects
         [SerializeField] [HideInInspector] private float effectLifetime; // used by loop effects
         [SerializeField] [HideInInspector] private GameObject originalEffectObject;
+        [SerializeField] [HideInInspector] public Transform effectClonesParent;
         [SerializeField] [HideInInspector] public Vector3 effectLocalCenter;
         [SerializeField] [HideInInspector] public Vector3 effectScale;
         [SerializeField] [HideInInspector] public bool doLimitDistance;
@@ -162,14 +163,23 @@ When this is true said second rotation is random."
         }
         bool IOnBuildCallback.OnBuild()
         {
-            if (this.transform.childCount != 1)
+            if (this.transform.childCount == 1)
+                Instantiate(new GameObject(), this.transform.position, this.transform.rotation, this.transform).name = "EffectClones";
+            else if (this.transform.childCount != 2)
             {
-                Debug.LogError($"The {nameof(EffectDescriptor)} must have exactly 1 child."
-                    + $" Said child must be the 'EffectParent' which is either the parent for a collection of particle systems,"
-                    + $" or the parent for an object. To be exact it is considered to be an object whenever there are no particle systems.");
+                Debug.LogError($"The {nameof(EffectDescriptor)} must have exactly 2 children."
+                    + $" The first child must be the 'EffectParent' which is either the parent for a collection of particle systems,"
+                    + $" or the parent for an object. To be exact it is considered to be an object whenever there are no particle systems."
+                    + $" The second child must be the 'EffectClones' with exactly 0 children.");
                 return false;
             }
             Transform effectParent = this.transform.GetChild(0);
+            effectClonesParent = this.transform.GetChild(1);
+            if (effectClonesParent.childCount != 0)
+            {
+                Debug.LogError($"The {nameof(EffectDescriptor)}'s second child (the 'EffectClones') must have exactly 0 children.");
+                return false;
+            }
             originalEffectObject = effectParent.gameObject;
             var particleSystems = effectParent.GetComponentsInChildren<ParticleSystem>();
             effectDuration = 0f;
@@ -357,7 +367,7 @@ When this is true said second rotation is random."
             // and an unused game object in the world but what am I supposed to do
             var obj = VRCInstantiate(originalEffectObject);
             effectTransform = obj.transform;
-            effectTransform.parent = this.transform;
+            effectTransform.parent = effectClonesParent;
             EffectParents[index] = effectTransform;
             if (HasParticleSystems)
                 ParticleSystems[index] = effectTransform.GetComponentsInChildren<ParticleSystem>();
