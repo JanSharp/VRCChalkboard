@@ -73,6 +73,7 @@ namespace JanSharp
         public EffectOrderSync OrderSync => orderSync;
         [SerializeField] private VFXTargetGunEffectsFullSync fullSync;
         [SerializeField] public Material placePreviewMaterial;
+        [SerializeField] public Material deletePreviewMaterial;
 
         // set OnBuild
         [SerializeField] [HideInInspector] private MeshRenderer[] gunMeshRenderers;
@@ -217,10 +218,13 @@ namespace JanSharp
             {
                 if (value == selectedEffect)
                     return;
+                DeleteTargetIndex = -1; // set before changing selected effect
+                selectedDeletePreview = null; // this can be anywhere but I put it here for organization
                 if (selectedEffect != null)
                     selectedEffect.Selected = false;
                 selectedEffect = value; // update `selectedEffect` before setting `Selected` to true on an effect descriptor
                 SetSelectedPlacePreviewUsingSelectedEffect();
+                UpdateIsDeletePreviewActiveBasedOnToggle();
                 if (value == null)
                 {
                     UpdateColors();
@@ -229,6 +233,7 @@ namespace JanSharp
                     IsPlaceIndicatorActive = false;
                     IsDeleteIndicatorActive = false;
                     laser.gameObject.SetActive(false);
+                    IsDeletePreviewActive = false;
                 }
                 else
                 {
@@ -239,6 +244,7 @@ namespace JanSharp
                         laser.gameObject.SetActive(true);
                     deleteIndicator.localScale = value.effectScale;
                     placeIndicatorForwardsArrow.SetActive(!value.randomizeRotation);
+                    IsDeletePreviewActive = value.IsObject && deletePreviewToggle.isOn;
                 }
                 UpdateUseText();
                 if (!isReceiving)
@@ -318,7 +324,20 @@ namespace JanSharp
             RequestSerialization();
         }
 
-        private int deleteTargetIndex;
+        private int deleteTargetIndex = -1;
+        private int DeleteTargetIndex
+        {
+            get => deleteTargetIndex;
+            set
+            {
+                if (deleteTargetIndex == value)
+                    return;
+                if (SelectedEffect != null && SelectedEffect.IsObject && deleteTargetIndex != -1)
+                    SelectedEffect.EffectParents[deleteTargetIndex].gameObject.SetActive(SelectedEffect.ActiveEffects[deleteTargetIndex]);
+                deleteTargetIndex = value;
+                UpdateDeletePreview();
+            }
+        }
         private bool isDeleteIndicatorActive;
         private bool IsDeleteIndicatorActive
         {
@@ -328,11 +347,50 @@ namespace JanSharp
                 if (isDeleteIndicatorActive == value)
                     return;
                 isDeleteIndicatorActive = value;
-                deleteIndicator.gameObject.SetActive(value);
                 secondLaser.gameObject.SetActive(value);
+                UpdateDeletePreview();
                 UpdateUseText();
+                if (!value)
+                    DeleteTargetIndex = -1;
             }
         }
+        private bool isDeletePreviewActive;
+        private bool IsDeletePreviewActive
+        {
+            get => isDeletePreviewActive;
+            set
+            {
+                if (isDeletePreviewActive == value)
+                    return;
+                isDeletePreviewActive = value;
+                UpdateDeletePreview();
+            }
+        }
+        public void UpdateIsDeletePreviewActiveBasedOnToggle()
+            => IsDeletePreviewActive = deletePreviewToggle.isOn && SelectedEffect != null && SelectedEffect.IsObject;
+        private Transform selectedDeletePreview;
+        private void UpdateDeletePreview()
+        {
+            if (IsDeleteIndicatorActive && IsDeletePreviewActive && DeleteTargetIndex != -1)
+            {
+                if (selectedDeletePreview == null)
+                    selectedDeletePreview = SelectedEffect.GetDeletePreview();
+                selectedDeletePreview.gameObject.SetActive(true);
+                var effectParent = SelectedEffect.EffectParents[DeleteTargetIndex];
+                selectedDeletePreview.SetPositionAndRotation(effectParent.position, effectParent.rotation);
+                effectParent.gameObject.SetActive(false);
+                deleteIndicator.gameObject.SetActive(false);
+            }
+            else
+            {
+                if (selectedDeletePreview != null)
+                    selectedDeletePreview.gameObject.SetActive(false);
+                if (DeleteTargetIndex != -1)
+                    SelectedEffect.EffectParents[DeleteTargetIndex].gameObject.SetActive(true);
+                deleteIndicator.gameObject.SetActive(IsDeleteIndicatorActive);
+            }
+        }
+
         private bool isPlaceIndicatorActive;
         private bool IsPlaceIndicatorActive
         {
@@ -572,7 +630,7 @@ namespace JanSharp
             {
                 if (IsDeleteIndicatorActive)
                 {
-                    SelectedEffect.StopToggleEffect(deleteTargetIndex);
+                    SelectedEffect.StopToggleEffect(DeleteTargetIndex);
                     IsDeleteIndicatorActive = false;
                 }
             }
@@ -794,12 +852,18 @@ namespace JanSharp
                                 break;
                             effectParent = parent;
                         }
-                        deleteTargetIndex = effectParent.GetSiblingIndex();
+                        DeleteTargetIndex = effectParent.GetSiblingIndex();
+                    }
+                    else if (IsDeleteIndicatorActive && IsDeletePreviewActive && hit.transform != null && selectedDeletePreview != null
+                        && hit.transform.IsChildOf(selectedDeletePreview))
+                    {
+                        // do nothing :)
+                        effectParent = SelectedEffect.EffectParents[DeleteTargetIndex];
                     }
                     else
                     {
-                        deleteTargetIndex = SelectedEffect.GetNearestActiveEffect(hit.point);
-                        effectParent = SelectedEffect.EffectParents[deleteTargetIndex];
+                        DeleteTargetIndex = SelectedEffect.GetNearestActiveEffect(hit.point);
+                        effectParent = SelectedEffect.EffectParents[DeleteTargetIndex];
                     }
                     Vector3 position = effectParent.position + effectParent.TransformDirection(SelectedEffect.effectLocalCenter);
                     if (SelectedEffect.doLimitDistance && (position - hit.point).magnitude > Mathf.Max(1f, SelectedEffect.effectScale.x * 0.65f))

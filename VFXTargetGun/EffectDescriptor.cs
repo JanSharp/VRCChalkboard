@@ -73,6 +73,26 @@ When this is true said second rotation is random."
             }
         }
 
+        private Transform deletePreview;
+        public Transform GetDeletePreview()
+        {
+            if (deletePreview == null)
+            {
+                var obj = VRCInstantiate(originalEffectObject);
+                deletePreview = obj.transform;
+                deletePreview.parent = this.transform;
+                // replace all materials
+                foreach (var renderer in deletePreview.GetComponentsInChildren<Renderer>())
+                {
+                    var materials = renderer.materials;
+                    for (int i = 0; i < materials.Length; i++)
+                        materials[i] = gun.deletePreviewMaterial;
+                    renderer.materials = materials;
+                }
+            }
+            return deletePreview;
+        }
+
         [HideInInspector] public Quaternion nextRandomRotation;
         public Transform[] EffectParents { get; private set; }
         public ParticleSystem[][] ParticleSystems { get; private set; }
