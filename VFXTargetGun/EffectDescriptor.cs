@@ -51,6 +51,29 @@ When this is true said second rotation is random."
         public bool IsToggle => !IsOnce;
         public bool HasParticleSystems => !IsObject;
 
+        [HideInInspector] public Transform placePreview;
+        public void InitPlacePreview()
+        {
+            if (placePreview == null)
+            {
+                var obj = VRCInstantiate(originalEffectObject);
+                placePreview = obj.transform;
+                placePreview.parent = this.transform;
+                // replace all materials
+                foreach (var renderer in placePreview.GetComponentsInChildren<Renderer>())
+                {
+                    var materials = renderer.materials;
+                    for (int i = 0; i < materials.Length; i++)
+                        materials[i] = gun.placePreviewMaterial;
+                    renderer.materials = materials;
+                }
+                // disable all colliders
+                foreach (var collider in placePreview.GetComponentsInChildren<Collider>())
+                    collider.enabled = false;
+            }
+        }
+
+        [HideInInspector] public Quaternion nextRandomRotation;
         public Transform[] EffectParents { get; private set; }
         public ParticleSystem[][] ParticleSystems { get; private set; }
         public bool[] ActiveEffects { get; private set; }
@@ -267,6 +290,7 @@ When this is true said second rotation is random."
         {
             if (effectInitialized)
                 return;
+            nextRandomRotation = Quaternion.AngleAxis(Random.Range(0f, 360f), Vector3.forward);
             effectInitialized = true;
             EffectParents = new Transform[4];
             if (HasParticleSystems)
@@ -402,7 +426,10 @@ When this is true said second rotation is random."
         public void PlayEffect(Vector3 position, Quaternion rotation)
         {
             if (randomizeRotation)
-                rotation = rotation * Quaternion.AngleAxis(Random.Range(0f, 360f), Vector3.forward);
+            {
+                rotation = rotation * nextRandomRotation;
+                nextRandomRotation = Quaternion.AngleAxis(Random.Range(0f, 360f), Vector3.forward);
+            }
 
             int index;
             if (ActiveCount == MaxCount)

@@ -65,10 +65,14 @@ namespace JanSharp
         [SerializeField] private Button placeModeButton;
         [SerializeField] private Button deleteModeButton;
         [SerializeField] private Button editModeButton;
+        [SerializeField] private Toggle placePreviewToggle;
+        [SerializeField] private Toggle deletePreviewToggle;
+        [SerializeField] private Toggle editPreviewToggle;
         [SerializeField] private Sprite selectedSprite;
         [SerializeField] private EffectOrderSync orderSync;
         public EffectOrderSync OrderSync => orderSync;
         [SerializeField] private VFXTargetGunEffectsFullSync fullSync;
+        [SerializeField] public Material placePreviewMaterial;
 
         // set OnBuild
         [SerializeField] [HideInInspector] private MeshRenderer[] gunMeshRenderers;
@@ -216,6 +220,7 @@ namespace JanSharp
                 if (selectedEffect != null)
                     selectedEffect.Selected = false;
                 selectedEffect = value; // update `selectedEffect` before setting `Selected` to true on an effect descriptor
+                SetSelectedPlacePreviewUsingSelectedEffect();
                 if (value == null)
                 {
                     UpdateColors();
@@ -337,8 +342,62 @@ namespace JanSharp
                 if (isPlaceIndicatorActive == value)
                     return;
                 isPlaceIndicatorActive = value;
+                if (IsPlacePreviewActive)
+                {
+                    if (value)
+                        SetSelectedPlacePreviewUsingSelectedEffect();
+                    else if (SelectedPlacePreview != null)
+                        SelectedPlacePreview.gameObject.SetActive(false);
+                }
                 placeIndicator.gameObject.SetActive(value);
             }
+        }
+        private bool isPlacePreviewActive;
+        private bool IsPlacePreviewActive
+        {
+            get => isPlacePreviewActive;
+            set
+            {
+                if (isPlacePreviewActive == value)
+                    return;
+                isPlacePreviewActive = value;
+                if (IsPlaceIndicatorActive)
+                {
+                    if (value)
+                        SetSelectedPlacePreviewUsingSelectedEffect();
+                    else if (SelectedPlacePreview != null)
+                        SelectedPlacePreview.gameObject.SetActive(false);
+                }
+            }
+        }
+        public void UpdateIsPlacePreviewActiveBasedOnToggle() => IsPlacePreviewActive = placePreviewToggle.isOn;
+        private Transform selectedPlacePreview;
+        private Transform SelectedPlacePreview
+        {
+            get => selectedPlacePreview;
+            set
+            {
+                if (selectedPlacePreview != null)
+                    selectedPlacePreview.gameObject.SetActive(false);
+                selectedPlacePreview = value;
+                if (value != null && IsPlaceIndicatorActive && IsPlacePreviewActive)
+                    EnablePlacePreviewObject();
+            }
+        }
+        private void SetSelectedPlacePreviewUsingSelectedEffect()
+        {
+            if (IsPlacePreviewActive && SelectedEffect != null && SelectedEffect.IsObject)
+            {
+                SelectedEffect.InitPlacePreview();
+                SelectedPlacePreview = SelectedEffect.placePreview;
+            }
+            else
+                SelectedPlacePreview = null;
+        }
+        private void EnablePlacePreviewObject()
+        {
+            SelectedPlacePreview.gameObject.SetActive(true);
+            SelectedPlacePreview.SetPositionAndRotation(placeIndicator.position, placeIndicator.rotation);
         }
         private bool isVisible;
         public bool IsVisible
@@ -701,7 +760,15 @@ namespace JanSharp
                 laser.localScale = new Vector3(1f, 1f, (aimPoint.position - hit.point).magnitude * laserBaseScale);
                 if (IsPlaceMode)
                 {
-                    placeIndicator.SetPositionAndRotation(hit.point, Quaternion.LookRotation(hit.normal, aimPoint.forward));
+                    var position = hit.point;
+                    var rotation = Quaternion.LookRotation(hit.normal, aimPoint.forward);
+                    placeIndicator.SetPositionAndRotation(position, rotation);
+                    if (IsPlacePreviewActive && SelectedPlacePreview != null)
+                    {
+                        if (SelectedEffect.randomizeRotation)
+                            rotation = rotation * SelectedEffect.nextRandomRotation;
+                        SelectedPlacePreview.SetPositionAndRotation(position, rotation);
+                    }
                     IsPlaceIndicatorActive = true;
                 }
                 else if (IsDeleteMode)
