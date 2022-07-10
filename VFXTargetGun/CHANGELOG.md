@@ -1,6 +1,19 @@
 
 # Changelog
 
+## [0.3.0] - 2022-07-10
+
+### Added
+
+- Previews for Place and Delete modes (`c2ee809`, `61af510`, `fad9053`, `97a446d`, `7039a4e`)
+
+### Changed
+
+- **Breaking:** Update VFXTargetGun prefab (`a69b9b8`)
+- Move VFXTargetGun and ButtonEffect to `Prefabs` folder (`f3b8d03`)
+- Put all cloned effects into a separate parent obj at runtime (`c24b9c7`)
+- Organize syncing performance notes (`fa56e61`)
+
 ## [0.2.3] - 2022-07-04
 
 ### Changed
@@ -109,12 +122,14 @@ _Initial release._
 - Add basic UI (`b99f245`)
 - Workaround for VRCInstantiate being weird (`4e4840e`)
 
+<!-- VFXTargetGun_v0.3.0 -->
 <!-- VFXTargetGun_v0.2.3 -->
 <!-- VFXTargetGun_v0.2.2 -->
 <!-- VFXTargetGun_v0.2.1 -->
 <!-- VFXTargetGun_v0.2.0 -->
 <!-- VFXTargetGun_v0.1.0 -->
 
+[0.3.0]: /dev/null
 [0.2.3]: /dev/null
 [0.2.2]: /dev/null
 [0.2.1]: /dev/null
