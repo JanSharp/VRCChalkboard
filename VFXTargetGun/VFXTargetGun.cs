@@ -219,11 +219,13 @@ namespace JanSharp
                 if (value == selectedEffect)
                     return;
                 DeleteTargetIndex = -1; // set before changing selected effect
+                IsPlacePreviewActive = false; // disable before changing selected effect so the current preview gets disabled
                 selectedDeletePreview = null; // this can be anywhere but I put it here for organization
+                selectedPlacePreview = null; // this however has to be here, after `IsPlacePreviewActive = false` but before `UpdateIsPlacePreviewActiveBasedOnToggle`
                 if (selectedEffect != null)
                     selectedEffect.Selected = false;
                 selectedEffect = value; // update `selectedEffect` before setting `Selected` to true on an effect descriptor
-                SetSelectedPlacePreviewUsingSelectedEffect();
+                UpdateIsPlacePreviewActiveBasedOnToggle();
                 UpdateIsDeletePreviewActiveBasedOnToggle();
                 if (value == null)
                 {
@@ -400,14 +402,8 @@ namespace JanSharp
                 if (isPlaceIndicatorActive == value)
                     return;
                 isPlaceIndicatorActive = value;
-                if (IsPlacePreviewActive)
-                {
-                    if (value)
-                        SetSelectedPlacePreviewUsingSelectedEffect();
-                    else if (SelectedPlacePreview != null)
-                        SelectedPlacePreview.gameObject.SetActive(false);
-                }
                 placeIndicator.gameObject.SetActive(value);
+                UpdatePlacePreview();
             }
         }
         private bool isPlacePreviewActive;
@@ -419,44 +415,28 @@ namespace JanSharp
                 if (isPlacePreviewActive == value)
                     return;
                 isPlacePreviewActive = value;
-                if (IsPlaceIndicatorActive)
-                {
-                    if (value)
-                        SetSelectedPlacePreviewUsingSelectedEffect();
-                    else if (SelectedPlacePreview != null)
-                        SelectedPlacePreview.gameObject.SetActive(false);
-                }
+                UpdatePlacePreview();
             }
         }
-        public void UpdateIsPlacePreviewActiveBasedOnToggle() => IsPlacePreviewActive = placePreviewToggle.isOn;
+        public void UpdateIsPlacePreviewActiveBasedOnToggle()
+            => IsPlacePreviewActive = placePreviewToggle.isOn && SelectedEffect != null && SelectedEffect.IsObject;
         private Transform selectedPlacePreview;
-        private Transform SelectedPlacePreview
+        private void UpdatePlacePreview()
         {
-            get => selectedPlacePreview;
-            set
+            if (IsPlaceIndicatorActive && IsPlacePreviewActive)
+            {
+                if (selectedPlacePreview == null)
+                    selectedPlacePreview = SelectedEffect.GetPlacePreview();
+                selectedPlacePreview.gameObject.SetActive(true);
+                selectedPlacePreview.SetPositionAndRotation(placeIndicator.position, placeIndicator.rotation);
+            }
+            else
             {
                 if (selectedPlacePreview != null)
                     selectedPlacePreview.gameObject.SetActive(false);
-                selectedPlacePreview = value;
-                if (value != null && IsPlaceIndicatorActive && IsPlacePreviewActive)
-                    EnablePlacePreviewObject();
             }
         }
-        private void SetSelectedPlacePreviewUsingSelectedEffect()
-        {
-            if (IsPlacePreviewActive && SelectedEffect != null && SelectedEffect.IsObject)
-            {
-                SelectedEffect.InitPlacePreview();
-                SelectedPlacePreview = SelectedEffect.placePreview;
-            }
-            else
-                SelectedPlacePreview = null;
-        }
-        private void EnablePlacePreviewObject()
-        {
-            SelectedPlacePreview.gameObject.SetActive(true);
-            SelectedPlacePreview.SetPositionAndRotation(placeIndicator.position, placeIndicator.rotation);
-        }
+
         private bool isVisible;
         public bool IsVisible
         {
@@ -821,11 +801,11 @@ namespace JanSharp
                     var position = hit.point;
                     var rotation = Quaternion.LookRotation(hit.normal, aimPoint.forward);
                     placeIndicator.SetPositionAndRotation(position, rotation);
-                    if (IsPlacePreviewActive && SelectedPlacePreview != null)
+                    if (IsPlacePreviewActive && selectedPlacePreview != null)
                     {
                         if (SelectedEffect.randomizeRotation)
                             rotation = rotation * SelectedEffect.nextRandomRotation;
-                        SelectedPlacePreview.SetPositionAndRotation(position, rotation);
+                        selectedPlacePreview.SetPositionAndRotation(position, rotation);
                     }
                     IsPlaceIndicatorActive = true;
                 }

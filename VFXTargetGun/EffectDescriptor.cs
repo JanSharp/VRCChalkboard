@@ -51,8 +51,8 @@ When this is true said second rotation is random."
         public bool IsToggle => !IsOnce;
         public bool HasParticleSystems => !IsObject;
 
-        [HideInInspector] public Transform placePreview;
-        public void InitPlacePreview()
+        private Transform placePreview;
+        public Transform GetPlacePreview()
         {
             if (placePreview == null)
             {
@@ -71,6 +71,7 @@ When this is true said second rotation is random."
                 foreach (var collider in placePreview.GetComponentsInChildren<Collider>())
                     collider.enabled = false;
             }
+            return placePreview;
         }
 
         private Transform deletePreview;
