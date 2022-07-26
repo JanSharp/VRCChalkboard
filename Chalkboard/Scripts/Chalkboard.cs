@@ -11,6 +11,5 @@ namespace JanSharp
         public Transform bottomLeft;
         public Transform topRight;
         public Renderer boardRenderer;
-        public float chalkPixelRadius;
     }
 }
