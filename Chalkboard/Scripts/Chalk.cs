@@ -57,9 +57,15 @@ namespace JanSharp
                 Texture2D texture = (Texture2D)board.boardRenderer.material.mainTexture;
                 float x = Mathf.Abs((hit.point.x - board.bottomLeft.position.x) / (board.topRight.position.x - board.bottomLeft.position.x));
                 float y = Mathf.Abs((hit.point.y - board.bottomLeft.position.y) / (board.topRight.position.y - board.bottomLeft.position.y));
-                int xPixel = System.Math.Max(0, System.Math.Min(texture.width - 1, (int)(x * texture.width)));
-                int yPixel = System.Math.Max(0, System.Math.Min(texture.height - 1, (int)(y * texture.height)));
-                texture.SetPixel(xPixel, yPixel, Color.white);
+                // NOTE: this algorithm is not very performant
+                for (float xCheck = Mathf.Floor(-board.chalkPixelRadius); xCheck <= Mathf.Ceil(board.chalkPixelRadius); xCheck++)
+                    for (float yCheck = Mathf.Floor(-board.chalkPixelRadius); yCheck <= Mathf.Ceil(board.chalkPixelRadius); yCheck++)
+                        if (Mathf.Sqrt(xCheck * xCheck + yCheck * yCheck) <= board.chalkPixelRadius)
+                        {
+                            int xPixel = System.Math.Max(0, System.Math.Min(texture.width - 1, (int)(xCheck + x * texture.width)));
+                            int yPixel = System.Math.Max(0, System.Math.Min(texture.height - 1, (int)(yCheck + y * texture.height)));
+                            texture.SetPixel(xPixel, yPixel, Color.white);
+                        }
                 texture.Apply();
             }
             else
