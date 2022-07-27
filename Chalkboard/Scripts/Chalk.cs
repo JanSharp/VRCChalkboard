@@ -23,10 +23,19 @@ namespace JanSharp
 
         private Color[] colors;
 
+        private const int PointBitCount = 21;
+        private const int AxisBitCount = 10;
+        private const ulong PointHasPrev = 0x100000UL;
+        private const ulong PointBits = 0x1fffffUL;
+        private const ulong UnusedPoint = PointBits;
         [UdonSynced]
-        private uint[] syncedPoints;
-        private uint[] pointsStage = new uint[4];
+        private ulong syncedData;
+        private int[] pointsStage = new int[4];
         private int pointsStageCount;
+        private const int IntHasPrev = 0x100000;
+        private const int IntPointBits = 0x1fffff;
+        private const int IntUnusedPoint = IntPointBits;
+        private const int IntAxisBits = 0x3ff;
 
         // TODO: sync which chalkboard is being drawn on
         [SerializeField] private Chalkboard chalkboard;
@@ -88,8 +97,8 @@ namespace JanSharp
                 int y = (int)Mathf.Clamp(Mathf.Abs((hit.point.y - blPos.y) / (trPos.y - blPos.y)) * height, 2, height - 3);
                 if (hasPrev && (Mathf.Abs(x - prevX) + Mathf.Abs(y - prevY)) <= 2) // didn't draw more than 2 pixels from prev point? => ignore
                     return;
-                DrawFromPrevTo(texture, x, y);
                 AddPointToSyncedPoints(x, y);
+                DrawFromPrevTo(texture, x, y);
                 texture.Apply();
             }
             else
@@ -151,30 +160,46 @@ namespace JanSharp
         {
             if (pointsStageCount == pointsStage.Length)
             {
-                var newPointsStage = new uint[pointsStageCount * 2];
+                var newPointsStage = new int[pointsStageCount * 2];
                 pointsStage.CopyTo(newPointsStage, 0);
                 pointsStage = newPointsStage;
             }
-            Debug.Log($"<dlt> adding point x: {x}, y: {y}");
-            pointsStage[pointsStageCount++] = (((uint)x) << 16) + ((uint)y);
+            Debug.Log($"<dlt> adding point x: {x}, y: {y}, hasPrev: {hasPrev}");
+            pointsStage[pointsStageCount++] = x | (y << AxisBitCount) | (hasPrev ? IntHasPrev : 0);
             Networking.SetOwner(Networking.LocalPlayer, this.gameObject);
             RequestSerialization();
         }
 
         public override void OnPreSerialization()
         {
+            Debug.Log($"<dlt> sending {System.Math.Min(pointsStageCount, 3)} points");
             if (pointsStageCount == 0)
             {
-                syncedPoints = null;
+                syncedData = 0xffffffffffffffffUL;
                 return;
             }
-            if (syncedPoints == null || syncedPoints.Length != pointsStageCount)
-                syncedPoints = new uint[pointsStageCount];
-            for (int i = 0; i < pointsStageCount; i++)
-                syncedPoints[i] = pointsStage[i];
-            Debug.Log($"<dlt> sending {pointsStageCount} points");
-            pointsStageCount = 0;
+            syncedData = 0UL;
+            for (int i = 0; i < 3; i++)
+            {
+                if (i < pointsStageCount)
+                    syncedData |= ((ulong)(pointsStage[i] & 0x1fffffU)) << (i * PointBitCount);
+                else
+                    syncedData |= UnusedPoint << (i * PointBitCount);
+            }
+
+            if (pointsStageCount <= 3)
+                pointsStageCount = 0;
+            else
+            {
+                // TODO: improve the implementation of the que to not require any shifting
+                for (int i = 3; i < pointsStageCount; i++)
+                    pointsStage[i - 3] = pointsStage[i];
+                pointsStageCount -= 3;
+                SendCustomEventDelayedFrames(nameof(RequestSerializationDelayed), 1);
+            }
         }
+
+        public void RequestSerializationDelayed() => RequestSerialization();
 
         public override void OnPostSerialization(SerializationResult result)
         {
@@ -183,17 +208,17 @@ namespace JanSharp
 
         public override void OnDeserialization()
         {
-            Debug.Log($"<dlt> received {(syncedPoints == null ? "null" : "not null")} points array");
-            if (syncedPoints == null) // Just to make sure
-                return;
             Texture2D texture = (Texture2D)chalkboard.boardRenderer.material.mainTexture;
-            foreach (uint point in syncedPoints)
+            for (int i = 0; i < 3; i++)
             {
-                Debug.Log($"<dlt> received point x: {(int)((point >> 16) & 0xffff)}, y: {(int)(point & 0xffff)}");
-                DrawFromPrevTo(texture, (int)((point >> 16) & 0xffff), (int)(point & 0xffff));
+                int point = (int)((syncedData >> (i * PointBitCount)) & PointBits);
+                if (point == IntUnusedPoint)
+                    break;
+                if ((point & IntHasPrev) == 0)
+                    hasPrev = false;
+                Debug.Log($"<dlt> received point x: {point & IntAxisBits}, y: {(point >> AxisBitCount) & IntAxisBits} hasPrev: {((point & IntHasPrev) != 0)}");
+                DrawFromPrevTo(texture, point & IntAxisBits, (point >> AxisBitCount) & IntAxisBits);
             }
-            // TODO: better handling for "synced" `hasPrev`
-            hasPrev = false;
             texture.Apply();
         }
     }
