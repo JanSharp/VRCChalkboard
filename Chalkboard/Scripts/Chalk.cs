@@ -2,10 +2,11 @@
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
+using VRC.Udon.Common;
 
 namespace JanSharp
 {
-    [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
+    [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class Chalk : UdonSharpBehaviour
     {
         [SerializeField] private Transform aimPoint;
@@ -22,14 +23,25 @@ namespace JanSharp
 
         private Color[] colors;
 
+        [UdonSynced]
+        private uint[] syncedPoints;
+        private uint[] pointsStage = new uint[4];
+        private int pointsStageCount;
+
+        // TODO: sync which chalkboard is being drawn on
+        [SerializeField] private Chalkboard chalkboard;
         [SerializeField] private Transform debugIndicator;
+
+        private void Start()
+        {
+            colors = new Color[5 * 5];
+            for (int i = 0; i < colors.Length; i++)
+                colors[i] = color;
+        }
 
         public override void OnPickup()
         {
             updateManager.Register(this);
-            colors = new Color[5 * 5];
-            for (int i = 0; i < colors.Length; i++)
-                colors[i] = color;
         }
 
         public override void OnDrop()
@@ -77,6 +89,7 @@ namespace JanSharp
                 if (hasPrev && (Mathf.Abs(x - prevX) + Mathf.Abs(y - prevY)) <= 2) // didn't draw more than 2 pixels from prev point? => ignore
                     return;
                 DrawFromPrevTo(texture, x, y);
+                AddPointToSyncedPoints(x, y);
                 texture.Apply();
             }
             else
@@ -132,6 +145,56 @@ namespace JanSharp
             colors[20] = texture.GetPixel(blX, trY);
             colors[24] = texture.GetPixel(trX, trY);
             texture.SetPixels(blX, blY, 5, 5, colors);
+        }
+
+        private void AddPointToSyncedPoints(int x, int y)
+        {
+            if (pointsStageCount == pointsStage.Length)
+            {
+                var newPointsStage = new uint[pointsStageCount * 2];
+                pointsStage.CopyTo(newPointsStage, 0);
+                pointsStage = newPointsStage;
+            }
+            Debug.Log($"<dlt> adding point x: {x}, y: {y}");
+            pointsStage[pointsStageCount++] = (((uint)x) << 16) + ((uint)y);
+            Networking.SetOwner(Networking.LocalPlayer, this.gameObject);
+            RequestSerialization();
+        }
+
+        public override void OnPreSerialization()
+        {
+            if (pointsStageCount == 0)
+            {
+                syncedPoints = null;
+                return;
+            }
+            if (syncedPoints == null || syncedPoints.Length != pointsStageCount)
+                syncedPoints = new uint[pointsStageCount];
+            for (int i = 0; i < pointsStageCount; i++)
+                syncedPoints[i] = pointsStage[i];
+            Debug.Log($"<dlt> sending {pointsStageCount} points");
+            pointsStageCount = 0;
+        }
+
+        public override void OnPostSerialization(SerializationResult result)
+        {
+            Debug.Log($"<dlt> on post: success: {result.success}, byteCount: {result.byteCount}");
+        }
+
+        public override void OnDeserialization()
+        {
+            Debug.Log($"<dlt> received {(syncedPoints == null ? "null" : "not null")} points array");
+            if (syncedPoints == null) // Just to make sure
+                return;
+            Texture2D texture = (Texture2D)chalkboard.boardRenderer.material.mainTexture;
+            foreach (uint point in syncedPoints)
+            {
+                Debug.Log($"<dlt> received point x: {(int)((point >> 16) & 0xffff)}, y: {(int)(point & 0xffff)}");
+                DrawFromPrevTo(texture, (int)((point >> 16) & 0xffff), (int)(point & 0xffff));
+            }
+            // TODO: better handling for "synced" `hasPrev`
+            hasPrev = false;
+            texture.Apply();
         }
     }
 }
