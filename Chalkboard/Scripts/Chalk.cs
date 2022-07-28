@@ -13,7 +13,9 @@ namespace JanSharp
         // 0: Default, 4: Water, 8: Interactive, 11: Environment
         [SerializeField] private LayerMask layerMask = (1 << 0) | (1 << 4) | (1 << 8) | (1 << 11);
         [SerializeField] private UpdateManager updateManager;
+        [SerializeField] private ChalkboardManager chalkboardManager; // TODO: use OnBuild
         [SerializeField] private Color color = Color.white;
+        [SerializeField] private Transform debugIndicator;
         // for UpdateManager
         private int customUpdateInternalIndex;
         private bool holding;
@@ -37,9 +39,9 @@ namespace JanSharp
         private const int IntUnusedPoint = IntPointBits;
         private const int IntAxisBits = 0x3ff;
 
-        // TODO: sync which chalkboard is being drawn on
-        [SerializeField] private Chalkboard chalkboard;
-        [SerializeField] private Transform debugIndicator;
+        private Chalkboard lastSyncedChalkboard;
+        private Chalkboard chalkboard;
+        private Texture2D texture;
 
         private void Start()
         {
@@ -78,27 +80,31 @@ namespace JanSharp
             RaycastHit hit;
             if (Physics.Raycast(aimPoint.position, aimPoint.forward, out hit, 15f, layerMask.value) && hit.transform != null)
             {
-                Chalkboard board = hit.transform.GetComponent<Chalkboard>();
-                if (board == null)
+                if (chalkboard == null || hit.transform != chalkboard.transform)
                 {
-                    debugIndicator.gameObject.SetActive(false);
-                    return;
+                    hasPrev = false;
+                    chalkboard = hit.transform.GetComponent<Chalkboard>();
+                    if (chalkboard == null)
+                    {
+                        debugIndicator.gameObject.SetActive(false);
+                        return;
+                    }
+                    texture = (Texture2D)chalkboard.boardRenderer.material.mainTexture;
                 }
                 debugIndicator.gameObject.SetActive(true);
                 debugIndicator.position = hit.point;
                 if (!holding)
                     return;
-                Texture2D texture = (Texture2D)board.boardRenderer.material.mainTexture;
                 var width = texture.width;
                 var height = texture.height;
-                var blPos = board.bottomLeft.position;
-                var trPos = board.topRight.position;
+                var blPos = chalkboard.bottomLeft.position;
+                var trPos = chalkboard.topRight.position;
                 int x = (int)Mathf.Clamp(Mathf.Abs((hit.point.x - blPos.x) / (trPos.x - blPos.x)) * width, 2, width - 3);
                 int y = (int)Mathf.Clamp(Mathf.Abs((hit.point.y - blPos.y) / (trPos.y - blPos.y)) * height, 2, height - 3);
                 if (hasPrev && (Mathf.Abs(x - prevX) + Mathf.Abs(y - prevY)) <= 2) // didn't draw more than 2 pixels from prev point? => ignore
                     return;
                 AddPointToSyncedPoints(x, y);
-                DrawFromPrevTo(texture, x, y);
+                DrawFromPrevTo(x, y);
                 texture.Apply();
             }
             else
@@ -107,7 +113,7 @@ namespace JanSharp
             }
         }
 
-        private void DrawFromPrevTo(Texture2D texture, int toX, int toY)
+        private void DrawFromPrevTo(int toX, int toY)
         {
             if (hasPrev)
             {
@@ -119,10 +125,10 @@ namespace JanSharp
                     float y = prevY;
                     if (prevX < toX)
                         for (int x = prevX + stepX; x <= toX - 1; x += stepX)
-                            DrawPoint(texture, x, Mathf.RoundToInt(y += stepY));
+                            DrawPoint(x, Mathf.RoundToInt(y += stepY));
                     else
                         for (int x = prevX + stepX; x >= toX + 1; x += stepX)
-                            DrawPoint(texture, x, Mathf.RoundToInt(y += stepY));
+                            DrawPoint(x, Mathf.RoundToInt(y += stepY));
                 }
                 else // vertical
                 {
@@ -131,19 +137,19 @@ namespace JanSharp
                     float x = prevX;
                     if (prevY < toY)
                         for (int y = prevY + stepY; y <= toY - 1; y += stepY)
-                            DrawPoint(texture, Mathf.RoundToInt(x += stepX), y);
+                            DrawPoint(Mathf.RoundToInt(x += stepX), y);
                     else
                         for (int y = prevY + stepY; y >= toY + 1; y += stepY)
-                            DrawPoint(texture, Mathf.RoundToInt(x += stepX), y);
+                            DrawPoint(Mathf.RoundToInt(x += stepX), y);
                 }
             }
-            DrawPoint(texture, toX, toY);
+            DrawPoint(toX, toY);
             hasPrev = true;
             prevX = toX;
             prevY = toY;
         }
 
-        private void DrawPoint(Texture2D texture, int x, int y)
+        private void DrawPoint(int x, int y)
         {
             int blX = x - 2;
             int blY = y - 2;
@@ -158,11 +164,20 @@ namespace JanSharp
 
         private void AddPointToSyncedPoints(int x, int y)
         {
-            if (pointsStageCount == pointsStage.Length)
+            bool changedBoard = chalkboard != lastSyncedChalkboard;
+            if ((changedBoard ? pointsStageCount + 1 : pointsStageCount) >= pointsStage.Length)
             {
                 var newPointsStage = new int[pointsStageCount * 2];
                 pointsStage.CopyTo(newPointsStage, 0);
                 pointsStage = newPointsStage;
+            }
+            if (changedBoard)
+            {
+                lastSyncedChalkboard = chalkboard;
+                Debug.Log($"<dlt> adding switch to board id: {chalkboard.boardId}");
+                // this works because it makes y == 0 which is an invalid for a point
+                // so we can detect that x is actually a board id when y == 0
+                pointsStage[pointsStageCount++] = chalkboard.boardId;
             }
             Debug.Log($"<dlt> adding point x: {x}, y: {y}, hasPrev: {hasPrev}");
             pointsStage[pointsStageCount++] = x | (y << AxisBitCount) | (hasPrev ? IntHasPrev : 0);
@@ -172,7 +187,7 @@ namespace JanSharp
 
         public override void OnPreSerialization()
         {
-            Debug.Log($"<dlt> sending {System.Math.Min(pointsStageCount, 3)} points");
+            Debug.Log($"<dlt> sending {System.Math.Min(pointsStageCount, 3)} points (or switches)");
             if (pointsStageCount == 0)
             {
                 syncedData = 0xffffffffffffffffUL;
@@ -208,18 +223,32 @@ namespace JanSharp
 
         public override void OnDeserialization()
         {
-            Texture2D texture = (Texture2D)chalkboard.boardRenderer.material.mainTexture;
             for (int i = 0; i < 3; i++)
             {
                 int point = (int)((syncedData >> (i * PointBitCount)) & PointBits);
                 if (point == IntUnusedPoint)
                     break;
-                if ((point & IntHasPrev) == 0)
-                    hasPrev = false;
-                Debug.Log($"<dlt> received point x: {point & IntAxisBits}, y: {(point >> AxisBitCount) & IntAxisBits} hasPrev: {((point & IntHasPrev) != 0)}");
-                DrawFromPrevTo(texture, point & IntAxisBits, (point >> AxisBitCount) & IntAxisBits);
+                int x = point & IntAxisBits;
+                int y = (point >> AxisBitCount) & IntAxisBits;
+                if (y == 0)
+                {
+                    Debug.Log($"<dlt> received switch to board id: {x}");
+                    if (i != 0 && texture != null) // update the previous texture before switching
+                        texture.Apply();
+                    lastSyncedChalkboard = chalkboardManager.chalkboards[x];
+                    texture = (Texture2D)lastSyncedChalkboard.boardRenderer.material.mainTexture;
+                }
+                else
+                {
+                    if ((point & IntHasPrev) == 0)
+                        hasPrev = false;
+                    Debug.Log($"<dlt> received point x: {x}, y: {y} hasPrev: {((point & IntHasPrev) != 0)}");
+                    DrawFromPrevTo(x, y);
+                }
             }
-            texture.Apply();
+            if (texture != null)
+                texture.Apply();
+            // TODO: move all texture updating to the board itself
         }
     }
 }
