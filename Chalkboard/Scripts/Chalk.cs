@@ -89,7 +89,7 @@ namespace JanSharp
                         debugIndicator.gameObject.SetActive(false);
                         return;
                     }
-                    texture = (Texture2D)chalkboard.boardRenderer.material.mainTexture;
+                    texture = chalkboard.texture;
                 }
                 debugIndicator.gameObject.SetActive(true);
                 debugIndicator.position = hit.point;
@@ -105,7 +105,7 @@ namespace JanSharp
                     return;
                 AddPointToSyncedPoints(x, y);
                 DrawFromPrevTo(x, y);
-                texture.Apply();
+                chalkboard.UpdateTextureFast();
             }
             else
             {
@@ -223,20 +223,22 @@ namespace JanSharp
 
         public override void OnDeserialization()
         {
+            bool doUpdateTexture = false;
             for (int i = 0; i < 3; i++)
             {
                 int point = (int)((syncedData >> (i * PointBitCount)) & PointBits);
                 if (point == IntUnusedPoint)
                     break;
+                doUpdateTexture = true;
                 int x = point & IntAxisBits;
                 int y = (point >> AxisBitCount) & IntAxisBits;
                 if (y == 0)
                 {
                     Debug.Log($"<dlt> received switch to board id: {x}");
-                    if (i != 0 && texture != null) // update the previous texture before switching
-                        texture.Apply();
+                    if (i != 0 && lastSyncedChalkboard != null) // update the previous texture before switching
+                        lastSyncedChalkboard.UpdateTextureSlow();
                     lastSyncedChalkboard = chalkboardManager.chalkboards[x];
-                    texture = (Texture2D)lastSyncedChalkboard.boardRenderer.material.mainTexture;
+                    texture = lastSyncedChalkboard.texture;
                 }
                 else
                 {
@@ -246,9 +248,8 @@ namespace JanSharp
                     DrawFromPrevTo(x, y);
                 }
             }
-            if (texture != null)
-                texture.Apply();
-            // TODO: move all texture updating to the board itself
+            if (doUpdateTexture && lastSyncedChalkboard != null) // null check just in case there is some edge case with wrong order of packets
+                lastSyncedChalkboard.UpdateTextureSlow();
         }
     }
 }

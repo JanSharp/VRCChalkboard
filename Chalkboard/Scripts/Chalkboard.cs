@@ -1,4 +1,4 @@
-using UdonSharp;
+﻿using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
@@ -20,6 +20,48 @@ namespace JanSharp
         public Renderer boardRenderer;
 
         [HideInInspector] public int boardId;
+        [HideInInspector] [System.NonSerialized] public Texture2D texture;
+        private bool fastUpdating;
+        private bool slowUpdating;
+
+        private void Start()
+        {
+            texture = (Texture2D)boardRenderer.material.mainTexture;
+        }
+
+        // fast is kept completely separate from slow because when multiple people are drawing
+        // we wouldn't want to inconsistently switch between slow and fast updates
+        // instead it'll just update a bit quicker 4 times per frame while updating 15 times
+        // per frame in general, so a total of ~19 updates. Still irregular but at least
+        // it's updating quickly and the logic is simple
+
+        public void UpdateTextureFast()
+        {
+            if (fastUpdating)
+                return;
+            fastUpdating = true;
+            SendCustomEventDelayedSeconds(nameof(UpdateTextureFastDelayed), 1f / 15f);
+        }
+
+        public void UpdateTextureFastDelayed()
+        {
+            texture.Apply();
+            fastUpdating = false;
+        }
+
+        public void UpdateTextureSlow()
+        {
+            if (slowUpdating)
+                return;
+            slowUpdating = true;
+            SendCustomEventDelayedSeconds(nameof(UpdateTextureSlowDelayed), 1f / 4f);
+        }
+
+        public void UpdateTextureSlowDelayed()
+        {
+            texture.Apply();
+            slowUpdating = false;
+        }
 
         #if UNITY_EDITOR && !COMPILER_UDONSHARP
         [InitializeOnLoad]
