@@ -259,7 +259,7 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: debugIndicator
+      Data: indicator
     - Name: $v
       Entry: 7
       Data: 17|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
@@ -280,10 +280,10 @@ MonoBehaviour:
       Data: UnityEngineTransform
     - Name: symbolOriginalName
       Entry: 1
-      Data: debugIndicator
+      Data: indicator
     - Name: symbolUniqueName
       Entry: 1
-      Data: debugIndicator
+      Data: indicator
     - Name: symbolDefaultValue
       Entry: 6
       Data: 

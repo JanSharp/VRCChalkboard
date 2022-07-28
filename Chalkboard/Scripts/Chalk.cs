@@ -20,7 +20,7 @@ namespace JanSharp
         // 0: Default, 4: Water, 8: Interactive, 11: Environment
         [SerializeField] private LayerMask layerMask = (1 << 0) | (1 << 4) | (1 << 8) | (1 << 11);
         [SerializeField] private Color color = Color.white;
-        [SerializeField] private Transform debugIndicator;
+        [SerializeField] private Transform indicator;
         [SerializeField] [HideInInspector] private UpdateManager updateManager;
         [SerializeField] [HideInInspector] private ChalkboardManager chalkboardManager;
         // for UpdateManager
@@ -90,7 +90,7 @@ namespace JanSharp
 
         public override void OnDrop()
         {
-            debugIndicator.gameObject.SetActive(false);
+            indicator.gameObject.SetActive(false);
             updateManager.Deregister(this);
             // because I don't trust VRC
             holding = false;
@@ -119,13 +119,13 @@ namespace JanSharp
                     chalkboard = hit.transform.GetComponent<Chalkboard>();
                     if (chalkboard == null)
                     {
-                        debugIndicator.gameObject.SetActive(false);
+                        indicator.gameObject.SetActive(false);
                         return;
                     }
                     texture = chalkboard.texture;
                 }
-                debugIndicator.gameObject.SetActive(true);
-                debugIndicator.position = hit.point;
+                indicator.gameObject.SetActive(true);
+                indicator.position = hit.point;
                 if (!holding)
                     return;
                 var width = texture.width;
@@ -142,7 +142,7 @@ namespace JanSharp
             }
             else
             {
-                debugIndicator.gameObject.SetActive(false);
+                indicator.gameObject.SetActive(false);
             }
         }
 
