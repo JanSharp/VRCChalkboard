@@ -1,21 +1,28 @@
-﻿using UdonSharp;
+using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
 using VRC.Udon.Common;
+#if UNITY_EDITOR && !COMPILER_UDONSHARP
+using UnityEditor;
+using UdonSharpEditor;
+#endif
 
 namespace JanSharp
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class Chalk : UdonSharpBehaviour
+    #if UNITY_EDITOR && !COMPILER_UDONSHARP
+        , IOnBuildCallback
+    #endif
     {
         [SerializeField] private Transform aimPoint;
         // 0: Default, 4: Water, 8: Interactive, 11: Environment
         [SerializeField] private LayerMask layerMask = (1 << 0) | (1 << 4) | (1 << 8) | (1 << 11);
-        [SerializeField] private UpdateManager updateManager;
-        [SerializeField] private ChalkboardManager chalkboardManager; // TODO: use OnBuild
         [SerializeField] private Color color = Color.white;
         [SerializeField] private Transform debugIndicator;
+        [SerializeField] [HideInInspector] private UpdateManager updateManager;
+        [SerializeField] [HideInInspector] private ChalkboardManager chalkboardManager;
         // for UpdateManager
         private int customUpdateInternalIndex;
         private bool holding;
@@ -42,6 +49,32 @@ namespace JanSharp
         private Chalkboard lastSyncedChalkboard;
         private Chalkboard chalkboard;
         private Texture2D texture;
+
+        #if UNITY_EDITOR && !COMPILER_UDONSHARP
+        [InitializeOnLoad]
+        public static class OnBuildRegister
+        {
+            static OnBuildRegister() => JanSharp.OnBuildUtil.RegisterType<Chalk>();
+        }
+        bool IOnBuildCallback.OnBuild()
+        {
+            updateManager = GameObject.Find("/UpdateManager")?.GetUdonSharpComponent<UpdateManager>();
+            if (updateManager == null)
+                Debug.LogError("Chalk requires a GameObject that must be at the root of the scene"
+                        + " with the exact name 'UpdateManager' which has the 'UpdateManager' UdonBehaviour.",
+                    UdonSharpEditorUtility.GetBackingUdonBehaviour(this));
+
+            chalkboardManager = GameObject.Find("/ChalkboardManager")?.GetUdonSharpComponent<ChalkboardManager>();
+            if (chalkboardManager == null)
+                Debug.LogError("Chalk requires a GameObject that must be at the root of the scene"
+                        + " with the exact name 'ChalkboardManager' which has the 'ChalkboardManager' UdonBehaviour.",
+                    UdonSharpEditorUtility.GetBackingUdonBehaviour(this));
+
+            this.ApplyProxyModifications();
+            // EditorUtility.SetDirty(UdonSharpEditorUtility.GetBackingUdonBehaviour(this));
+            return chalkboardManager != null;
+        }
+        #endif
 
         private void Start()
         {
