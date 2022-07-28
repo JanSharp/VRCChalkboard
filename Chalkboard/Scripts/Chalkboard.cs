@@ -17,7 +17,7 @@ namespace JanSharp
     {
         public Transform bottomLeft;
         public Transform topRight;
-        public Renderer boardRenderer;
+        public Material material;
 
         [HideInInspector] public int boardId;
         [HideInInspector] [System.NonSerialized] public Texture2D texture;
@@ -26,7 +26,7 @@ namespace JanSharp
 
         private void Start()
         {
-            texture = (Texture2D)boardRenderer.material.mainTexture;
+            texture = (Texture2D)material.mainTexture;
         }
 
         // fast is kept completely separate from slow because when multiple people are drawing
