@@ -148,15 +148,16 @@ namespace JanSharp
                     texture = chalkboard.texture;
                 }
                 indicator.gameObject.SetActive(true);
-                indicator.position = hit.point;
+                indicator.SetPositionAndRotation(hit.point, Quaternion.LookRotation(hit.normal, hit.transform.up));
                 if (!holding)
                     return;
                 var width = texture.width;
                 var height = texture.height;
-                var blPos = chalkboard.bottomLeft.position;
-                var trPos = chalkboard.topRight.position;
-                int x = (int)Mathf.Clamp(Mathf.Abs((hit.point.x - blPos.x) / (trPos.x - blPos.x)) * width, halfSize, width - halfSize - 1);
-                int y = (int)Mathf.Clamp(Mathf.Abs((hit.point.y - blPos.y) / (trPos.y - blPos.y)) * height, halfSize, height - halfSize - 1);
+                var localHitPos = chalkboard.transform.InverseTransformPoint(hit.point);
+                var blPos = chalkboard.bottomLeft.localPosition;
+                var trPos = chalkboard.topRight.localPosition;
+                int x = (int)Mathf.Clamp(Mathf.Abs((localHitPos.x - blPos.x) / (trPos.x - blPos.x)) * width, halfSize, width - halfSize - 1);
+                int y = (int)Mathf.Clamp(Mathf.Abs((localHitPos.y - blPos.y) / (trPos.y - blPos.y)) * height, halfSize, height - halfSize - 1);
                 if (hasPrev && (Mathf.Abs(x - prevX) + Mathf.Abs(y - prevY)) <= 2) // didn't draw more than 2 pixels from prev point? => ignore
                     return;
                 AddPointToSyncedPoints(x, y);
