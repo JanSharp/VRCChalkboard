@@ -1,4 +1,4 @@
-using UdonSharp;
+﻿using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
@@ -21,6 +21,7 @@ namespace JanSharp
         [SerializeField] private LayerMask layerMask = (1 << 0) | (1 << 4) | (1 << 8) | (1 << 11);
         [SerializeField] private Color color = Color.white;
         [SerializeField] private Transform indicator;
+        [SerializeField] private bool isSponge;
         [SerializeField] [HideInInspector] private UpdateManager updateManager;
         [SerializeField] [HideInInspector] private ChalkboardManager chalkboardManager;
         // for UpdateManager
@@ -30,7 +31,18 @@ namespace JanSharp
         private int prevX;
         private int prevY;
 
+        // NOTE: the indexes of the 4 corners for hte chalk are still hard coded,
+        // but changing the chalk size isn't really supported anyway.
+        // 5x5 both looks the best and is pretty balanced in terms of performance
+        private const int ChalkSize = 5;
+        private const int ChalkLineDrawingFrequency = 2;
+        private const int SpongeSize = 41;
+        private const int SpongeLineDrawingFrequency = 8;
+
         private Color[] colors;
+        private int lineDrawingFrequency;
+        private int size;
+        private int halfSize;
 
         private const int PointBitCount = 21;
         private const int AxisBitCount = 10;
@@ -78,7 +90,18 @@ namespace JanSharp
 
         private void Start()
         {
-            colors = new Color[5 * 5];
+            if (isSponge)
+            {
+                lineDrawingFrequency = SpongeLineDrawingFrequency;
+                size = SpongeSize;
+            }
+            else
+            {
+                lineDrawingFrequency = ChalkLineDrawingFrequency;
+                size = ChalkSize;
+            }
+            halfSize = size / 2;
+            colors = new Color[size * size];
             for (int i = 0; i < colors.Length; i++)
                 colors[i] = color;
         }
@@ -132,8 +155,8 @@ namespace JanSharp
                 var height = texture.height;
                 var blPos = chalkboard.bottomLeft.position;
                 var trPos = chalkboard.topRight.position;
-                int x = (int)Mathf.Clamp(Mathf.Abs((hit.point.x - blPos.x) / (trPos.x - blPos.x)) * width, 2, width - 3);
-                int y = (int)Mathf.Clamp(Mathf.Abs((hit.point.y - blPos.y) / (trPos.y - blPos.y)) * height, 2, height - 3);
+                int x = (int)Mathf.Clamp(Mathf.Abs((hit.point.x - blPos.x) / (trPos.x - blPos.x)) * width, halfSize, width - halfSize - 1);
+                int y = (int)Mathf.Clamp(Mathf.Abs((hit.point.y - blPos.y) / (trPos.y - blPos.y)) * height, halfSize, height - halfSize - 1);
                 if (hasPrev && (Mathf.Abs(x - prevX) + Mathf.Abs(y - prevY)) <= 2) // didn't draw more than 2 pixels from prev point? => ignore
                     return;
                 AddPointToSyncedPoints(x, y);
@@ -153,8 +176,8 @@ namespace JanSharp
                 Vector2 delta = new Vector2(toX - prevX, toY - prevY);
                 if (Mathf.Abs(delta.x) >= Mathf.Abs(delta.y)) // horizontal
                 {
-                    int stepX = System.Math.Sign(delta.x) * 2;
-                    float stepY = (delta.y / Mathf.Abs(delta.x)) * 2;
+                    int stepX = System.Math.Sign(delta.x) * lineDrawingFrequency;
+                    float stepY = (delta.y / Mathf.Abs(delta.x)) * lineDrawingFrequency;
                     float y = prevY;
                     if (prevX < toX)
                         for (int x = prevX + stepX; x <= toX - 1; x += stepX)
@@ -165,8 +188,8 @@ namespace JanSharp
                 }
                 else // vertical
                 {
-                    int stepY = System.Math.Sign(delta.y) * 2;
-                    float stepX = (delta.x / Mathf.Abs(delta.y)) * 2;
+                    int stepY = System.Math.Sign(delta.y) * lineDrawingFrequency;
+                    float stepX = (delta.x / Mathf.Abs(delta.y)) * lineDrawingFrequency;
                     float x = prevX;
                     if (prevY < toY)
                         for (int y = prevY + stepY; y <= toY - 1; y += stepY)
@@ -184,15 +207,22 @@ namespace JanSharp
 
         private void DrawPoint(int x, int y)
         {
-            int blX = x - 2;
-            int blY = y - 2;
-            int trX = x + 2;
-            int trY = y + 2;
-            colors[0] = texture.GetPixel(blX, blY);
-            colors[4] = texture.GetPixel(trX, blY);
-            colors[20] = texture.GetPixel(blX, trY);
-            colors[24] = texture.GetPixel(trX, trY);
-            texture.SetPixels(blX, blY, 5, 5, colors);
+            if (isSponge)
+            {
+                texture.SetPixels(x - halfSize, y - halfSize, size, size, colors);
+            }
+            else
+            {
+                int blX = x - halfSize;
+                int blY = y - halfSize;
+                int trX = x + halfSize;
+                int trY = y + halfSize;
+                colors[0] = texture.GetPixel(blX, blY);
+                colors[4] = texture.GetPixel(trX, blY);
+                colors[20] = texture.GetPixel(blX, trY);
+                colors[24] = texture.GetPixel(trX, trY);
+                texture.SetPixels(blX, blY, size, size, colors);
+            }
         }
 
         private void AddPointToSyncedPoints(int x, int y)
