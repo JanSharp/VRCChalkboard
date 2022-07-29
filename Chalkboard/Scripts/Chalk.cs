@@ -206,6 +206,11 @@ namespace JanSharp
             RequestSerialization();
         }
 
+        public override void OnPlayerJoined(VRCPlayerApi player)
+        {
+            lastSyncedChalkboard = null;
+        }
+
         public override void OnPreSerialization()
         {
             Debug.Log($"<dlt> sending {System.Math.Min(pointsStageCount, 3)} points (or switches)");

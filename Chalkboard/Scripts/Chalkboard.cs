@@ -1,7 +1,8 @@
-using UdonSharp;
+﻿using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
+using VRC.Udon.Common;
 using VRC.Udon.Common.Interfaces;
 #if UNITY_EDITOR && !COMPILER_UDONSHARP
 using UnityEditor;
@@ -22,6 +23,7 @@ namespace JanSharp
         public Color boardColor;
 
         [HideInInspector] public int boardId;
+        [HideInInspector] [SerializeField] private ChalkboardManager chalkboardManager;
         [HideInInspector] [System.NonSerialized] public Texture2D texture;
         private Color[] initialPixels;
         private bool fastUpdating;
@@ -30,9 +32,33 @@ namespace JanSharp
         private int allActionsCount;
         private ulong currentActions;
         private int currentActionsIndex;
+        private const int PointBitCount = 21;
+        private const int AxisBitCount = 10;
+        private const ulong PointHasPrev = 0x100000UL;
+        private const ulong PointBits = 0x1fffffUL;
+        private const ulong UnusedPoint = PointBits;
+        private const int IntHasPrev = 0x100000;
+        private const int IntPointBits = 0x1fffff;
+        private const int IntUnusedPoint = IntPointBits;
+        private const int IntAxisBits = 0x3ff;
+        private Chalk prevChalk;
+        private int prevX;
+        private int prevY;
+        private bool waitingToStartSending;
+        private bool sending;
+        [UdonSynced]
+        private ulong syncedData;
+        private int currentSyncedIndex;
+        private int actionsCountRequiredToSync;
+        private bool catchingUp;
+        private Chalk receivedChalk;
+        private int receivedPrevX;
+        private int receivedPrevY;
+        private const float LateJoinerSyncDelay = 10f; // TODO: set this higher for the real world
 
         private void Start()
         {
+            allActions = new ulong[64];
             texture = (Texture2D)material.mainTexture;
             // ok so this seems to be using about 9MB for a 1024x512 texture
             // if there was no overhead that should be 2MB
@@ -86,7 +112,7 @@ namespace JanSharp
         }
         bool IOnBuildCallback.OnBuild()
         {
-            var chalkboardManager = GameObject.Find("/ChalkboardManager")?.GetUdonSharpComponent<ChalkboardManager>();
+            chalkboardManager = GameObject.Find("/ChalkboardManager")?.GetUdonSharpComponent<ChalkboardManager>();
             boardId = chalkboardManager?.GetBoardId(this) ?? -1;
             if (chalkboardManager == null)
                 Debug.LogError("Chalkboard requires a GameObject that must be at the root of the scene"
@@ -116,12 +142,66 @@ namespace JanSharp
 
         public void DrawPoint(Chalk chalk, int x, int y)
         {
+            if (catchingUp)
+            {
+                // TODO: store this action to apply later
+                return;
+            }
+            UseChalk(chalk);
+            AddAction(x | (y << AxisBitCount));
             DrawPointInternal(chalk, x, y);
+            prevX = x;
+            prevY = y;
         }
 
         public void DrawLine(Chalk chalk, int fromX, int fromY, int toX, int toY)
         {
+            if (catchingUp)
+            {
+                // TODO: store this action to apply later
+                return;
+            }
+            UseChalk(chalk);
+            if (fromX != prevX || fromY != prevY)
+                AddAction(fromX | (fromY << AxisBitCount));
+            AddAction(toX | (toY << AxisBitCount) | IntHasPrev);
             DrawLineInternal(chalk, fromX, fromY, toX, toY);
+            prevX = toX;
+            prevY = toY;
+        }
+
+        private void UseChalk(Chalk chalk)
+        {
+            if (chalk == prevChalk)
+                return;
+            prevChalk = chalk;
+            // this works because it makes y == 0 which is an invalid for a point
+            // so we can detect that x is actually a chalk id when y == 0
+            AddAction(chalk.chalkId);
+            prevX = 0;
+            prevY = 0;
+        }
+
+        private void AddAction(int action)
+        {
+            currentActions |= ((ulong)action) << (currentActionsIndex * PointBitCount);
+            if (++currentActionsIndex == 3)
+            {
+                AddToAllActions(currentActions);
+                currentActions = 0;
+                currentActionsIndex = 0;
+            }
+        }
+
+        private void AddToAllActions(ulong actions)
+        {
+            if (allActionsCount == allActions.Length)
+            {
+                var newAllActions = new ulong[allActionsCount * 2];
+                allActions.CopyTo(newAllActions, 0);
+                allActions = newAllActions;
+            }
+            allActions[allActionsCount++] = actions;
         }
 
         private void DrawPointInternal(Chalk chalk, int x, int y)
@@ -154,10 +234,10 @@ namespace JanSharp
                 float y = fromY;
                 if (fromX < toX)
                     for (int x = fromX + stepX; x <= toX - 1; x += stepX)
-                        DrawPoint(chalk, x, Mathf.RoundToInt(y += stepY));
+                        DrawPointInternal(chalk, x, Mathf.RoundToInt(y += stepY));
                 else
                     for (int x = fromX + stepX; x >= toX + 1; x += stepX)
-                        DrawPoint(chalk, x, Mathf.RoundToInt(y += stepY));
+                        DrawPointInternal(chalk, x, Mathf.RoundToInt(y += stepY));
             }
             else // vertical
             {
@@ -166,12 +246,105 @@ namespace JanSharp
                 float x = fromX;
                 if (fromY < toY)
                     for (int y = fromY + stepY; y <= toY - 1; y += stepY)
-                        DrawPoint(chalk, Mathf.RoundToInt(x += stepX), y);
+                        DrawPointInternal(chalk, Mathf.RoundToInt(x += stepX), y);
                 else
                     for (int y = fromY + stepY; y >= toY + 1; y += stepY)
-                        DrawPoint(chalk, Mathf.RoundToInt(x += stepX), y);
+                        DrawPointInternal(chalk, Mathf.RoundToInt(x += stepX), y);
             }
             DrawPointInternal(chalk, toX, toY);
+        }
+
+        public override void OnPlayerJoined(VRCPlayerApi player)
+        {
+            actionsCountRequiredToSync = allActionsCount;
+            currentSyncedIndex = 0;
+            if (player.isLocal)
+                catchingUp = true;
+            if (Networking.IsOwner(this.gameObject))
+            {
+                SendCustomEventDelayedSeconds(nameof(RequestSerializationDelayed), LateJoinerSyncDelay); // honestly... I'm annoyed
+                sending = false;
+                waitingToStartSending = true;
+            }
+        }
+
+        public override void OnPreSerialization()
+        {
+            if (!sending)
+            {
+                Debug.Log($"<dlt> ICU VRC trying to screw me, no I'm not syncing data right now.");
+                syncedData = 0;
+                return;
+            }
+            Debug.Log($"<dlt> sending {currentSyncedIndex + 1}/{actionsCountRequiredToSync + 1}");
+            if (currentSyncedIndex >= actionsCountRequiredToSync)
+            {
+                syncedData = currentActions | (PointBits << (currentActionsIndex * PointBitCount));
+                sending = false;
+                return;
+            }
+            syncedData = allActions[currentSyncedIndex++];
+            SendCustomEventDelayedFrames(nameof(RequestSerializationDelayed), 1);
+        }
+
+        public void RequestSerializationDelayed()
+        {
+            if (waitingToStartSending)
+            {
+                waitingToStartSending = false;
+                sending = true;
+            }
+            RequestSerialization();
+        }
+
+        public override void OnPostSerialization(SerializationResult result)
+        {
+            Debug.Log($"<dlt> on post: success: {result.success}, byteCount: {result.byteCount}");
+        }
+
+        public override void OnDeserialization()
+        {
+            if (!catchingUp)
+            {
+                // TODO: handle currentSyncedIndex
+                return;
+            }
+            bool doUpdateTexture = false;
+            for (int i = 0; i < 3; i++)
+            {
+                int point = (int)((syncedData >> (i * PointBitCount)) & PointBits);
+                if (point == IntUnusedPoint)
+                {
+                    catchingUp = false;
+                    Debug.Log($"<dlt> we caught up!");
+                    // TODO: set current action and action index
+                    break;
+                }
+                doUpdateTexture = true;
+                int x = point & IntAxisBits;
+                int y = (point >> AxisBitCount) & IntAxisBits;
+                if (y == 0)
+                {
+                    Debug.Log($"<dlt> received switch to chalk id: {x}");
+                    receivedChalk = chalkboardManager.chalks[x];
+                }
+                else
+                {
+                    Debug.Log($"<dlt> received point x: {x}, y: {y} hasPrev: {((point & IntHasPrev) != 0)}");
+                    if (receivedChalk == null)
+                        Debug.Log($"<dlt> received point before receiving any switch to a chalk?!");
+                    else if ((point & IntHasPrev) != 0)
+                        DrawLineInternal(receivedChalk, receivedPrevX, receivedPrevY, x, y);
+                    else
+                        DrawPointInternal(receivedChalk, x, y);
+                    receivedPrevX = x;
+                    receivedPrevY = y;
+                }
+            }
+            if (catchingUp)
+                AddToAllActions(syncedData);
+            if (doUpdateTexture)
+                UpdateTextureSlow();
         }
     }
 }
