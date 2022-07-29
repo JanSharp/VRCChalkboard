@@ -15,6 +15,7 @@ using System.Diagnostics;
 namespace JanSharp
 {
     [InitializeOnLoad]
+    [DefaultExecutionOrder(-1000)]
     public static class OnBuildUtil
     {
         private static HashSet<Type> typesToLookFor;
