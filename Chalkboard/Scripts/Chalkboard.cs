@@ -1,7 +1,8 @@
-﻿using UdonSharp;
+using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
+using VRC.Udon.Common.Interfaces;
 #if UNITY_EDITOR && !COMPILER_UDONSHARP
 using UnityEditor;
 using UdonSharpEditor;
@@ -9,7 +10,7 @@ using UdonSharpEditor;
 
 namespace JanSharp
 {
-    [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
+    [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class Chalkboard : UdonSharpBehaviour
     #if UNITY_EDITOR && !COMPILER_UDONSHARP
         , IOnBuildCallback
@@ -18,15 +19,25 @@ namespace JanSharp
         public Transform bottomLeft;
         public Transform topRight;
         public Material material;
+        public Color boardColor;
 
         [HideInInspector] public int boardId;
         [HideInInspector] [System.NonSerialized] public Texture2D texture;
+        private Color[] initialPixels;
         private bool fastUpdating;
         private bool slowUpdating;
 
         private void Start()
         {
             texture = (Texture2D)material.mainTexture;
+            // ok so this seems to be using about 9MB for a 1024x512 texture
+            // if there was no overhead that should be 2MB
+            // note that this is also based on one single test in the editor with 3 boards in the scene
+            // however considering this saves us having to loop through all pixels to reset the color
+            // well I really can't say it is a good option, but it is an option that allows us to
+            // reset the board to the initial state in 2ms instead of 1.5s which it is when looping
+            // through all pixels to reset them takes (first a GetPixels call, then the loop, then SetPixels)
+            initialPixels = texture.GetPixels();
         }
 
         // fast is kept completely separate from slow because when multiple people are drawing
@@ -83,5 +94,16 @@ namespace JanSharp
             return chalkboardManager != null;
         }
         #endif
+
+        public void Clear()
+        {
+            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(ClearInternal));
+        }
+
+        public void ClearInternal()
+        {
+            texture.SetPixels(initialPixels);
+            UpdateTextureSlow();
+        }
     }
 }
