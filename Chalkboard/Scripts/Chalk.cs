@@ -21,9 +21,10 @@ namespace JanSharp
         [SerializeField] private LayerMask layerMask = (1 << 0) | (1 << 4) | (1 << 8) | (1 << 11);
         [SerializeField] private Color color = Color.white;
         [SerializeField] private Transform indicator;
-        [SerializeField] private bool isSponge;
+        [SerializeField] public bool isSponge;
         [SerializeField] [HideInInspector] private UpdateManager updateManager;
         [SerializeField] [HideInInspector] private ChalkboardManager chalkboardManager;
+        [HideInInspector] public int chalkId;
         // for UpdateManager
         private int customUpdateInternalIndex;
         private bool holding;
@@ -39,10 +40,10 @@ namespace JanSharp
         private const int SpongeSize = 41;
         private const int SpongeLineDrawingFrequency = 8;
 
-        private Color[] colors;
-        private int lineDrawingFrequency;
-        private int size;
-        private int halfSize;
+        [HideInInspector] [System.NonSerialized] public Color[] colors;
+        [HideInInspector] [System.NonSerialized] public int lineDrawingFrequency;
+        [HideInInspector] [System.NonSerialized] public int size;
+        [HideInInspector] [System.NonSerialized] public int halfSize;
 
         private const int PointBitCount = 21;
         private const int AxisBitCount = 10;
@@ -77,6 +78,7 @@ namespace JanSharp
                     UdonSharpEditorUtility.GetBackingUdonBehaviour(this));
 
             chalkboardManager = GameObject.Find("/ChalkboardManager")?.GetUdonSharpComponent<ChalkboardManager>();
+            chalkId = chalkboardManager?.GetChalkId(this) ?? -1;
             if (chalkboardManager == null)
                 Debug.LogError("Chalk requires a GameObject that must be at the root of the scene"
                         + " with the exact name 'ChalkboardManager' which has the 'ChalkboardManager' UdonBehaviour.",
@@ -84,7 +86,7 @@ namespace JanSharp
 
             this.ApplyProxyModifications();
             // EditorUtility.SetDirty(UdonSharpEditorUtility.GetBackingUdonBehaviour(this));
-            return chalkboardManager != null;
+            return updateManager != null && chalkboardManager != null;
         }
         #endif
 
@@ -173,57 +175,12 @@ namespace JanSharp
         private void DrawFromPrevTo(int toX, int toY)
         {
             if (hasPrev)
-            {
-                Vector2 delta = new Vector2(toX - prevX, toY - prevY);
-                if (Mathf.Abs(delta.x) >= Mathf.Abs(delta.y)) // horizontal
-                {
-                    int stepX = System.Math.Sign(delta.x) * lineDrawingFrequency;
-                    float stepY = (delta.y / Mathf.Abs(delta.x)) * lineDrawingFrequency;
-                    float y = prevY;
-                    if (prevX < toX)
-                        for (int x = prevX + stepX; x <= toX - 1; x += stepX)
-                            DrawPoint(x, Mathf.RoundToInt(y += stepY));
-                    else
-                        for (int x = prevX + stepX; x >= toX + 1; x += stepX)
-                            DrawPoint(x, Mathf.RoundToInt(y += stepY));
-                }
-                else // vertical
-                {
-                    int stepY = System.Math.Sign(delta.y) * lineDrawingFrequency;
-                    float stepX = (delta.x / Mathf.Abs(delta.y)) * lineDrawingFrequency;
-                    float x = prevX;
-                    if (prevY < toY)
-                        for (int y = prevY + stepY; y <= toY - 1; y += stepY)
-                            DrawPoint(Mathf.RoundToInt(x += stepX), y);
-                    else
-                        for (int y = prevY + stepY; y >= toY + 1; y += stepY)
-                            DrawPoint(Mathf.RoundToInt(x += stepX), y);
-                }
-            }
-            DrawPoint(toX, toY);
+                lastSyncedChalkboard.DrawLine(this, prevX, prevY, toX, toY);
+            else
+                lastSyncedChalkboard.DrawPoint(this, toX, toY);
             hasPrev = true;
             prevX = toX;
             prevY = toY;
-        }
-
-        private void DrawPoint(int x, int y)
-        {
-            if (isSponge)
-            {
-                texture.SetPixels(x - halfSize, y - halfSize, size, size, colors);
-            }
-            else
-            {
-                int blX = x - halfSize;
-                int blY = y - halfSize;
-                int trX = x + halfSize;
-                int trY = y + halfSize;
-                colors[0] = texture.GetPixel(blX, blY);
-                colors[4] = texture.GetPixel(trX, blY);
-                colors[20] = texture.GetPixel(blX, trY);
-                colors[24] = texture.GetPixel(trX, trY);
-                texture.SetPixels(blX, blY, size, size, colors);
-            }
         }
 
         private void AddPointToSyncedPoints(int x, int y)
@@ -309,7 +266,10 @@ namespace JanSharp
                     if ((point & IntHasPrev) == 0)
                         hasPrev = false;
                     Debug.Log($"<dlt> received point x: {x}, y: {y} hasPrev: {((point & IntHasPrev) != 0)}");
-                    DrawFromPrevTo(x, y);
+                    if (lastSyncedChalkboard == null)
+                        Debug.Log($"<dlt> received point before receiving any switch to a board?!");
+                    else
+                        DrawFromPrevTo(x, y);
                 }
             }
             if (doUpdateTexture && lastSyncedChalkboard != null) // null check just in case there is some edge case with wrong order of packets

@@ -18,9 +18,11 @@ namespace JanSharp
     #endif
     {
         [HideInInspector] public Chalkboard[] chalkboards;
+        [HideInInspector] public Chalk[] chalks;
 
         #if UNITY_EDITOR && !COMPILER_UDONSHARP
         private List<Chalkboard> allBoards;
+        private List<Chalk> allChalks;
 
         [InitializeOnLoad]
         public static class OnBuildRegister
@@ -29,34 +31,51 @@ namespace JanSharp
         }
         bool IOnBuildCallback.OnBuild()
         {
-            allBoards = allBoards ?? new List<Chalkboard>();
-            if (allBoards.Any(b => b == null))
-            {
-                allBoards.RemoveAll(b => b == null);
-                for (int i = 0; i < allBoards.Count; i++)
-                {
-                    allBoards[i].boardId = i;
-                    allBoards[i].ApplyProxyModifications();
-                    // EditorUtility.SetDirty(UdonSharpEditorUtility.GetBackingUdonBehaviour(allBoards[i]));
-                }
-            }
-            chalkboards = allBoards.ToArray();
+            Cleanup(ref allBoards, ref chalkboards, (board, id) => board.boardId = id);
+            Cleanup(ref allChalks, ref chalks, (chalk, id) => chalk.chalkId = id);
             this.ApplyProxyModifications();
             // EditorUtility.SetDirty(UdonSharpEditorUtility.GetBackingUdonBehaviour(this));
             return true;
         }
 
+        private void Cleanup<T>(ref List<T> allValues, ref T[] allValuesArray, System.Action<T, int> setId)
+            where T : UdonSharpBehaviour
+        {
+            allValues = allValues ?? new List<T>();
+            if (allValues.Any(b => b == null))
+            {
+                allValues.RemoveAll(b => b == null);
+                for (int i = 0; i < allValues.Count; i++)
+                {
+                    setId(allValues[i], i);
+                    allValues[i].ApplyProxyModifications();
+                    // EditorUtility.SetDirty(UdonSharpEditorUtility.GetBackingUdonBehaviour(allBoards[i]));
+                }
+            }
+            allValuesArray = allValues.ToArray();
+        }
+
         public int GetBoardId(Chalkboard board)
         {
-            allBoards = allBoards ?? new List<Chalkboard>();
-            int index = allBoards.FindIndex(b => b == board);
+            return GetId(ref allBoards, ref chalkboards, board);
+        }
+
+        public int GetChalkId(Chalk chalk)
+        {
+            return GetId(ref allChalks, ref chalks, chalk);
+        }
+
+        private int GetId<T>(ref List<T> allValues, ref T[] allValuesArray, T value)
+        {
+            allValues = allValues ?? new List<T>();
+            int index = allValues.FindIndex(b => b.Equals(value));
             if (index != -1)
                 return index;
-            allBoards.Add(board);
-            chalkboards = allBoards.ToArray();
+            allValues.Add(value);
+            allValuesArray = allValues.ToArray();
             this.ApplyProxyModifications();
             // EditorUtility.SetDirty(UdonSharpEditorUtility.GetBackingUdonBehaviour(this));
-            return allBoards.Count - 1;
+            return allValues.Count - 1;
         }
         #endif
     }

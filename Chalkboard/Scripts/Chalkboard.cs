@@ -26,6 +26,10 @@ namespace JanSharp
         private Color[] initialPixels;
         private bool fastUpdating;
         private bool slowUpdating;
+        private ulong[] allActions;
+        private int allActionsCount;
+        private ulong currentActions;
+        private int currentActionsIndex;
 
         private void Start()
         {
@@ -103,7 +107,71 @@ namespace JanSharp
         public void ClearInternal()
         {
             texture.SetPixels(initialPixels);
+            allActionsCount = 0;
+            currentActionsIndex = 0;
             UpdateTextureSlow();
+        }
+
+
+
+        public void DrawPoint(Chalk chalk, int x, int y)
+        {
+            DrawPointInternal(chalk, x, y);
+        }
+
+        public void DrawLine(Chalk chalk, int fromX, int fromY, int toX, int toY)
+        {
+            DrawLineInternal(chalk, fromX, fromY, toX, toY);
+        }
+
+        private void DrawPointInternal(Chalk chalk, int x, int y)
+        {
+            if (chalk.isSponge)
+            {
+                texture.SetPixels(x - chalk.halfSize, y - chalk.halfSize, chalk.size, chalk.size, chalk.colors);
+            }
+            else
+            {
+                int blX = x - chalk.halfSize;
+                int blY = y - chalk.halfSize;
+                int trX = x + chalk.halfSize;
+                int trY = y + chalk.halfSize;
+                chalk.colors[0] = texture.GetPixel(blX, blY);
+                chalk.colors[4] = texture.GetPixel(trX, blY);
+                chalk.colors[20] = texture.GetPixel(blX, trY);
+                chalk.colors[24] = texture.GetPixel(trX, trY);
+                texture.SetPixels(blX, blY, chalk.size, chalk.size, chalk.colors);
+            }
+        }
+
+        private void DrawLineInternal(Chalk chalk, int fromX, int fromY, int toX, int toY)
+        {
+            Vector2 delta = new Vector2(toX - fromX, toY - fromY);
+            if (Mathf.Abs(delta.x) >= Mathf.Abs(delta.y)) // horizontal
+            {
+                int stepX = System.Math.Sign(delta.x) * chalk.lineDrawingFrequency;
+                float stepY = (delta.y / Mathf.Abs(delta.x)) * chalk.lineDrawingFrequency;
+                float y = fromY;
+                if (fromX < toX)
+                    for (int x = fromX + stepX; x <= toX - 1; x += stepX)
+                        DrawPoint(chalk, x, Mathf.RoundToInt(y += stepY));
+                else
+                    for (int x = fromX + stepX; x >= toX + 1; x += stepX)
+                        DrawPoint(chalk, x, Mathf.RoundToInt(y += stepY));
+            }
+            else // vertical
+            {
+                int stepY = System.Math.Sign(delta.y) * chalk.lineDrawingFrequency;
+                float stepX = (delta.x / Mathf.Abs(delta.y)) * chalk.lineDrawingFrequency;
+                float x = fromX;
+                if (fromY < toY)
+                    for (int y = fromY + stepY; y <= toY - 1; y += stepY)
+                        DrawPoint(chalk, Mathf.RoundToInt(x += stepX), y);
+                else
+                    for (int y = fromY + stepY; y >= toY + 1; y += stepY)
+                        DrawPoint(chalk, Mathf.RoundToInt(x += stepX), y);
+            }
+            DrawPointInternal(chalk, toX, toY);
         }
     }
 }
