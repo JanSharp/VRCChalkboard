@@ -36,20 +36,23 @@ namespace JanSharp
         private int currentActionsIndex;
         private const int ActionBitCount = 21;
         private const int AxisBitCount = 10;
+        private const ulong MetadataFlag = 0x8000000000000000UL;
+        private const ulong ActionCountMetadataFlag = 0x4000000000000000UL;
         private const ulong PointHasPrev = 0x100000UL;
         private const ulong ActionBits = 0x1fffffUL;
         private const int IntPointHasPrev = 0x100000;
         private const int IntUnusedAction = 0; // x + y
-        private const int IntCaughtUpAction = 1; // x + y
         private const int IntSwitchToChalkY = 1; // just y
         private const int IntAxisBits = 0x3ff;
         private Chalk prevChalk;
         private int prevX;
         private int prevY;
         private bool waitingToStartSending;
+        private bool firstSend;
         private bool sending;
         [UdonSynced]
         private ulong syncedActions;
+        private int expectedReceivedActionsCount;
         private int currentSyncedIndex;
         private int actionsCountRequiredToSync;
         private bool catchingUp;
@@ -61,6 +64,7 @@ namespace JanSharp
         private ulong[] catchUpQueue;
         private int catchUpQueueCount;
         private int catchUpQueueIndex;
+        private bool somebodyIsCatchingUp;
 
         private void Start()
         {
@@ -148,8 +152,10 @@ namespace JanSharp
             prevY = 0;
             waitingToStartSending = false;
             sending = false;
+            firstSend = false;
             catchingUp = false;
             catchingUpWithTheQueue = false;
+            somebodyIsCatchingUp = false;
             receivedChalk = null; // just to clear the reference, really. syncing doesn't happen anymore
             catchUpQueue = null;
             catchUpQueueCount = 0; // reset to stop CatchUpWithQueue if it's running
@@ -318,7 +324,7 @@ namespace JanSharp
             // also note that if the player who was sending for late joiners leaves/crashes then the new owner is just going to start
             // from the beginning. I thought about syncing the index for about where we're at, but it actually adds quite a lot of
             // complexity. So considering this isn't exactly common I'll call it good enough since it doesn't break at least... in theory
-            if (player.isLocal)
+            if (somebodyIsCatchingUp && player.isLocal)
             {
                 catchingUp = false;
                 catchingUpWithTheQueue = false;
@@ -332,12 +338,13 @@ namespace JanSharp
 
         public override bool OnOwnershipRequest(VRCPlayerApi requestingPlayer, VRCPlayerApi requestedOwner)
         {
-            return !catchingUp && !catchingUpWithTheQueue && !sending && !waitingToStartSending;
+            return !somebodyIsCatchingUp && !catchingUp && !catchingUpWithTheQueue && !sending && !waitingToStartSending;
         }
 
         private void InitSending()
         {
             SendCustomEventDelayedSeconds(nameof(RequestSerializationDelayed), LateJoinerSyncDelay); // honestly... I'm annoyed
+            somebodyIsCatchingUp = false;
             sending = false;
             waitingToStartSending = true;
         }
@@ -350,10 +357,21 @@ namespace JanSharp
                 syncedActions = 0;
                 return;
             }
+            if (firstSend)
+            {
+                // for some reason `|` doesn't understand the difference between implicit and explicit casts
+                // so it's still complaining even with an explicit cast. Just using `+` instead because
+                // none of the bits will be used twice anyway so it does the same thing
+                Debug.Log($"<dlt> informing everyone that we're about to sync {actionsCountRequiredToSync} actions");
+                syncedActions = MetadataFlag | ActionCountMetadataFlag + (ulong)actionsCountRequiredToSync;
+                firstSend = false;
+                SendCustomEventDelayedFrames(nameof(RequestSerializationDelayed), 1);
+                return;
+            }
             Debug.Log($"<dlt> sending {currentSyncedIndex + 1}/{actionsCountRequiredToSync + 1}");
             if (currentSyncedIndex >= actionsCountRequiredToSync)
             {
-                syncedActions = (ulong)IntCaughtUpAction;
+                syncedActions = MetadataFlag;
                 sending = false;
                 return;
             }
@@ -373,6 +391,7 @@ namespace JanSharp
                 actionsCountRequiredToSync = allActionsCount;
                 currentSyncedIndex = 0;
                 waitingToStartSending = false;
+                firstSend = true;
                 sending = true;
             }
             RequestSerialization();
@@ -385,6 +404,30 @@ namespace JanSharp
 
         public override void OnDeserialization()
         {
+            if ((syncedActions & MetadataFlag) != 0UL)
+            {
+                ulong metadata = syncedActions ^ MetadataFlag; // remove metadata flag
+                if ((metadata & ActionCountMetadataFlag) != 0UL)
+                {
+                    Debug.Log($"<dlt> someone (could be multiple people) is about to receive {actionsCountRequiredToSync} actions");
+                    metadata ^= ActionCountMetadataFlag; // remove second flag
+                    if (catchingUp)
+                        expectedReceivedActionsCount = (int)metadata;
+                    else
+                        somebodyIsCatchingUp = true;
+                    return;
+                }
+                if (catchingUp)
+                {
+                    Debug.Log($"<dlt> we caught up with all actions that happened before we joined!");
+                    catchingUp = false;
+                    catchingUpWithTheQueue = true;
+                    SendCustomEventDelayedFrames(nameof(CatchUpWithQueue), 1);
+                    return;
+                }
+                somebodyIsCatchingUp = false;
+                return;
+            }
             if (!catchingUp)
                 return;
             ProcessActions(syncedActions);
@@ -398,14 +441,6 @@ namespace JanSharp
                 int point = (int)((actions >> (i * ActionBitCount)) & ActionBits);
                 if (point == IntUnusedAction)
                     break;
-                if (point == IntCaughtUpAction)
-                {
-                    Debug.Log($"<dlt> we caught up with all actions that happened before we joined!");
-                    catchingUp = false;
-                    catchingUpWithTheQueue = true;
-                    SendCustomEventDelayedFrames(nameof(CatchUpWithQueue), 1);
-                    return;
-                }
                 doUpdateTexture = true;
                 int x = point & IntAxisBits;
                 int y = (point >> AxisBitCount) & IntAxisBits;
