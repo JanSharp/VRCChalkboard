@@ -45,18 +45,18 @@ namespace JanSharp
         [HideInInspector] [System.NonSerialized] public int size;
         [HideInInspector] [System.NonSerialized] public int halfSize;
 
-        private const int PointBitCount = 21;
+        private const int ActionBitCount = 21;
         private const int AxisBitCount = 10;
         private const ulong PointHasPrev = 0x100000UL;
-        private const ulong PointBits = 0x1fffffUL;
-        private const ulong UnusedPoint = PointBits;
+        private const ulong ActionBits = 0x1fffffUL;
         [UdonSynced]
-        private ulong syncedData;
+        private ulong syncedActions;
         private int[] pointsStage = new int[4];
         private int pointsStageCount;
-        private const int IntHasPrev = 0x100000;
-        private const int IntPointBits = 0x1fffff;
-        private const int IntUnusedPoint = IntPointBits;
+        private const int IntPointHasPrev = 0x100000;
+        private const int IntActionBits = 0x1fffff;
+        private const int IntUnusedAction = 0; // x + y
+        private const int IntSwitchToBoardY = 1; // just y
         private const int IntAxisBits = 0x3ff;
 
         private const float LateJoinerSyncDelay = 10f; // TODO: set this higher for the real world
@@ -198,12 +198,11 @@ namespace JanSharp
             {
                 lastSyncedChalkboard = chalkboard;
                 Debug.Log($"<dlt> adding switch to board id: {chalkboard.boardId}");
-                // this works because it makes y == 0 which is an invalid for a point
-                // so we can detect that x is actually a board id when y == 0
-                pointsStage[pointsStageCount++] = chalkboard.boardId;
+                // y == 1 is an invalid point, so it means "switch to board [x]" instead
+                pointsStage[pointsStageCount++] = chalkboard.boardId | (IntSwitchToBoardY << AxisBitCount);
             }
             Debug.Log($"<dlt> adding point x: {x}, y: {y}, hasPrev: {hasPrev}");
-            pointsStage[pointsStageCount++] = x | (y << AxisBitCount) | (hasPrev ? IntHasPrev : 0);
+            pointsStage[pointsStageCount++] = x | (y << AxisBitCount) | (hasPrev ? IntPointHasPrev : 0);
             Networking.SetOwner(Networking.LocalPlayer, this.gameObject);
             RequestSerialization();
         }
@@ -217,20 +216,12 @@ namespace JanSharp
 
         public override void OnPreSerialization()
         {
-            Debug.Log($"<dlt> sending {System.Math.Min(pointsStageCount, 3)} points (or switches)");
+            Debug.Log($"<dlt> sending {System.Math.Min(pointsStageCount, 3)} actions");
+            syncedActions = 0UL;
             if (pointsStageCount == 0)
-            {
-                syncedData = 0xffffffffffffffffUL;
                 return;
-            }
-            syncedData = 0UL;
-            for (int i = 0; i < 3; i++)
-            {
-                if (i < pointsStageCount)
-                    syncedData |= ((ulong)(pointsStage[i] & 0x1fffffU)) << (i * PointBitCount);
-                else
-                    syncedData |= UnusedPoint << (i * PointBitCount);
-            }
+            for (int i = 0; i < System.Math.Min(pointsStageCount, 3); i++)
+                syncedActions |= ((ulong)(pointsStage[i] & 0x1fffffU)) << (i * ActionBitCount);
 
             if (pointsStageCount <= 3)
                 pointsStageCount = 0;
@@ -256,13 +247,13 @@ namespace JanSharp
             bool doUpdateTexture = false;
             for (int i = 0; i < 3; i++)
             {
-                int point = (int)((syncedData >> (i * PointBitCount)) & PointBits);
-                if (point == IntUnusedPoint)
+                int point = (int)((syncedActions >> (i * ActionBitCount)) & ActionBits);
+                if (point == IntUnusedAction)
                     break;
                 doUpdateTexture = true;
                 int x = point & IntAxisBits;
                 int y = (point >> AxisBitCount) & IntAxisBits;
-                if (y == 0)
+                if (y == IntSwitchToBoardY)
                 {
                     Debug.Log($"<dlt> received switch to board id: {x}");
                     if (i != 0 && lastSyncedChalkboard != null) // update the previous texture before switching
@@ -272,9 +263,9 @@ namespace JanSharp
                 }
                 else
                 {
-                    if ((point & IntHasPrev) == 0)
+                    if ((point & IntPointHasPrev) == 0)
                         hasPrev = false;
-                    Debug.Log($"<dlt> received point x: {x}, y: {y} hasPrev: {((point & IntHasPrev) != 0)}");
+                    Debug.Log($"<dlt> received point x: {x}, y: {y} hasPrev: {((point & IntPointHasPrev) != 0)}");
                     if (lastSyncedChalkboard == null)
                         Debug.Log($"<dlt> received point before receiving any switch to a board?!");
                     else

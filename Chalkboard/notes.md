@@ -4,7 +4,7 @@
 - [ ] only apply changes to the texture if the player is near the board
 - [x] late joiner syncing
   - [x] handle unexpected ownership transfer
-  - [ ] update chalk action structure to match chalkboard
+  - [x] update chalk action structure to match chalkboard
   - [ ] use 3 or 4 ulongs and sync less frequently. it's significantly more efficient in terms of total synced byte count
 - [ ] add progress bars just for fun
 - [ ] improve queue logic for chalks

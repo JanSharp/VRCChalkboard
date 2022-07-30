@@ -34,13 +34,11 @@ namespace JanSharp
         private int allActionsCount;
         private ulong currentActions;
         private int currentActionsIndex;
-        private const int PointBitCount = 21;
+        private const int ActionBitCount = 21;
         private const int AxisBitCount = 10;
         private const ulong PointHasPrev = 0x100000UL;
-        private const ulong PointBits = 0x1fffffUL;
-        private const ulong UnusedPoint = PointBits;
-        private const int IntHasPrev = 0x100000;
-        private const int IntPointBits = 0x1fffff;
+        private const ulong ActionBits = 0x1fffffUL;
+        private const int IntPointHasPrev = 0x100000;
         private const int IntUnusedAction = 0; // x + y
         private const int IntCaughtUpAction = 1; // x + y
         private const int IntSwitchToChalkY = 1; // just y
@@ -51,7 +49,7 @@ namespace JanSharp
         private bool waitingToStartSending;
         private bool sending;
         [UdonSynced]
-        private ulong syncedData;
+        private ulong syncedActions;
         private int currentSyncedIndex;
         private int actionsCountRequiredToSync;
         private bool catchingUp;
@@ -178,7 +176,7 @@ namespace JanSharp
             UseChalk(chalk);
             if (fromX != prevX || fromY != prevY)
                 AddAction(fromX | (fromY << AxisBitCount));
-            AddAction(toX | (toY << AxisBitCount) | IntHasPrev);
+            AddAction(toX | (toY << AxisBitCount) | IntPointHasPrev);
             if (!catchingUp && !catchingUpWithTheQueue)
                 DrawLineInternal(chalk, fromX, fromY, toX, toY);
             prevX = toX;
@@ -206,7 +204,7 @@ namespace JanSharp
 
         private void AddAction(int action)
         {
-            currentActions |= ((ulong)action) << (currentActionsIndex * PointBitCount);
+            currentActions |= ((ulong)action) << (currentActionsIndex * ActionBitCount);
             if (++currentActionsIndex == 3)
             {
                 AddToAllActions(currentActions);
@@ -349,17 +347,17 @@ namespace JanSharp
             if (!sending)
             {
                 Debug.Log($"<dlt> ICU VRC trying to screw me, no I'm not syncing data right now.");
-                syncedData = 0;
+                syncedActions = 0;
                 return;
             }
             Debug.Log($"<dlt> sending {currentSyncedIndex + 1}/{actionsCountRequiredToSync + 1}");
             if (currentSyncedIndex >= actionsCountRequiredToSync)
             {
-                syncedData = (ulong)IntCaughtUpAction;
+                syncedActions = (ulong)IntCaughtUpAction;
                 sending = false;
                 return;
             }
-            syncedData = allActions[currentSyncedIndex++];
+            syncedActions = allActions[currentSyncedIndex++];
             SendCustomEventDelayedFrames(nameof(RequestSerializationDelayed), 1);
         }
 
@@ -389,7 +387,7 @@ namespace JanSharp
         {
             if (!catchingUp)
                 return;
-            ProcessActions(syncedData);
+            ProcessActions(syncedActions);
         }
 
         private void ProcessActions(ulong actions)
@@ -397,7 +395,7 @@ namespace JanSharp
             bool doUpdateTexture = false;
             for (int i = 0; i < 3; i++)
             {
-                int point = (int)((actions >> (i * PointBitCount)) & PointBits);
+                int point = (int)((actions >> (i * ActionBitCount)) & ActionBits);
                 if (point == IntUnusedAction)
                     break;
                 if (point == IntCaughtUpAction)
@@ -418,10 +416,10 @@ namespace JanSharp
                 }
                 else
                 {
-                    Debug.Log($"<dlt> processing point x: {x}, y: {y} hasPrev: {((point & IntHasPrev) != 0)}");
+                    Debug.Log($"<dlt> processing point x: {x}, y: {y} hasPrev: {((point & IntPointHasPrev) != 0)}");
                     if (receivedChalk == null)
                         Debug.Log($"<dlt> processing point before receiving any switch to a chalk?!");
-                    else if ((point & IntHasPrev) != 0)
+                    else if ((point & IntPointHasPrev) != 0)
                         DrawLineInternal(receivedChalk, receivedPrevX, receivedPrevY, x, y);
                     else
                         DrawPointInternal(receivedChalk, x, y);
@@ -436,7 +434,7 @@ namespace JanSharp
 
         public void CatchUpWithQueue()
         {
-            Debug.Log($"<dlt> CatchUpWithQueue {catchUpQueueIndex}/{catchUpQueueCount}");
+            Debug.Log($"<dlt> CatchUpWithQueue {catchUpQueueIndex + 1}/{catchUpQueueCount + 1}");
             if (catchUpQueueIndex == catchUpQueueCount)
             {
                 Debug.Log($"<dlt> we are fully caught up!");
