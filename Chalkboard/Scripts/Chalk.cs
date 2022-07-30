@@ -53,6 +53,7 @@ namespace JanSharp
         private ulong syncedActions;
         private int[] pointsStage = new int[4];
         private int pointsStageCount;
+        private int pointsStageStartIndex;
         private const int IntPointHasPrev = 0x100000;
         private const int IntActionBits = 0x1fffff;
         private const int IntUnusedAction = 0; // x + y
@@ -191,18 +192,22 @@ namespace JanSharp
             if ((changedBoard ? pointsStageCount + 1 : pointsStageCount) >= pointsStage.Length)
             {
                 var newPointsStage = new int[pointsStageCount * 2];
-                pointsStage.CopyTo(newPointsStage, 0);
+                for (int i = 0; i < pointsStage.Length; i++)
+                    newPointsStage[i] = pointsStage[(i + pointsStageStartIndex) % pointsStage.Length];
                 pointsStage = newPointsStage;
+                pointsStageStartIndex = 0;
             }
             if (changedBoard)
             {
                 lastSyncedChalkboard = chalkboard;
                 Debug.Log($"<dlt> adding switch to board id: {chalkboard.boardId}");
                 // y == 1 is an invalid point, so it means "switch to board [x]" instead
-                pointsStage[pointsStageCount++] = chalkboard.boardId | (IntSwitchToBoardY << AxisBitCount);
+                pointsStage[(pointsStageStartIndex + (pointsStageCount++)) % pointsStage.Length]
+                    = chalkboard.boardId | (IntSwitchToBoardY << AxisBitCount);
             }
             Debug.Log($"<dlt> adding point x: {x}, y: {y}, hasPrev: {hasPrev}");
-            pointsStage[pointsStageCount++] = x | (y << AxisBitCount) | (hasPrev ? IntPointHasPrev : 0);
+            pointsStage[(pointsStageStartIndex + (pointsStageCount++)) % pointsStage.Length]
+                = x | (y << AxisBitCount) | (hasPrev ? IntPointHasPrev : 0);
             Networking.SetOwner(Networking.LocalPlayer, this.gameObject);
             RequestSerialization();
         }
@@ -221,16 +226,20 @@ namespace JanSharp
             if (pointsStageCount == 0)
                 return;
             for (int i = 0; i < System.Math.Min(pointsStageCount, 3); i++)
-                syncedActions |= ((ulong)(pointsStage[i] & 0x1fffffU)) << (i * ActionBitCount);
+            {
+                int stageIndex = (pointsStageStartIndex + i) % pointsStage.Length;
+                syncedActions |= ((ulong)(pointsStage[stageIndex] & 0x1fffffU)) << (i * ActionBitCount);
+            }
 
             if (pointsStageCount <= 3)
+            {
                 pointsStageCount = 0;
+                pointsStageStartIndex = 0;
+            }
             else
             {
-                // TODO: improve the implementation of the que to not require any shifting
-                for (int i = 3; i < pointsStageCount; i++)
-                    pointsStage[i - 3] = pointsStage[i];
                 pointsStageCount -= 3;
+                pointsStageStartIndex = (pointsStageStartIndex + 3) % pointsStage.Length;
                 SendCustomEventDelayedFrames(nameof(RequestSerializationDelayed), 1);
             }
         }
