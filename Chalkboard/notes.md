@@ -6,7 +6,7 @@
   - [x] handle unexpected ownership transfer
   - [x] update chalk action structure to match chalkboard
   - [x] use 3 or 4 ulongs and sync less frequently. it's significantly more efficient in terms of total synced byte count
-- [ ] add progress bars just for fun
+- [x] add progress bars just for fun
 - [x] improve queue logic for chalks
 - [ ] scale previews based on board size and resolution
 - [ ] adjust update rates depending on resolution

@@ -1,5 +1,6 @@
 ﻿using UdonSharp;
 using UnityEngine;
+using UnityEngine.UI;
 using VRC.SDKBase;
 using VRC.Udon;
 using VRC.Udon.Common;
@@ -21,6 +22,7 @@ namespace JanSharp
         public Transform topRight;
         public Material material;
         public Color boardColor;
+        public Slider progressBar;
 
         [HideInInspector] public int boardId;
         [HideInInspector] [SerializeField] private ChalkboardManager chalkboardManager;
@@ -56,6 +58,7 @@ namespace JanSharp
         [UdonSynced] private ulong syncedActions3;
         [UdonSynced] private ulong syncedActions4;
         private int expectedReceivedActionsCount;
+        private int currentReceivedActionIndex;
         private int currentSyncedIndex;
         private int actionsCountRequiredToSync;
         private bool catchingUp;
@@ -176,6 +179,8 @@ namespace JanSharp
             firstSend = false;
             catchingUp = false;
             catchingUpWithTheQueue = false;
+            if (progressBar != null)
+                progressBar.gameObject.SetActive(false);
             somebodyIsCatchingUp = false;
             receivedChalk = null; // just to clear the reference, really. syncing doesn't happen anymore
             catchUpQueue = null;
@@ -328,6 +333,8 @@ namespace JanSharp
             else if (player.isLocal) // technically this doesn't have to be an else if (I don't think) but it makes no sense to ever do both
             {
                 catchingUp = true;
+                if (progressBar != null)
+                    progressBar.gameObject.SetActive(true);
                 catchUpQueue = new ulong[8];
             }
         }
@@ -349,6 +356,8 @@ namespace JanSharp
             {
                 catchingUp = false;
                 catchingUpWithTheQueue = false;
+                if (progressBar != null)
+                    progressBar.gameObject.SetActive(false);
                 catchUpQueue = null;
                 catchUpQueueCount = 0;
                 catchUpQueueIndex = 0;
@@ -446,7 +455,10 @@ namespace JanSharp
                     Debug.Log($"<dlt> someone (could be multiple people) is about to receive {actionsCountRequiredToSync} actions");
                     metadata ^= ActionCountMetadataFlag; // remove second flag
                     if (catchingUp)
+                    {
+                        currentReceivedActionIndex = 0;
                         expectedReceivedActionsCount = (int)metadata;
+                    }
                     else
                         somebodyIsCatchingUp = true;
                     return;
@@ -465,6 +477,8 @@ namespace JanSharp
             if (!catchingUp)
                 return;
             ProcessActions(syncedActions);
+            if (progressBar != null)
+                progressBar.value = (float)(++currentReceivedActionIndex) / (float)expectedReceivedActionsCount;
         }
 
         private void ProcessActions(ulong actions)
@@ -509,9 +523,13 @@ namespace JanSharp
                 Debug.Log($"<dlt> we are fully caught up!");
                 catchingUpWithTheQueue = false;
                 catchUpQueue = null; // free that memory
+                if (progressBar != null)
+                    progressBar.gameObject.SetActive(false);
                 return;
             }
             ProcessActions(catchUpQueue[catchUpQueueIndex++]);
+            if (progressBar != null)
+                progressBar.value = (float)catchUpQueueIndex / (float)catchUpQueueCount;
             SendCustomEventDelayedFrames(nameof(CatchUpWithQueue), 1);
         }
     }
