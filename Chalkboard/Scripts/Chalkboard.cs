@@ -50,8 +50,10 @@ namespace JanSharp
         private bool waitingToStartSending;
         private bool firstSend;
         private bool sending;
-        [UdonSynced]
-        private ulong syncedActions;
+        [UdonSynced] private ulong syncedActions1;
+        [UdonSynced] private ulong syncedActions2;
+        [UdonSynced] private ulong syncedActions3;
+        [UdonSynced] private ulong syncedActions4;
         private int expectedReceivedActionsCount;
         private int currentSyncedIndex;
         private int actionsCountRequiredToSync;
@@ -60,6 +62,7 @@ namespace JanSharp
         private Chalk receivedChalk;
         private int receivedPrevX;
         private int receivedPrevY;
+        private const float SyncFrequency = 0.3f;
         private const float LateJoinerSyncDelay = 10f; // TODO: set this higher for the real world
         private ulong[] catchUpQueue;
         private int catchUpQueueCount;
@@ -351,11 +354,20 @@ namespace JanSharp
 
         public override void OnPreSerialization()
         {
+            syncedActions1 = GetNextActions();
+            syncedActions2 = GetNextActions();
+            syncedActions3 = GetNextActions();
+            syncedActions4 = GetNextActions();
+            if (sending)
+                SendCustomEventDelayedSeconds(nameof(RequestSerializationDelayed), SyncFrequency);
+        }
+
+        private ulong GetNextActions()
+        {
             if (!sending)
             {
-                Debug.Log($"<dlt> ICU VRC trying to screw me, no I'm not syncing data right now.");
-                syncedActions = 0;
-                return;
+                Debug.Log($"<dlt> ICU VRC trying to screw me, no I'm not syncing data right now. Ok at this point the logic actually uses this intentionally.");
+                return 0UL;
             }
             if (firstSend)
             {
@@ -363,20 +375,16 @@ namespace JanSharp
                 // so it's still complaining even with an explicit cast. Just using `+` instead because
                 // none of the bits will be used twice anyway so it does the same thing
                 Debug.Log($"<dlt> informing everyone that we're about to sync {actionsCountRequiredToSync} actions");
-                syncedActions = MetadataFlag | ActionCountMetadataFlag + (ulong)actionsCountRequiredToSync;
                 firstSend = false;
-                SendCustomEventDelayedFrames(nameof(RequestSerializationDelayed), 1);
-                return;
+                return MetadataFlag | ActionCountMetadataFlag + (ulong)actionsCountRequiredToSync;
             }
             Debug.Log($"<dlt> sending {currentSyncedIndex + 1}/{actionsCountRequiredToSync + 1}");
             if (currentSyncedIndex >= actionsCountRequiredToSync)
             {
-                syncedActions = MetadataFlag;
                 sending = false;
-                return;
+                return MetadataFlag;
             }
-            syncedActions = allActions[currentSyncedIndex++];
-            SendCustomEventDelayedFrames(nameof(RequestSerializationDelayed), 1);
+            return allActions[currentSyncedIndex++];
         }
 
         public void RequestSerializationDelayed()
@@ -403,6 +411,14 @@ namespace JanSharp
         }
 
         public override void OnDeserialization()
+        {
+            ProcessSyncedActions(syncedActions1);
+            ProcessSyncedActions(syncedActions2);
+            ProcessSyncedActions(syncedActions3);
+            ProcessSyncedActions(syncedActions4);
+        }
+
+        private void ProcessSyncedActions(ulong syncedActions)
         {
             if ((syncedActions & MetadataFlag) != 0UL)
             {
