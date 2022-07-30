@@ -1,7 +1,7 @@
 
 <!-- cSpell:ignore ulongs -->
 
-- [ ] only apply changes to the texture if the player is near the board
+- [x] only apply changes to the texture if the player is near the board
 - [x] late joiner syncing
   - [x] handle unexpected ownership transfer
   - [x] update chalk action structure to match chalkboard

@@ -28,6 +28,7 @@ namespace JanSharp
         private Color[] initialPixels;
         private bool fastUpdating;
         private bool slowUpdating;
+        private bool superSlowUpdating;
         private int localUsageCount;
         private const int AttemptToTakeOwnershipInterval = 250;
         private ulong[] allActions;
@@ -113,8 +114,25 @@ namespace JanSharp
 
         public void UpdateTextureSlowDelayed()
         {
-            texture.Apply();
+            if ((Networking.LocalPlayer.GetPosition() - this.transform.position).magnitude > 64f)
+                UpdateTextureSuperSlow();
+            else
+                texture.Apply();
             slowUpdating = false;
+        }
+
+        public void UpdateTextureSuperSlow()
+        {
+            if (superSlowUpdating)
+                return;
+            superSlowUpdating = true;
+            SendCustomEventDelayedSeconds(nameof(UpdateTextureSuperSlowDelayed), 10f);
+        }
+
+        public void UpdateTextureSuperSlowDelayed()
+        {
+            texture.Apply();
+            superSlowUpdating = false;
         }
 
         #if UNITY_EDITOR && !COMPILER_UDONSHARP
