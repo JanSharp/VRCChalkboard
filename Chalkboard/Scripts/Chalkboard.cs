@@ -1,4 +1,4 @@
-﻿using UdonSharp;
+using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
@@ -39,7 +39,9 @@ namespace JanSharp
         private const ulong UnusedPoint = PointBits;
         private const int IntHasPrev = 0x100000;
         private const int IntPointBits = 0x1fffff;
-        private const int IntUnusedPoint = IntPointBits;
+        private const int IntUnusedAction = 0; // x + y
+        private const int IntCaughtUpAction = 1; // x + y
+        private const int IntSwitchToChalkY = 1; // just y
         private const int IntAxisBits = 0x3ff;
         private Chalk prevChalk;
         private int prevX;
@@ -51,10 +53,14 @@ namespace JanSharp
         private int currentSyncedIndex;
         private int actionsCountRequiredToSync;
         private bool catchingUp;
+        private bool catchingUpWithTheQueue;
         private Chalk receivedChalk;
         private int receivedPrevX;
         private int receivedPrevY;
         private const float LateJoinerSyncDelay = 10f; // TODO: set this higher for the real world
+        private ulong[] catchUpQueue;
+        private int catchUpQueueCount;
+        private int catchUpQueueIndex;
 
         private void Start()
         {
@@ -133,8 +139,21 @@ namespace JanSharp
         public void ClearInternal()
         {
             texture.SetPixels(initialPixels);
+            allActions = new ulong[64]; // to free up that memory
             allActionsCount = 0;
+            currentActions = 0;
             currentActionsIndex = 0;
+            prevChalk = null;
+            prevX = 0;
+            prevY = 0;
+            waitingToStartSending = false;
+            sending = false;
+            catchingUp = false;
+            catchingUpWithTheQueue = false;
+            receivedChalk = null; // just to clear the reference, really. syncing doesn't happen anymore
+            catchUpQueue = null;
+            catchUpQueueCount = 0; // reset to stop CatchUpWithQueue if it's running
+            catchUpQueueIndex = 0; // reset to stop CatchUpWithQueue if it's running
             UpdateTextureSlow();
         }
 
@@ -142,30 +161,22 @@ namespace JanSharp
 
         public void DrawPoint(Chalk chalk, int x, int y)
         {
-            if (catchingUp)
-            {
-                // TODO: store this action to apply later
-                return;
-            }
             UseChalk(chalk);
             AddAction(x | (y << AxisBitCount));
-            DrawPointInternal(chalk, x, y);
+            if (!catchingUp && !catchingUpWithTheQueue)
+                DrawPointInternal(chalk, x, y);
             prevX = x;
             prevY = y;
         }
 
         public void DrawLine(Chalk chalk, int fromX, int fromY, int toX, int toY)
         {
-            if (catchingUp)
-            {
-                // TODO: store this action to apply later
-                return;
-            }
             UseChalk(chalk);
             if (fromX != prevX || fromY != prevY)
                 AddAction(fromX | (fromY << AxisBitCount));
             AddAction(toX | (toY << AxisBitCount) | IntHasPrev);
-            DrawLineInternal(chalk, fromX, fromY, toX, toY);
+            if (!catchingUp && !catchingUpWithTheQueue)
+                DrawLineInternal(chalk, fromX, fromY, toX, toY);
             prevX = toX;
             prevY = toY;
         }
@@ -175,9 +186,8 @@ namespace JanSharp
             if (chalk == prevChalk)
                 return;
             prevChalk = chalk;
-            // this works because it makes y == 0 which is an invalid for a point
-            // so we can detect that x is actually a chalk id when y == 0
-            AddAction(chalk.chalkId);
+            // y == 1 is an invalid point, so it means "switch to chalk [x]" instead
+            AddAction(chalk.chalkId | (IntSwitchToChalkY << AxisBitCount));
             prevX = 0;
             prevY = 0;
         }
@@ -194,6 +204,24 @@ namespace JanSharp
         }
 
         private void AddToAllActions(ulong actions)
+        {
+            if (catchingUp || catchingUpWithTheQueue)
+            {
+                if (catchUpQueueCount == catchUpQueue.Length)
+                {
+                    var newCatchUpQueue = new ulong[catchUpQueueCount * 2];
+                    catchUpQueue.CopyTo(newCatchUpQueue, 0);
+                    catchUpQueue = newCatchUpQueue;
+                }
+                catchUpQueue[catchUpQueueCount++] = actions;
+            }
+            else
+            {
+                AddToAllActionsInternal(actions);
+            }
+        }
+
+        private void AddToAllActionsInternal(ulong actions)
         {
             if (allActionsCount == allActions.Length)
             {
@@ -256,15 +284,18 @@ namespace JanSharp
 
         public override void OnPlayerJoined(VRCPlayerApi player)
         {
-            actionsCountRequiredToSync = allActionsCount;
-            currentSyncedIndex = 0;
-            if (player.isLocal)
-                catchingUp = true;
+            if (player.isMaster) // first player joining, we have to ignore it because they can't send to themselves so they would get stuck
+                return;
             if (Networking.IsOwner(this.gameObject))
             {
                 SendCustomEventDelayedSeconds(nameof(RequestSerializationDelayed), LateJoinerSyncDelay); // honestly... I'm annoyed
                 sending = false;
                 waitingToStartSending = true;
+            }
+            else if (player.isLocal) // technically this doesn't have to be an else if - I don't think - but it makes no sense to ever do both
+            {
+                catchingUp = true;
+                catchUpQueue = new ulong[8];
             }
         }
 
@@ -279,7 +310,7 @@ namespace JanSharp
             Debug.Log($"<dlt> sending {currentSyncedIndex + 1}/{actionsCountRequiredToSync + 1}");
             if (currentSyncedIndex >= actionsCountRequiredToSync)
             {
-                syncedData = currentActions | (PointBits << (currentActionsIndex * PointBitCount));
+                syncedData = (ulong)IntCaughtUpAction;
                 sending = false;
                 return;
             }
@@ -291,6 +322,13 @@ namespace JanSharp
         {
             if (waitingToStartSending)
             {
+                // it is at this point that the joined player can actually receive the packets we are sending
+                // so initialize how far we need to sync here instead of in on player joined
+                AddToAllActions(currentActions);
+                currentActions = 0;
+                currentActionsIndex = 0;
+                actionsCountRequiredToSync = allActionsCount;
+                currentSyncedIndex = 0;
                 waitingToStartSending = false;
                 sending = true;
             }
@@ -309,30 +347,38 @@ namespace JanSharp
                 // TODO: handle currentSyncedIndex
                 return;
             }
+            ProcessActions(syncedData);
+        }
+
+        private void ProcessActions(ulong actions)
+        {
             bool doUpdateTexture = false;
             for (int i = 0; i < 3; i++)
             {
-                int point = (int)((syncedData >> (i * PointBitCount)) & PointBits);
-                if (point == IntUnusedPoint)
-                {
-                    catchingUp = false;
-                    Debug.Log($"<dlt> we caught up!");
-                    // TODO: set current action and action index
+                int point = (int)((actions >> (i * PointBitCount)) & PointBits);
+                if (point == IntUnusedAction)
                     break;
+                if (point == IntCaughtUpAction)
+                {
+                    Debug.Log($"<dlt> we caught up with all actions that happened before we joined!");
+                    catchingUp = false;
+                    catchingUpWithTheQueue = true;
+                    SendCustomEventDelayedFrames(nameof(CatchUpWithQueue), 1);
+                    return;
                 }
                 doUpdateTexture = true;
                 int x = point & IntAxisBits;
                 int y = (point >> AxisBitCount) & IntAxisBits;
-                if (y == 0)
+                if (y == IntSwitchToChalkY)
                 {
-                    Debug.Log($"<dlt> received switch to chalk id: {x}");
+                    Debug.Log($"<dlt> processing switch to chalk id: {x}");
                     receivedChalk = chalkboardManager.chalks[x];
                 }
                 else
                 {
-                    Debug.Log($"<dlt> received point x: {x}, y: {y} hasPrev: {((point & IntHasPrev) != 0)}");
+                    Debug.Log($"<dlt> processing point x: {x}, y: {y} hasPrev: {((point & IntHasPrev) != 0)}");
                     if (receivedChalk == null)
-                        Debug.Log($"<dlt> received point before receiving any switch to a chalk?!");
+                        Debug.Log($"<dlt> processing point before receiving any switch to a chalk?!");
                     else if ((point & IntHasPrev) != 0)
                         DrawLineInternal(receivedChalk, receivedPrevX, receivedPrevY, x, y);
                     else
@@ -341,10 +387,23 @@ namespace JanSharp
                     receivedPrevY = y;
                 }
             }
-            if (catchingUp)
-                AddToAllActions(syncedData);
+            AddToAllActionsInternal(actions);
             if (doUpdateTexture)
                 UpdateTextureSlow();
+        }
+
+        public void CatchUpWithQueue()
+        {
+            Debug.Log($"<dlt> CatchUpWithQueue {catchUpQueueIndex}/{catchUpQueueCount}");
+            if (catchUpQueueIndex == catchUpQueueCount)
+            {
+                Debug.Log($"<dlt> we are fully caught up!");
+                catchingUpWithTheQueue = false;
+                catchUpQueue = null; // free that memory
+                return;
+            }
+            ProcessActions(catchUpQueue[catchUpQueueIndex++]);
+            SendCustomEventDelayedFrames(nameof(CatchUpWithQueue), 1);
         }
     }
 }

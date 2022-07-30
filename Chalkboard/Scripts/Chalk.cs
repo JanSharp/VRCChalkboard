@@ -59,6 +59,8 @@ namespace JanSharp
         private const int IntUnusedPoint = IntPointBits;
         private const int IntAxisBits = 0x3ff;
 
+        private const float LateJoinerSyncDelay = 10f; // TODO: set this higher for the real world
+        private float lastTimeAPlayerJoined;
         private Chalkboard lastSyncedChalkboard;
         private Chalkboard chalkboard;
         private Texture2D texture;
@@ -185,7 +187,7 @@ namespace JanSharp
 
         private void AddPointToSyncedPoints(int x, int y)
         {
-            bool changedBoard = chalkboard != lastSyncedChalkboard;
+            bool changedBoard = chalkboard != lastSyncedChalkboard || (lastTimeAPlayerJoined + LateJoinerSyncDelay) > Time.time;
             if ((changedBoard ? pointsStageCount + 1 : pointsStageCount) >= pointsStage.Length)
             {
                 var newPointsStage = new int[pointsStageCount * 2];
@@ -208,7 +210,9 @@ namespace JanSharp
 
         public override void OnPlayerJoined(VRCPlayerApi player)
         {
+            // have to do both to handle the chalk being used _right now_ as well as at some random point in the future
             lastSyncedChalkboard = null;
+            lastTimeAPlayerJoined = Time.time;
         }
 
         public override void OnPreSerialization()
