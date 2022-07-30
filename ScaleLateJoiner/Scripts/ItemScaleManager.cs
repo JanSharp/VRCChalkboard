@@ -16,8 +16,8 @@ namespace JanSharp
     public class ItemScaleManager : UdonSharpBehaviour
     {
         public GameObject[] parentsForObjectPools;
-        [HideInInspector] public GameObject[] items;
-        [HideInInspector] public Vector3[] initialScales;
+        public GameObject[] items;
+        public Vector3[] initialScales;
 
         private float[] scales;
         private ushort[] itemIds;
@@ -36,13 +36,19 @@ namespace JanSharp
         {
             for (int i = 0; i < items.Length; i++)
                 if (items[i] == obj)
+                {
+                    // Debug.Log($"<dlt> id for item {obj.name} is {i}");
                     return i;
+                }
             return -1;
         }
 
         public void SetScale(int id, Vector3 currentLocalScale)
         {
+            if (id == -1)
+                return;
             float scale = currentLocalScale.x / initialScales[id].x;
+            // Debug.Log($"<dlt> scale: {scale} currentLocalScale.x: {currentLocalScale.x} initialScales[id].x: {initialScales[id].x}");
             ushort shortId = (ushort)id;
             for (int i = 0; i < itemsCount; i++)
             {
@@ -84,10 +90,19 @@ namespace JanSharp
         {
             if (syncedItemIds == null) // just in case
                 return;
+            int count = 16;
+            while (count < syncedItemIds.Length)
+                count *= 2;
+            itemIds = new ushort[count];
+            scales = new float[count];
+            syncedItemIds.CopyTo(itemIds, 0);
+            syncedScales.CopyTo(scales, 0);
+            itemsCount = syncedItemIds.Length;
             for (int i = 0; i < syncedItemIds.Length; i++)
             {
                 ushort id = syncedItemIds[i];
                 items[id].transform.localScale = initialScales[id] * syncedScales[i];
+                // Debug.Log($"<dlt> initialScales[id]: {initialScales[id]} syncedScales[i]: {syncedScales[i]}");
             }
         }
     }

@@ -8,7 +8,10 @@ namespace JanSharp
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class ScaleChanger : UdonSharpBehaviour
     {
+        public ItemScaleManager scaleManager;
         private Transform Target;
+        [UdonSynced]
+        private int TargetId;
         public string Name;
         private Vector3 startScale;
         [UdonSynced]
@@ -23,6 +26,7 @@ namespace JanSharp
                 Target = other.transform;
                 Name = other.name;
                 startScale = new Vector3(Target.localScale.x, Target.localScale.y, Target.localScale.z);
+                TargetId = scaleManager.GetIdForItem(Target.gameObject);
             }
         }
 
@@ -39,10 +43,10 @@ namespace JanSharp
         {
             if (Target != null)
             {
-                Sync();
                 isAdd = true;
                 syncScale = Target.localScale * (1f + Percentage);
                 Target.localScale = syncScale;
+                Sync();
             }
         }
 
@@ -52,10 +56,10 @@ namespace JanSharp
             {
                 if (Target.localScale.x > 0)
                 {
-                    Sync();
                     isSubtract = true;
                     syncScale = Target.localScale * (1f - Percentage);
                     Target.localScale = syncScale;
+                    Sync();
                 }
             }
         }
@@ -85,6 +89,7 @@ namespace JanSharp
         //}
         public void Sync()
         {
+            scaleManager.SetScale(TargetId, syncScale);
             Networking.SetOwner(Networking.LocalPlayer, this.gameObject);
             RequestSerialization();
         }
@@ -94,6 +99,7 @@ namespace JanSharp
             if (Target != null)
             {
                 Target.localScale = syncScale;
+                scaleManager.SetScale(TargetId, syncScale);
             }
         }
     }
