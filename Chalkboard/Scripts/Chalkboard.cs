@@ -1,4 +1,4 @@
-using UdonSharp;
+﻿using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
@@ -28,6 +28,8 @@ namespace JanSharp
         private Color[] initialPixels;
         private bool fastUpdating;
         private bool slowUpdating;
+        private int localUsageCount;
+        private const int AttemptToTakeOwnershipInterval = 250;
         private ulong[] allActions;
         private int allActionsCount;
         private ulong currentActions;
@@ -161,6 +163,7 @@ namespace JanSharp
 
         public void DrawPoint(Chalk chalk, int x, int y)
         {
+            IncrementLocalUse();
             UseChalk(chalk);
             AddAction(x | (y << AxisBitCount));
             if (!catchingUp && !catchingUpWithTheQueue)
@@ -171,6 +174,7 @@ namespace JanSharp
 
         public void DrawLine(Chalk chalk, int fromX, int fromY, int toX, int toY)
         {
+            IncrementLocalUse();
             UseChalk(chalk);
             if (fromX != prevX || fromY != prevY)
                 AddAction(fromX | (fromY << AxisBitCount));
@@ -179,6 +183,14 @@ namespace JanSharp
                 DrawLineInternal(chalk, fromX, fromY, toX, toY);
             prevX = toX;
             prevY = toY;
+        }
+
+        private void IncrementLocalUse()
+        {
+            // if some player is drawing on a board a lot then we'll try making them the owner of it.
+            // that's purely done to spread out ownerships and with it load between players
+            if (((++localUsageCount) % AttemptToTakeOwnershipInterval) == 0)
+                Networking.SetOwner(Networking.LocalPlayer, this.gameObject);
         }
 
         private void UseChalk(Chalk chalk)
@@ -287,16 +299,49 @@ namespace JanSharp
             if (player.isMaster) // first player joining, we have to ignore it because they can't send to themselves so they would get stuck
                 return;
             if (Networking.IsOwner(this.gameObject))
-            {
-                SendCustomEventDelayedSeconds(nameof(RequestSerializationDelayed), LateJoinerSyncDelay); // honestly... I'm annoyed
-                sending = false;
-                waitingToStartSending = true;
-            }
-            else if (player.isLocal) // technically this doesn't have to be an else if - I don't think - but it makes no sense to ever do both
+                InitSending();
+            else if (player.isLocal) // technically this doesn't have to be an else if (I don't think) but it makes no sense to ever do both
             {
                 catchingUp = true;
                 catchUpQueue = new ulong[8];
             }
+        }
+
+        public override void OnOwnershipTransferred(VRCPlayerApi player)
+        {
+            // I remember hearing something about "the master of the instance is always the one who's been the longest in the instance"
+            // and I've also heard that "the default owner of any object is the master", which would make me guess that if the current
+            // owner of this object leaves (or crashes, same thing) the player who's been in the instance the longest becomes the owner.
+            // If that is true then that works in our favor because the player who's been in the instance the longest naturally has
+            // the most information about all the boards in the world.
+            // Even if this isn't the case, trying to figure out who still has the most information about a board and transferring
+            // ownership to them is damn near impossible. Like it's not impossible but not reasonable or feasible
+            //
+            // also note that if the player who was sending for late joiners leaves/crashes then the new owner is just going to start
+            // from the beginning. I thought about syncing the index for about where we're at, but it actually adds quite a lot of
+            // complexity. So considering this isn't exactly common I'll call it good enough since it doesn't break at least... in theory
+            if (player.isLocal)
+            {
+                catchingUp = false;
+                catchingUpWithTheQueue = false;
+                catchUpQueue = null;
+                catchUpQueueCount = 0;
+                catchUpQueueIndex = 0;
+                receivedChalk = null;
+                InitSending();
+            }
+        }
+
+        public override bool OnOwnershipRequest(VRCPlayerApi requestingPlayer, VRCPlayerApi requestedOwner)
+        {
+            return !catchingUp && !catchingUpWithTheQueue && !sending && !waitingToStartSending;
+        }
+
+        private void InitSending()
+        {
+            SendCustomEventDelayedSeconds(nameof(RequestSerializationDelayed), LateJoinerSyncDelay); // honestly... I'm annoyed
+            sending = false;
+            waitingToStartSending = true;
         }
 
         public override void OnPreSerialization()
@@ -343,10 +388,7 @@ namespace JanSharp
         public override void OnDeserialization()
         {
             if (!catchingUp)
-            {
-                // TODO: handle currentSyncedIndex
                 return;
-            }
             ProcessActions(syncedData);
         }
 
