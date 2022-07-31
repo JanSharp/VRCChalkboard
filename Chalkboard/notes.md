@@ -9,7 +9,7 @@
 - [x] add progress bars just for fun
 - [x] improve queue logic for chalks
 - [ ] scale previews based on board size and resolution
-- [ ] adjust update rates depending on resolution
+- [x] adjust update rates depending on resolution
 - [ ] use transparency for background
 - [ ] test planes
 - [ ] maybe test interpolation for less jagged drawing in VR. May depend on the user, their setup and general usage such as distance from the board, speed of writing

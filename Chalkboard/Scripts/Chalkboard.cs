@@ -28,6 +28,12 @@ namespace JanSharp
         [HideInInspector] [SerializeField] private ChalkboardManager chalkboardManager;
         [HideInInspector] [System.NonSerialized] public Texture2D texture;
         private Color[] initialPixels;
+        private const float fastUpdateDelayPerPixel = (1f / 15f) / (1024 * 512);
+        private const float slowUpdateDelayPerPixel = (1f / 4f) / (1024 * 512);
+        private const float superSlowUpdateDelayPerPixel = 10f / (1024 * 512);
+        private float fastUpdateDelay;
+        private float slowUpdateDelay;
+        private float superSlowUpdateDelay;
         private bool fastUpdating;
         private bool slowUpdating;
         private bool superSlowUpdating;
@@ -85,6 +91,9 @@ namespace JanSharp
             // reset the board to the initial state in 2ms instead of 1.5s which it is when looping
             // through all pixels to reset them takes (first a GetPixels call, then the loop, then SetPixels)
             initialPixels = texture.GetPixels();
+            fastUpdateDelay = fastUpdateDelayPerPixel * initialPixels.Length;
+            slowUpdateDelay = slowUpdateDelayPerPixel * initialPixels.Length;
+            superSlowUpdateDelay = superSlowUpdateDelayPerPixel * initialPixels.Length;
         }
 
         // fast is kept completely separate from slow because when multiple people are drawing
@@ -98,7 +107,7 @@ namespace JanSharp
             if (fastUpdating)
                 return;
             fastUpdating = true;
-            SendCustomEventDelayedSeconds(nameof(UpdateTextureFastDelayed), 1f / 15f);
+            SendCustomEventDelayedSeconds(nameof(UpdateTextureFastDelayed), fastUpdateDelay);
         }
 
         public void UpdateTextureFastDelayed()
@@ -112,7 +121,7 @@ namespace JanSharp
             if (slowUpdating)
                 return;
             slowUpdating = true;
-            SendCustomEventDelayedSeconds(nameof(UpdateTextureSlowDelayed), 1f / 4f);
+            SendCustomEventDelayedSeconds(nameof(UpdateTextureSlowDelayed), slowUpdateDelay);
         }
 
         public void UpdateTextureSlowDelayed()
@@ -129,7 +138,7 @@ namespace JanSharp
             if (superSlowUpdating)
                 return;
             superSlowUpdating = true;
-            SendCustomEventDelayedSeconds(nameof(UpdateTextureSuperSlowDelayed), 10f);
+            SendCustomEventDelayedSeconds(nameof(UpdateTextureSuperSlowDelayed), superSlowUpdateDelay);
         }
 
         public void UpdateTextureSuperSlowDelayed()
