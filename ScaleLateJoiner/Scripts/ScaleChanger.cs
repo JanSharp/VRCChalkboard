@@ -12,7 +12,7 @@ namespace JanSharp
         private Transform Target;
         [UdonSynced]
         private int TargetId;
-        public string Name;
+        public string Name; // NOTE: should be private
         private Vector3 startScale;
         [UdonSynced]
         private Vector3 syncScale;
@@ -25,23 +25,23 @@ namespace JanSharp
             {
                 Target = other.transform;
                 Name = other.name;
-                startScale = new Vector3(Target.localScale.x, Target.localScale.y, Target.localScale.z);
+                startScale = new Vector3(Target.localScale.x, Target.localScale.y, Target.localScale.z); // NOTE: can be a direct assignment
                 TargetId = scaleManager.GetIdForItem(Target.gameObject);
             }
         }
 
         public void OnTriggerExit(Collider other)
         {
-            if (other.name.Contains(Name))
+            if (other.name.Contains(Name)) // NOTE: this should check for equality of the name
             {
-                Name = "";
+                Name = ""; // NOTE: this should check set to null
                 Target = null;
             }
         }
 
         public void onAdd()
         {
-            if (Target != null)
+            if (Target != null) // NOTE: can use early return
             {
                 isAdd = true;
                 syncScale = Target.localScale * (1f + Percentage);
@@ -52,9 +52,9 @@ namespace JanSharp
 
         public void onSubtract()
         {
-            if (Target != null)
+            if (Target != null) // NOTE: can use early return
             {
-                if (Target.localScale.x > 0)
+                if (Target.localScale.x > 0) // NOTE: allows actually reaching 0, even if it would take forever
                 {
                     isSubtract = true;
                     syncScale = Target.localScale * (1f - Percentage);
@@ -70,15 +70,15 @@ namespace JanSharp
         //    {
         //        if (isAdd == true)
         //        {
-        //            Sync();
-        //            syncScale = new Vector3(Target.localScale.x + (startScale.x * Percentage), Target.localScale.y + (startScale.y * Percentage), Target.localScale.z + (startScale.z * Percentage));
+        //            syncScale = new Vector3(Target.localScale.x + (startScale.x * Percentage), Target.localScale.y + (startScale.y * Percentage), Target.localScale.z + (startScale.z * Percentage)); // NOTE: can be done cleaner
         //            Target.localScale = syncScale;
+        //            Sync();
         //        }
         //        if (isSubtract == true)
         //        {
-        //            Sync();
-        //            syncScale = new Vector3(Target.localScale.x - (startScale.x * Percentage), Target.localScale.y - (startScale.y * Percentage), Target.localScale.z - (startScale.z * Percentage));
+        //            syncScale = new Vector3(Target.localScale.x - (startScale.x * Percentage), Target.localScale.y - (startScale.y * Percentage), Target.localScale.z - (startScale.z * Percentage)); // NOTE: can be done cleaner
         //            Target.localScale = syncScale;
+        //            Sync();
         //        }
         //    }
         //    if (Input.GetButtonUp("Oculus_CrossPlatform_SecondaryIndexTrigger") && (isAdd == true || isSubtract == true))
@@ -87,6 +87,7 @@ namespace JanSharp
         //        isSubtract = false;
         //    }
         //}
+
         public void Sync()
         {
             scaleManager.SetScale(TargetId, syncScale);
@@ -96,7 +97,7 @@ namespace JanSharp
 
         public override void OnDeserialization()
         {
-            if (Target != null)
+            if (Target != null) // NOTE: can use early return
             {
                 Target.localScale = syncScale;
                 scaleManager.SetScale(TargetId, syncScale);
