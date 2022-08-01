@@ -170,7 +170,7 @@ namespace JanSharp
                 var trPos = chalkboard.topRight.localPosition;
                 int x = (int)Mathf.Clamp(Mathf.Abs((localHitPos.x - blPos.x) / (trPos.x - blPos.x)) * width, halfSize, width - halfSize - 1);
                 int y = (int)Mathf.Clamp(Mathf.Abs((localHitPos.y - blPos.y) / (trPos.y - blPos.y)) * height, halfSize, height - halfSize - 1);
-                if (hasPrev && (Mathf.Abs(x - prevX) + Mathf.Abs(y - prevY)) <= 2) // didn't draw more than 2 pixels from prev point? => ignore
+                if (hasPrev && (Mathf.Abs(x - prevX) + Mathf.Abs(y - prevY)) < 2) // didn't draw 2 or more pixels from prev point? => ignore
                     return;
                 AddPointToSyncedPoints(x, y);
                 DrawFromPrevTo(x, y);
