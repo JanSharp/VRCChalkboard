@@ -27,6 +27,8 @@ namespace JanSharp
         [HideInInspector] public int boardId;
         [HideInInspector] [SerializeField] private ChalkboardManager chalkboardManager;
         [HideInInspector] [System.NonSerialized] public Texture2D texture;
+        [HideInInspector] public Vector3 chalkScale;
+        [HideInInspector] public Vector3 spongeScale;
         private Color[] initialPixels;
         private const float fastUpdateDelayPerPixel = (1f / 15f) / (1024 * 512);
         private const float slowUpdateDelayPerPixel = (1f / 4f) / (1024 * 512);
@@ -160,6 +162,39 @@ namespace JanSharp
             if (chalkboardManager == null)
                 Debug.LogError("Chalkboard requires a GameObject that must be at the root of the scene"
                         + " with the exact name 'ChalkboardManager' which has the 'ChalkboardManager' UdonBehaviour.",
+                    UdonSharpEditorUtility.GetBackingUdonBehaviour(this));
+
+            if (bottomLeft != null && topRight != null && material != null)
+            {
+                var blPos = bottomLeft.position;
+                var trPos = topRight.position;
+
+                var vertical = bottomLeft.up;
+                var horizontal = bottomLeft.right;
+
+                // blPos.x + X * horizontal.x + Y * vertical.x = trPos.x
+                // blPos.y + X * horizontal.y + Y * vertical.y = trPos.y
+                // blPos.z + X * horizontal.z + Y * vertical.z = trPos.z
+
+                // blPos.x + X * horizontal.x + Y * vertical.x - trPos.x = 0
+                // blPos.y + X * horizontal.y + Y * vertical.y - trPos.y = 0
+                // blPos.z + X * horizontal.z + Y * vertical.z - trPos.z = 0
+
+                var texture = (Texture2D)material.mainTexture;
+                var pixelsPerUnit = new Vector3(
+                    ((topRight.localPosition.x - bottomLeft.localPosition.x) / texture.width),
+                    ((topRight.localPosition.y - bottomLeft.localPosition.y) / texture.height)
+                );
+                var lossyScale = this.transform.lossyScale;
+
+                chalkScale = pixelsPerUnit * 5.75f;
+                chalkScale = new Vector3(lossyScale.x * chalkScale.x, lossyScale.y * chalkScale.y, 0.01f);
+                spongeScale = pixelsPerUnit * 41f;
+                spongeScale = new Vector3(lossyScale.x * spongeScale.x, lossyScale.y * spongeScale.y, 0.01f);
+            }
+
+            if (bottomLeft == null || topRight == null || material == null)
+                Debug.LogError($"{nameof(bottomLeft)}, {nameof(topRight)} and {nameof(material)} must all be set.",
                     UdonSharpEditorUtility.GetBackingUdonBehaviour(this));
 
             this.ApplyProxyModifications();
