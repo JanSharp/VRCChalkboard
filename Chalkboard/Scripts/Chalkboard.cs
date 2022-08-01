@@ -21,7 +21,6 @@ namespace JanSharp
         public Transform bottomLeft;
         public Transform topRight;
         public Material material;
-        public Color boardColor;
         public Slider progressBar;
 
         [HideInInspector] public int boardId;
