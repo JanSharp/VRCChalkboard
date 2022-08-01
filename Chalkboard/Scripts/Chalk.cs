@@ -159,7 +159,7 @@ namespace JanSharp
                     return;
                 var width = texture.width;
                 var height = texture.height;
-                var localHitPos = chalkboard.transform.InverseTransformPoint(hit.point);
+                var localHitPos = chalkboard.boardParent.InverseTransformPoint(hit.point);
                 var blPos = chalkboard.bottomLeft.localPosition;
                 var trPos = chalkboard.topRight.localPosition;
                 int x = (int)Mathf.Clamp(Mathf.Abs((localHitPos.x - blPos.x) / (trPos.x - blPos.x)) * width, halfSize, width - halfSize - 1);

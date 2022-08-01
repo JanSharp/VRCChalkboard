@@ -10,8 +10,9 @@
 - [x] improve queue logic for chalks
 - [x] scale previews based on board size and resolution
 - [x] adjust update rates depending on resolution
-- [ ] use transparency for background
-- [ ] test planes
+- [x] use transparency for background
+- [x] test planes
+- [ ] looking at the boards from the side makes the lines disappear, this is most likely related to both them now being transparent and on planes in font of the board
 - [ ] maybe test interpolation for less jagged drawing in VR. May depend on the user, their setup and general usage such as distance from the board, speed of writing
 - [ ] set grip depending on if the user is in VR
 - [ ] reduce allowed distance from the board in VR

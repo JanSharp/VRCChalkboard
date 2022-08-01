@@ -24,6 +24,7 @@ namespace JanSharp
         public Slider progressBar;
 
         [HideInInspector] public int boardId;
+        [HideInInspector] public Transform boardParent;
         [HideInInspector] [SerializeField] private ChalkboardManager chalkboardManager;
         [HideInInspector] [System.NonSerialized] public Texture2D texture;
         [HideInInspector] public Vector3 chalkScale;
@@ -179,12 +180,17 @@ namespace JanSharp
                 // blPos.y + X * horizontal.y + Y * vertical.y - trPos.y = 0
                 // blPos.z + X * horizontal.z + Y * vertical.z - trPos.z = 0
 
+                boardParent = bottomLeft.parent;
+                if (topRight.parent != boardParent)
+                    Debug.LogError($"{nameof(bottomLeft)} and {nameof(topRight)} must share the same parent",
+                        UdonSharpEditorUtility.GetBackingUdonBehaviour(this));
+
                 var texture = (Texture2D)material.mainTexture;
                 var pixelsPerUnit = new Vector3(
                     ((topRight.localPosition.x - bottomLeft.localPosition.x) / texture.width),
                     ((topRight.localPosition.y - bottomLeft.localPosition.y) / texture.height)
                 );
-                var lossyScale = this.transform.lossyScale;
+                var lossyScale = boardParent.lossyScale;
 
                 chalkScale = pixelsPerUnit * 5.75f;
                 chalkScale = new Vector3(lossyScale.x * chalkScale.x, lossyScale.y * chalkScale.y, 0.01f);
