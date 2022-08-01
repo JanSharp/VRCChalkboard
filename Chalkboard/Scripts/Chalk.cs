@@ -16,6 +16,7 @@ namespace JanSharp
         , IOnBuildCallback
     #endif
     {
+        [SerializeField] private VRC_Pickup pickup;
         [SerializeField] private Transform aimPoint;
         // 0: Default, 4: Water, 8: Interactive, 11: Environment
         [SerializeField] private LayerMask layerMask = (1 << 0) | (1 << 4) | (1 << 8) | (1 << 11);
@@ -118,6 +119,7 @@ namespace JanSharp
         {
             updateManager.Register(this);
             currentMaxDistance = Networking.LocalPlayer.IsUserInVR() ? VRMaxDistance : DesktopMaxDistance;
+            pickup.orientation = Networking.LocalPlayer.IsUserInVR() ? VRC_Pickup.PickupOrientation.Any : VRC_Pickup.PickupOrientation.Gun;
         }
 
         public override void OnDrop()
