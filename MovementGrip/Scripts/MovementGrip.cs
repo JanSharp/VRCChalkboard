@@ -1,4 +1,4 @@
-using UdonSharp;
+﻿using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
@@ -49,6 +49,8 @@ namespace JanSharp
             {
                 receiving = value;
                 pickup.pickupable = !value;
+                if (value)
+                    pickup.Drop();
             }
         }
         private bool currentlyHeld;
