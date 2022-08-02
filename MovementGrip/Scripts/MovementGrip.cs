@@ -35,19 +35,20 @@ namespace JanSharp
         // for UpdateManager
         private int customUpdateInternalIndex;
 
-        [UdonSynced] private Vector3 syncedDirection; //  = new Vector3(float.NaN, float.NaN, float.NaN)
-        // private bool receiving;
-        // private bool Receiving
-        // {
-        //     get => receiving;
-        //     set
-        //     {
-        //         receiving = value;
-        //         pickup.pickupable = !value;
-        //         if (!value)
-        //             SnapBack();
-        //     }
-        // }
+        [UdonSynced] private Vector3 syncedPosition;
+        private float lastReceivedTime;
+        private Vector3 lerpStartPosition;
+        private const float lerpDuration = 0.25f;
+        private bool receiving;
+        private bool Receiving
+        {
+            get => receiving;
+            set
+            {
+                receiving = value;
+                pickup.pickupable = !value;
+            }
+        }
         private bool currentlyHeld;
         private bool CurrentlyHeld
         {
@@ -55,8 +56,6 @@ namespace JanSharp
             set
             {
                 currentlyHeld = value;
-                // if (!value)
-                //     syncedDirection = new Vector3(float.NaN, float.NaN, float.NaN);
             }
         }
 
@@ -100,7 +99,7 @@ namespace JanSharp
         public override void OnPickup()
         {
             Networking.SetOwner(Networking.LocalPlayer, this.gameObject);
-            // Receiving = false;
+            Receiving = false;
             CurrentlyHeld = true;
             updateManager.Register(this);
         }
@@ -115,6 +114,21 @@ namespace JanSharp
 
         public void CustomUpdate()
         {
+            if (Receiving)
+            {
+                float percent = (Time.time - lastReceivedTime) / lerpDuration;
+                if (percent >= 1f)
+                {
+                    toMove.localPosition = syncedPosition;
+                    Receiving = false;
+                    updateManager.Deregister(this);
+                    SnapBack();
+                    return;
+                }
+                toMove.localPosition = Vector3.Lerp(lerpStartPosition, syncedPosition, percent);
+                return;
+            }
+
             var direction = toMove.InverseTransformDirection(this.transform.localPosition - thisInitialLocalPosition);
 
             if (allowMovementOnX)
@@ -134,15 +148,16 @@ namespace JanSharp
 
             toMove.localPosition = targetInitialLocalPosition + direction;
 
-            syncedDirection = direction;
+            syncedPosition = targetInitialLocalPosition + direction;
             RequestSerialization();
         }
 
         public override void OnDeserialization()
         {
-            // Receiving = !float.IsNaN(syncedDirection.x);
-            toMove.localPosition = targetInitialLocalPosition + syncedDirection; // TODO: interpolate
-            SnapBack();
+            Receiving = true;
+            lastReceivedTime = Time.time;
+            lerpStartPosition = toMove.localPosition;
+            updateManager.Register(this);
         }
     }
 }
