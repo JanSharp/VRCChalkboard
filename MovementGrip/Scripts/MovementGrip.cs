@@ -35,6 +35,31 @@ namespace JanSharp
         // for UpdateManager
         private int customUpdateInternalIndex;
 
+        [UdonSynced] private Vector3 syncedDirection; //  = new Vector3(float.NaN, float.NaN, float.NaN)
+        // private bool receiving;
+        // private bool Receiving
+        // {
+        //     get => receiving;
+        //     set
+        //     {
+        //         receiving = value;
+        //         pickup.pickupable = !value;
+        //         if (!value)
+        //             SnapBack();
+        //     }
+        // }
+        private bool currentlyHeld;
+        private bool CurrentlyHeld
+        {
+            get => currentlyHeld;
+            set
+            {
+                currentlyHeld = value;
+                // if (!value)
+                //     syncedDirection = new Vector3(float.NaN, float.NaN, float.NaN);
+            }
+        }
+
         #if UNITY_EDITOR && !COMPILER_UDONSHARP
         [InitializeOnLoad]
         public static class OnBuildRegister
@@ -74,19 +99,16 @@ namespace JanSharp
 
         public override void OnPickup()
         {
-            // HoldingPlayer = Networking.LocalPlayer;
-            // Networking.SetOwner(HoldingPlayer, this.gameObject);
-            // isReceiving = false;
-            // currentlyHeld = true;
-            // currentHandBone = pickup.currentHand == VRC_Pickup.PickupHand.Right ? HumanBodyBones.RightHand : HumanBodyBones.LeftHand;
-            // RequestSerialization();
+            Networking.SetOwner(Networking.LocalPlayer, this.gameObject);
+            // Receiving = false;
+            CurrentlyHeld = true;
             updateManager.Register(this);
         }
 
         public override void OnDrop()
         {
-            // currentlyHeld = false;
-            // RequestSerialization();
+            CurrentlyHeld = false;
+            RequestSerialization();
             SnapBack();
             updateManager.Deregister(this);
         }
@@ -111,6 +133,16 @@ namespace JanSharp
                 direction.z = 0;
 
             toMove.localPosition = targetInitialLocalPosition + direction;
+
+            syncedDirection = direction;
+            RequestSerialization();
+        }
+
+        public override void OnDeserialization()
+        {
+            // Receiving = !float.IsNaN(syncedDirection.x);
+            toMove.localPosition = targetInitialLocalPosition + syncedDirection; // TODO: interpolate
+            SnapBack();
         }
     }
 }
