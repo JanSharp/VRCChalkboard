@@ -1,4 +1,4 @@
-﻿using UdonSharp;
+using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
@@ -35,10 +35,12 @@ namespace JanSharp
         // for UpdateManager
         private int customUpdateInternalIndex;
 
+        private float nextSyncTime;
+        private const float SyncInterval = 0.2f;
+        private const float LerpDuration = SyncInterval + 0.1f;
         [UdonSynced] private Vector3 syncedPosition;
         private float lastReceivedTime;
         private Vector3 lerpStartPosition;
-        private const float lerpDuration = 0.25f;
         private bool receiving;
         private bool Receiving
         {
@@ -99,6 +101,7 @@ namespace JanSharp
         public override void OnPickup()
         {
             Networking.SetOwner(Networking.LocalPlayer, this.gameObject);
+            nextSyncTime = 0f;
             Receiving = false;
             CurrentlyHeld = true;
             updateManager.Register(this);
@@ -116,7 +119,7 @@ namespace JanSharp
         {
             if (Receiving)
             {
-                float percent = (Time.time - lastReceivedTime) / lerpDuration;
+                float percent = (Time.time - lastReceivedTime) / LerpDuration;
                 if (percent >= 1f)
                 {
                     toMove.localPosition = syncedPosition;
@@ -149,7 +152,11 @@ namespace JanSharp
             toMove.localPosition = targetInitialLocalPosition + direction;
 
             syncedPosition = targetInitialLocalPosition + direction;
-            RequestSerialization();
+            if (Time.time >= nextSyncTime)
+            {
+                RequestSerialization();
+                nextSyncTime = Time.time + SyncInterval;
+            }
         }
 
         public override void OnDeserialization()
