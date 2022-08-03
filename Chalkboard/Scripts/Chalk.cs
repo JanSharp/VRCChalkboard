@@ -159,7 +159,7 @@ namespace JanSharp
                     texture = chalkboard.texture;
                 }
                 indicator.gameObject.SetActive(true);
-                indicator.SetPositionAndRotation(hit.point, Quaternion.LookRotation(chalkboard.bottomLeft.forward, chalkboard.bottomLeft.up));
+                indicator.SetPositionAndRotation(hit.point + hit.normal * 0.002f, Quaternion.LookRotation(chalkboard.bottomLeft.forward, chalkboard.bottomLeft.up));
                 indicator.localScale = isSponge ? chalkboard.spongeScale : chalkboard.chalkScale;
                 if (!holding)
                     return;
