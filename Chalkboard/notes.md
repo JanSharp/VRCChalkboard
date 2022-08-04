@@ -18,4 +18,5 @@
 - [x] reduce allowed distance from the board in VR
 - [x] move board up and down
 - [ ] you being the only single person in the world is going to break late joiner syncing for the first other person joining
-- [ ] drawing a whole bunch with one chalk takes too long to catch up with incremental syncing causing you using another chalk too quickly being potentially overdrawn by the old chalk for all other clients, so in other words it's a de-sync.
+- [x] drawing a whole bunch with one chalk takes too long to catch up with incremental syncing causing you using another chalk too quickly being potentially overdrawn by the old chalk for all other clients, so in other words it's a de-sync. (fixed by registering fewer points per second)
+- [ ] the indicator still disappears behind the plane that's drawn upon

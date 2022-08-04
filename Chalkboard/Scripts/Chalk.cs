@@ -32,6 +32,7 @@ namespace JanSharp
         private bool hasPrev;
         private int prevX;
         private int prevY;
+        private float movementStartTime;
         private const float DesktopMaxDistance = 12f;
         private const float VRMaxDistance = 2f;
         private float currentMaxDistance;
@@ -170,8 +171,18 @@ namespace JanSharp
                 var trPos = chalkboard.topRight.localPosition;
                 int x = (int)Mathf.Clamp(Mathf.Abs((localHitPos.x - blPos.x) / (trPos.x - blPos.x)) * width, halfSize, width - halfSize - 1);
                 int y = (int)Mathf.Clamp(Mathf.Abs((localHitPos.y - blPos.y) / (trPos.y - blPos.y)) * height, halfSize, height - halfSize - 1);
-                if (hasPrev && (Mathf.Abs(x - prevX) + Mathf.Abs(y - prevY)) < 2) // didn't draw 2 or more pixels from prev point? => ignore
-                    return;
+                if (hasPrev)
+                {
+                    var time = Time.time;
+                    if (x == prevX && y == prevY)
+                    {
+                        movementStartTime = time;
+                        return;
+                    }
+                    // getting about 20 points per second for drawing text and about 33 for fast strokes with this magic number 1.25f
+                    if ((time - movementStartTime) * (Mathf.Sqrt(Mathf.Pow(x - prevX, 2f) + Mathf.Pow(y - prevY, 2f)) + 20f) < 1.25f)
+                        return;
+                }
                 AddPointToSyncedPoints(x, y);
                 DrawFromPrevTo(x, y);
                 chalkboard.UpdateTextureFast();
@@ -191,6 +202,7 @@ namespace JanSharp
             hasPrev = true;
             prevX = toX;
             prevY = toY;
+            movementStartTime = Time.time;
         }
 
         private void AddPointToSyncedPoints(int x, int y)
