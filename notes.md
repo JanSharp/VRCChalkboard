@@ -35,3 +35,13 @@ removing:
 $1
 
 ```
+
+# Syncing
+
+object associated - intended use
+player associated - not at all (tags that I didn't check out yet)
+
+state syncing - intended use
+event syncing - intended use
+parameterized event syncing - not intended use, but workable
+incremental syncing - syncing hell
