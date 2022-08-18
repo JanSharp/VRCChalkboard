@@ -12,8 +12,8 @@
 - [x] adjust update rates depending on resolution
 - [x] use transparency for background
 - [x] test planes
-- [ ] looking at the boards from the side makes the lines disappear, this is most likely related to both them now being transparent and on planes in font of the board
-- [ ] maybe test interpolation for less jagged drawing in VR. May depend on the user, their setup and general usage such as distance from the board, speed of writing
+- [x] ~~looking at the boards from the side makes the lines disappear, this is most likely related to both them now being transparent and on planes in font of the board.~~ While this might be true when compared to the non transparent version before, there's nothing we can do about this, at least as far as I know. Plus I've tested it again and you really have to be looking at it from a very flat angle for the lines to get unreasonably thin. I'm calling this a non-issue.
+- [x] ~~maybe test interpolation for less jagged drawing in VR. May depend on the user, their setup and general usage such as distance from the board, speed of writing.~~ Tested and the result is that it's a ton of complexity which is also incredibly difficult to get right to make it feel good. It's still not a bad idea but implementing it is very hard.
 - [x] set grip depending on if the user is in VR
 - [x] reduce allowed distance from the board in VR
 - [x] move board up and down
