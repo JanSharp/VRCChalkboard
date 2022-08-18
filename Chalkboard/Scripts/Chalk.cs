@@ -65,6 +65,17 @@ namespace JanSharp
 
         private const float LateJoinerSyncDelay = 10f; // TODO: set this higher for the real world
         private float lastTimeAPlayerJoined;
+        private int currentPlayerCount;
+        private int CurrentPlayerCount
+        {
+            get => currentPlayerCount;
+            set
+            {
+                currentPlayerCount = value;
+                localPlayerIsAlone = value <= 1;
+            }
+        }
+        private bool localPlayerIsAlone = true;
         private Chalkboard lastSyncedChalkboard;
         private Chalkboard chalkboard;
         private Texture2D texture;
@@ -204,6 +215,15 @@ namespace JanSharp
 
         private void AddPointToSyncedPoints(int x, int y)
         {
+            // if the local player is the only player in the instance then nothing _must_ be synced.
+            // late joiner syncing is handled by the boards
+            if (localPlayerIsAlone)
+            {
+                // has to set the last synced chalkboard even though it's not really synced since there is no one to sync with
+                // because other logic requires `lastSyncedChalkboard` to be set. when someone joins this is reset anyway
+                lastSyncedChalkboard = chalkboard;
+                return;
+            }
             bool changedBoard = chalkboard != lastSyncedChalkboard || (lastTimeAPlayerJoined + LateJoinerSyncDelay) > Time.time;
             if ((changedBoard ? pointsStageCount + 1 : pointsStageCount) >= pointsStage.Length)
             {
@@ -233,6 +253,12 @@ namespace JanSharp
             // have to do both to handle the chalk being used _right now_ as well as at some random point in the future
             lastSyncedChalkboard = null;
             lastTimeAPlayerJoined = Time.time;
+            CurrentPlayerCount++;
+        }
+
+        public override void OnPlayerLeft(VRCPlayerApi player)
+        {
+            CurrentPlayerCount--;
         }
 
         public override void OnPreSerialization()

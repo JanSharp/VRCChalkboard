@@ -17,9 +17,10 @@
 - [x] set grip depending on if the user is in VR
 - [x] reduce allowed distance from the board in VR
 - [x] move board up and down
-- [ ] you being the only single person in the world is going to break late joiner syncing for the first other person joining
+- [x] you being the only single person in the world is going to break late joiner syncing for the first other person joining
+  - [ ] think about and test more edge cases involving being the only one in the instance during different stages of syncing
 - [x] drawing a whole bunch with one chalk takes too long to catch up with incremental syncing causing you using another chalk too quickly being potentially overdrawn by the old chalk for all other clients, so in other words it's a de-sync. (fixed by registering fewer points per second)
-- [x] the indicator still disappears behind the plane that's drawn upon
+- [ ] the indicator still disappears behind the plane that's drawn upon
 
 
 
