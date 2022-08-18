@@ -33,9 +33,7 @@ namespace JanSharp
         private int prevX;
         private int prevY;
         private float movementStartTime;
-        private const float DesktopMaxDistance = 12f;
-        private const float VRMaxDistance = 2f;
-        private float currentMaxDistance;
+        private const float MaxDistance = 12f;
 
         // NOTE: the indexes of the 4 corners for hte chalk are still hard coded,
         // but changing the chalk size isn't really supported anyway.
@@ -119,7 +117,6 @@ namespace JanSharp
         public override void OnPickup()
         {
             updateManager.Register(this);
-            currentMaxDistance = Networking.LocalPlayer.IsUserInVR() ? VRMaxDistance : DesktopMaxDistance;
             pickup.orientation = Networking.LocalPlayer.IsUserInVR() ? VRC_Pickup.PickupOrientation.Any : VRC_Pickup.PickupOrientation.Gun;
         }
 
@@ -146,7 +143,7 @@ namespace JanSharp
         public void CustomUpdate()
         {
             RaycastHit hit;
-            if (Physics.Raycast(aimPoint.position, aimPoint.forward, out hit, currentMaxDistance, layerMask.value) && hit.transform != null)
+            if (Physics.Raycast(aimPoint.position, aimPoint.forward, out hit, MaxDistance, layerMask.value) && hit.transform != null)
             {
                 if (chalkboard == null || hit.transform != chalkboard.transform)
                 {
