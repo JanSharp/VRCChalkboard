@@ -54,12 +54,27 @@ namespace JanSharp
             }
         }
         private bool currentlyHeld;
+        private bool currentlyHeldInVR;
+        private VRCPlayerApi.TrackingDataType trackingDataType;
+        private Vector3 originPositionFromHand;
         private bool CurrentlyHeld
         {
             get => currentlyHeld;
             set
             {
                 currentlyHeld = value;
+                if (value)
+                {
+                    currentlyHeldInVR = Networking.LocalPlayer.IsUserInVR();
+                    if (currentlyHeldInVR)
+                    {
+                        trackingDataType = pickup.currentHand == VRC_Pickup.PickupHand.Left
+                            ? VRCPlayerApi.TrackingDataType.LeftHand
+                            : VRCPlayerApi.TrackingDataType.RightHand;
+                        originPositionFromHand = Networking.LocalPlayer.GetTrackingData(trackingDataType).position
+                            - this.transform.parent.TransformVector(this.transform.localPosition - thisInitialLocalPosition);
+                    }
+                }
             }
         }
 
@@ -82,7 +97,7 @@ namespace JanSharp
             }
             targetInitialLocalPosition = toMove.localPosition;
             thisInitialLocalPosition = this.transform.localPosition;
-            positionOffsetFromTargetToThis = toMove.InverseTransformDirection(this.transform.position - toMove.position);
+            positionOffsetFromTargetToThis = toMove.InverseTransformVector(this.transform.position - toMove.position);
             rotationOffsetFromTargetToThis = Quaternion.Inverse(toMove.rotation) * this.transform.rotation;
             SnapBack();
             this.ApplyProxyModifications();
@@ -93,7 +108,7 @@ namespace JanSharp
         private void Snap(Vector3 localOffset, Quaternion rotationOffset)
         {
             this.transform.SetPositionAndRotation(
-                toMove.position + toMove.TransformDirection(localOffset),
+                toMove.position + toMove.TransformVector(localOffset),
                 toMove.rotation * rotationOffset
             );
         }
@@ -134,26 +149,29 @@ namespace JanSharp
                 return;
             }
 
-            var direction = toMove.InverseTransformDirection(this.transform.localPosition - thisInitialLocalPosition);
+            var worldVector = currentlyHeldInVR
+                ? Networking.LocalPlayer.GetTrackingData(trackingDataType).position - originPositionFromHand
+                : this.transform.parent.TransformVector(this.transform.localPosition - thisInitialLocalPosition);
+            var localVector = toMove.parent.InverseTransformVector(worldVector);
 
             if (allowMovementOnX)
-                direction.x = Mathf.Clamp(direction.x, -maxLeftDeviation, maxRightDeviation);
+                localVector.x = Mathf.Clamp(localVector.x, -maxLeftDeviation, maxRightDeviation);
             else
-                direction.x = 0;
+                localVector.x = 0;
 
             if (allowMovementOnY)
-                direction.y = Mathf.Clamp(direction.y, -maxDownDeviation, maxUpDeviation);
+                localVector.y = Mathf.Clamp(localVector.y, -maxDownDeviation, maxUpDeviation);
             else
-                direction.y = 0;
+                localVector.y = 0;
 
             if (allowMovementOnZ)
-                direction.z = Mathf.Clamp(direction.z, -maxBackDeviation, maxForwardDeviation);
+                localVector.z = Mathf.Clamp(localVector.z, -maxBackDeviation, maxForwardDeviation);
             else
-                direction.z = 0;
+                localVector.z = 0;
 
-            toMove.localPosition = targetInitialLocalPosition + direction;
+            toMove.localPosition = targetInitialLocalPosition + localVector;
 
-            syncedPosition = targetInitialLocalPosition + direction;
+            syncedPosition = targetInitialLocalPosition + localVector;
             if (Time.time >= nextSyncTime)
             {
                 RequestSerialization();
