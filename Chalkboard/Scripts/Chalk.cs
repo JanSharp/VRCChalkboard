@@ -35,7 +35,7 @@ namespace JanSharp
         private float movementStartTime;
         private const float MaxDistance = 12f;
 
-        // NOTE: the indexes of the 4 corners for hte chalk are still hard coded,
+        // NOTE: the indexes of the 4 corners for the chalk are still hard coded,
         // but changing the chalk size isn't really supported anyway.
         // 5x5 both looks the best and is pretty balanced in terms of performance
         private const int ChalkSize = 5;

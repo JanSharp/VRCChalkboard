@@ -390,6 +390,25 @@ namespace JanSharp
 
         public override void OnOwnershipTransferred(VRCPlayerApi player)
         {
+            if (catchingUp && player.isLocal)
+            {
+                // well, the person sending to us left and assuming what is stated below about instance masters and ownership
+                // is correct we are now the one with the most information about the board, even though we don't have all of it.
+                // so we just pretend that we finished catching up
+                Debug.Log($"<dlt> we're not caught up but the last person having all data about the board left, so we're moving on.");
+                StartCatchingUpWithQueue();
+
+                // if someone else is also still catching up we have to tell them that there is nothing to receive anymore.
+                // we can't use the `somebodyIsCatchingUp` flag because if we ourselves were catching up we then that flag
+                // is always false. Changing that without also making it true when only we are catching up is not straight
+                // forward so we just sync the "we're done" metadata flag no matter what
+                sending = true;
+                // technically these 2 should already (still) be 0 at this point, but there is no need to save on these 2 statements
+                currentSyncedIndex = 0;
+                actionsCountRequiredToSync = 0;
+                RequestSerialization();
+                return;
+            }
             // I remember hearing something about "the master of the instance is always the one who's been the longest in the instance"
             // and I've also heard that "the default owner of any object is the master", which would make me guess that if the current
             // owner of this object leaves (or crashes, same thing) the player who's been in the instance the longest becomes the owner.
@@ -501,8 +520,8 @@ namespace JanSharp
                 ulong metadata = syncedActions ^ MetadataFlag; // remove metadata flag
                 if ((metadata & ActionCountMetadataFlag) != 0UL)
                 {
-                    Debug.Log($"<dlt> someone (could be multiple people) is about to receive {actionsCountRequiredToSync} actions");
                     metadata ^= ActionCountMetadataFlag; // remove second flag
+                    Debug.Log($"<dlt> someone (could be multiple people) is about to receive {(int)metadata} actions");
                     if (catchingUp)
                     {
                         currentReceivedActionIndex = 0;
@@ -515,9 +534,7 @@ namespace JanSharp
                 if (catchingUp)
                 {
                     Debug.Log($"<dlt> we caught up with all actions that happened before we joined!");
-                    catchingUp = false;
-                    catchingUpWithTheQueue = true;
-                    SendCustomEventDelayedFrames(nameof(CatchUpWithQueue), 1);
+                    StartCatchingUpWithQueue();
                     return;
                 }
                 somebodyIsCatchingUp = false;
@@ -528,6 +545,13 @@ namespace JanSharp
             ProcessActions(syncedActions);
             if (progressBar != null)
                 progressBar.value = (float)(++currentReceivedActionIndex) / (float)expectedReceivedActionsCount;
+        }
+
+        private void StartCatchingUpWithQueue()
+        {
+            catchingUp = false;
+            catchingUpWithTheQueue = true;
+            SendCustomEventDelayedFrames(nameof(CatchUpWithQueue), 1);
         }
 
         private void ProcessActions(ulong actions)
