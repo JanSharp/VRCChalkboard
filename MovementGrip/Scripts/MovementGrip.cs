@@ -54,12 +54,27 @@ namespace JanSharp
             }
         }
         private bool currentlyHeld;
+        private bool currentlyHeldInVR;
+        private VRCPlayerApi.TrackingDataType trackingDataType;
+        private Vector3 originPositionFromHand;
         private bool CurrentlyHeld
         {
             get => currentlyHeld;
             set
             {
                 currentlyHeld = value;
+                if (value)
+                {
+                    currentlyHeldInVR = Networking.LocalPlayer.IsUserInVR();
+                    if (currentlyHeldInVR)
+                    {
+                        trackingDataType = pickup.currentHand == VRC_Pickup.PickupHand.Left
+                            ? VRCPlayerApi.TrackingDataType.LeftHand
+                            : VRCPlayerApi.TrackingDataType.RightHand;
+                        originPositionFromHand = Networking.LocalPlayer.GetTrackingData(trackingDataType).position
+                            - this.transform.parent.TransformVector(this.transform.localPosition - thisInitialLocalPosition);
+                    }
+                }
             }
         }
 
@@ -134,7 +149,9 @@ namespace JanSharp
                 return;
             }
 
-            var worldVector = this.transform.parent.TransformVector(this.transform.localPosition - thisInitialLocalPosition);
+            var worldVector = currentlyHeldInVR
+                ? Networking.LocalPlayer.GetTrackingData(trackingDataType).position - originPositionFromHand
+                : this.transform.parent.TransformVector(this.transform.localPosition - thisInitialLocalPosition);
             var localVector = toMove.parent.InverseTransformVector(worldVector);
 
             if (allowMovementOnX)
