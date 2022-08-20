@@ -461,7 +461,9 @@ namespace JanSharp
         {
             if (!sending)
             {
+                #if ChalkboardDebug
                 Debug.Log($"<dlt> ICU VRC trying to screw me, no I'm not syncing data right now. Ok at this point the logic actually uses this intentionally.");
+                #endif
                 return 0UL;
             }
             if (firstSend)
@@ -469,11 +471,15 @@ namespace JanSharp
                 // for some reason `|` doesn't understand the difference between implicit and explicit casts
                 // so it's still complaining even with an explicit cast. Just using `+` instead because
                 // none of the bits will be used twice anyway so it does the same thing
+                #if ChalkboardDebug
                 Debug.Log($"<dlt> informing everyone that we're about to sync {actionsCountRequiredToSync} actions");
+                #endif
                 firstSend = false;
                 return MetadataFlag | ActionCountMetadataFlag + (ulong)actionsCountRequiredToSync;
             }
+            #if ChalkboardDebug
             Debug.Log($"<dlt> sending {currentSyncedIndex + 1}/{actionsCountRequiredToSync + 1}");
+            #endif
             if (currentSyncedIndex >= actionsCountRequiredToSync)
             {
                 sending = false;
@@ -500,10 +506,12 @@ namespace JanSharp
             RequestSerialization();
         }
 
+        #if ChalkboardDebug
         public override void OnPostSerialization(SerializationResult result)
         {
             Debug.Log($"<dlt> on post: success: {result.success}, byteCount: {result.byteCount}");
         }
+        #endif
 
         public override void OnDeserialization()
         {
@@ -521,7 +529,9 @@ namespace JanSharp
                 if ((metadata & ActionCountMetadataFlag) != 0UL)
                 {
                     metadata ^= ActionCountMetadataFlag; // remove second flag
+                    #if ChalkboardDebug
                     Debug.Log($"<dlt> someone (could be multiple people) is about to receive {(int)metadata} actions");
+                    #endif
                     if (catchingUp)
                     {
                         currentReceivedActionIndex = 0;
@@ -533,7 +543,9 @@ namespace JanSharp
                 }
                 if (catchingUp)
                 {
+                    #if ChalkboardDebug
                     Debug.Log($"<dlt> we caught up with all actions that happened before we joined!");
+                    #endif
                     StartCatchingUpWithQueue();
                     return;
                 }
@@ -567,14 +579,18 @@ namespace JanSharp
                 int y = (point >> AxisBitCount) & IntAxisBits;
                 if (y == IntSwitchToChalkY)
                 {
+                    #if ChalkboardDebug
                     Debug.Log($"<dlt> processing switch to chalk id: {x}");
+                    #endif
                     receivedChalk = chalkboardManager.chalks[x];
                 }
                 else
                 {
+                    #if ChalkboardDebug
                     Debug.Log($"<dlt> processing point x: {x}, y: {y} hasPrev: {((point & IntPointHasPrev) != 0)}");
+                    #endif
                     if (receivedChalk == null)
-                        Debug.Log($"<dlt> processing point before receiving any switch to a chalk?!");
+                        Debug.LogWarning($"<dlt> processing point before receiving any switch to a chalk?!");
                     else if ((point & IntPointHasPrev) != 0)
                         DrawLineInternal(receivedChalk, receivedPrevX, receivedPrevY, x, y);
                     else
@@ -590,10 +606,14 @@ namespace JanSharp
 
         public void CatchUpWithQueue()
         {
+            #if ChalkboardDebug
             Debug.Log($"<dlt> CatchUpWithQueue {catchUpQueueIndex + 1}/{catchUpQueueCount + 1}");
+            #endif
             if (catchUpQueueIndex == catchUpQueueCount)
             {
+                #if ChalkboardDebug
                 Debug.Log($"<dlt> we are fully caught up!");
+                #endif
                 catchingUpWithTheQueue = false;
                 catchUpQueue = null; // free that memory
                 if (progressBar != null)
