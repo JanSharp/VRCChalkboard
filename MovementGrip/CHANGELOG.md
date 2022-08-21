@@ -1,6 +1,12 @@
 
 # Changelog
 
+## [1.0.1] - 2022-08-21
+
+### Fixed
+
+- Fix objects potentially "disappearing" if the instance owner has not moved them yet (`43ac7cf`)
+
 ## [1.0.0] - 2022-08-19
 
 ### Added
@@ -19,8 +25,10 @@
 - Add syncing with interpolation (`bc5fbaa`, `22b4550`, `fe16657`)
 - Drop the grip when multiple people pick it up at the same time (`dce4ef4`)
 
+<!-- MovementGrip_v1.0.1 -->
 <!-- MovementGrip_v1.0.0 -->
 <!-- MovementGrip_v0.1.0 -->
 
+[1.0.1]: /dev/null
 [1.0.0]: /dev/null
 [0.1.0]: /dev/null
