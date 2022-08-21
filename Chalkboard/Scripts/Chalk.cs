@@ -63,7 +63,7 @@ namespace JanSharp
         private const int IntSwitchToBoardY = 1; // just y
         private const int IntAxisBits = 0x3ff;
 
-        private const float LateJoinerSyncDelay = 10f; // TODO: set this higher for the real world
+        private const float LateJoinerSyncDelay = 15f;
         private float lastTimeAPlayerJoined;
         private int currentPlayerCount;
         private int CurrentPlayerCount

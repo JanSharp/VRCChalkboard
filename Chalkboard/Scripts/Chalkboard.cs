@@ -75,7 +75,7 @@ namespace JanSharp
         private int receivedPrevX;
         private int receivedPrevY;
         private const float SyncFrequency = 0.3f;
-        private const float LateJoinerSyncDelay = 10f; // TODO: set this higher for the real world
+        private const float LateJoinerSyncDelay = 15f;
         private int initSendingCount;
         private ulong[] catchUpQueue;
         private int catchUpQueueCount;
