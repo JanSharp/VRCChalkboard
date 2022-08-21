@@ -24,6 +24,7 @@
 - [x] remove debug log messages from production builds. So basically use preprocessor ifs
 - [ ] maybe do something about the "can't go off the board" clamping in combination with the indicator. either move the indicator or add logic - mostly important for the sponge
 - [ ] the optional progressbar for syncing initializes with a value of 1 for the first 10 seconds (the time before it starts syncing). It should be 0
+- [x] the 10 second late joiner sync delay can fail if multiple people join within 10 seconds
 
 
 # Debugging

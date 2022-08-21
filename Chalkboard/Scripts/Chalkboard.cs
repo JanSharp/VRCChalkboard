@@ -76,6 +76,7 @@ namespace JanSharp
         private int receivedPrevY;
         private const float SyncFrequency = 0.3f;
         private const float LateJoinerSyncDelay = 10f; // TODO: set this higher for the real world
+        private int initSendingCount;
         private ulong[] catchUpQueue;
         private int catchUpQueueCount;
         private int catchUpQueueIndex;
@@ -442,6 +443,7 @@ namespace JanSharp
         private void InitSending()
         {
             SendCustomEventDelayedSeconds(nameof(RequestSerializationDelayed), LateJoinerSyncDelay); // honestly... I'm annoyed
+            initSendingCount++;
             somebodyIsCatchingUp = false;
             sending = false;
             waitingToStartSending = true;
@@ -454,7 +456,7 @@ namespace JanSharp
             syncedActions3 = GetNextActions();
             syncedActions4 = GetNextActions();
             if (sending)
-                SendCustomEventDelayedSeconds(nameof(RequestSerializationDelayed), SyncFrequency);
+                SendCustomEventDelayedSeconds(nameof(RequestSerializationLoop), SyncFrequency);
         }
 
         private ulong GetNextActions()
@@ -489,6 +491,12 @@ namespace JanSharp
         }
 
         public void RequestSerializationDelayed()
+        {
+            if ((--initSendingCount) == 0)
+                RequestSerializationLoop();
+        }
+
+        public void RequestSerializationLoop()
         {
             if (waitingToStartSending)
             {
