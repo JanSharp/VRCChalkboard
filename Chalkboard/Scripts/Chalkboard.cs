@@ -65,8 +65,8 @@ namespace JanSharp
         [UdonSynced] private ulong syncedActions2;
         [UdonSynced] private ulong syncedActions3;
         [UdonSynced] private ulong syncedActions4;
-        private int expectedReceivedActionsCount;
-        private int currentReceivedActionIndex;
+        private float expectedReceivedActionsCount = float.PositiveInfinity;
+        private float currentReceivedActionIndex;
         private int currentSyncedIndex;
         private int actionsCountRequiredToSync;
         private bool catchingUp;
@@ -542,8 +542,8 @@ namespace JanSharp
                     #endif
                     if (catchingUp)
                     {
-                        currentReceivedActionIndex = 0;
-                        expectedReceivedActionsCount = (int)metadata;
+                        currentReceivedActionIndex = 0f;
+                        expectedReceivedActionsCount = (float)metadata;
                     }
                     else
                         somebodyIsCatchingUp = true;
@@ -564,7 +564,7 @@ namespace JanSharp
                 return;
             ProcessActions(syncedActions);
             if (progressBar != null)
-                progressBar.value = (float)(++currentReceivedActionIndex) / (float)expectedReceivedActionsCount;
+                progressBar.value = (++currentReceivedActionIndex) / expectedReceivedActionsCount;
         }
 
         private void StartCatchingUpWithQueue()

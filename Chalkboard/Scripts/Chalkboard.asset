@@ -2852,7 +2852,7 @@ MonoBehaviour:
       Data: 166|UdonSharp.Compiler.SymbolDefinition, UdonSharp.Editor
     - Name: internalType
       Entry: 9
-      Data: 19
+      Data: 53
     - Name: declarationType
       Entry: 3
       Data: 2
@@ -2861,7 +2861,7 @@ MonoBehaviour:
       Data: 0
     - Name: symbolResolvedTypeName
       Entry: 1
-      Data: SystemInt32
+      Data: SystemSingle
     - Name: symbolOriginalName
       Entry: 1
       Data: expectedReceivedActionsCount
@@ -2910,7 +2910,7 @@ MonoBehaviour:
       Data: 169|UdonSharp.Compiler.SymbolDefinition, UdonSharp.Editor
     - Name: internalType
       Entry: 9
-      Data: 19
+      Data: 53
     - Name: declarationType
       Entry: 3
       Data: 2
@@ -2919,7 +2919,7 @@ MonoBehaviour:
       Data: 0
     - Name: symbolResolvedTypeName
       Entry: 1
-      Data: SystemInt32
+      Data: SystemSingle
     - Name: symbolOriginalName
       Entry: 1
       Data: currentReceivedActionIndex
