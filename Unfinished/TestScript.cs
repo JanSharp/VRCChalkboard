@@ -1,14 +1,8 @@
-﻿
-using System.Net;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UdonSharp;
 using TMPro;
 using VRC.SDKBase;
 using VRC.Udon;
-
-///cSpell:ignore UGUI
 
 namespace JanSharp
 {
