@@ -18,11 +18,13 @@ namespace JanSharp
     [DefaultExecutionOrder(-1000)]
     public static class OnBuildUtil
     {
-        private static HashSet<Type> typesToLookFor;
+        private static Dictionary<Type, OnBuildCallbackData> typesToLookFor;
+        private static List<OnBuildCallbackData> typesToLookForList;
 
         static OnBuildUtil()
         {
-            typesToLookFor = new HashSet<Type>();
+            typesToLookFor = new Dictionary<Type, OnBuildCallbackData>();
+            typesToLookForList = new List<OnBuildCallbackData>();
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
         }
 
@@ -32,29 +34,55 @@ namespace JanSharp
                 RunOnBuild();
         }
 
-        public static void RegisterType<T>() where T : IOnBuildCallback
+        public static void RegisterType<T>(int order = 0) where T : IOnBuildCallback
         {
-            if (!typesToLookFor.Contains(typeof(T)))
-                typesToLookFor.Add(typeof(T));
+            if (!typesToLookFor.ContainsKey(typeof(T)))
+            {
+                OnBuildCallbackData data = new OnBuildCallbackData(typeof(T), order);
+                typesToLookFor.Add(typeof(T), data);
+                typesToLookForList.Add(data);
+            }
         }
 
         public static bool RunOnBuild()
         {
             Stopwatch sw = new Stopwatch();
             sw.Start();
+
+            foreach (OnBuildCallbackData data in typesToLookForList)
+                data.behaviours.Clear();
+
             foreach (GameObject obj in UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects())
                 foreach (UdonBehaviour udonBehaviour in obj.GetComponentsInChildren<UdonBehaviour>())
-                {
                     if (UdonSharpEditorUtility.IsUdonSharpBehaviour(udonBehaviour))
                     {
                         UdonSharpBehaviour behaviour = UdonSharpEditorUtility.GetProxyBehaviour(udonBehaviour);
-                        if (typesToLookFor.Contains(behaviour.GetType()) && !((IOnBuildCallback)behaviour).OnBuild())
-                            return false;
+                        if (typesToLookFor.TryGetValue(behaviour.GetType(), out OnBuildCallbackData data))
+                            data.behaviours.Add(behaviour);
                     }
-                }
+
+            foreach (OnBuildCallbackData data in typesToLookForList.OrderBy(d => d.order))
+                foreach (UdonSharpBehaviour behaviour in data.behaviours)
+                    if (!((IOnBuildCallback)behaviour).OnBuild())
+                        return false;
+
             sw.Stop();
             UnityEngine.Debug.Log($"OnBuild handlers: {sw.Elapsed}.");
             return true;
+        }
+
+        private class OnBuildCallbackData
+        {
+            public Type type;
+            public List<UdonSharpBehaviour> behaviours;
+            public int order;
+
+            public OnBuildCallbackData(Type type, int order)
+            {
+                this.type = type;
+                this.behaviours = new List<UdonSharpBehaviour>();
+                this.order = order;
+            }
         }
     }
 
@@ -62,6 +90,8 @@ namespace JanSharp
     {
         bool OnBuild();
     }
+
+    ///cSpell:ignore IVRCSDK, VRCSDK
 
     public class VRCOnBuild : IVRCSDKBuildRequestedCallback
     {
