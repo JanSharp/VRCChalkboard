@@ -19,12 +19,12 @@ namespace JanSharp
     public static class OnBuildUtil
     {
         private static Dictionary<Type, OnBuildCallbackData> typesToLookFor;
-        private static List<OnBuildCallbackData> typesToLookForList;
+        private static List<OrderedOnBuildCallbackData> typesToLookForList;
 
         static OnBuildUtil()
         {
             typesToLookFor = new Dictionary<Type, OnBuildCallbackData>();
-            typesToLookForList = new List<OnBuildCallbackData>();
+            typesToLookForList = new List<OrderedOnBuildCallbackData>();
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
         }
 
@@ -36,11 +36,30 @@ namespace JanSharp
 
         public static void RegisterType<T>(int order = 0) where T : IOnBuildCallback
         {
-            if (!typesToLookFor.ContainsKey(typeof(T)))
+            RegisterTypeInternal(typeof(T), order, false);
+        }
+
+        public static void RegisterTypeV2<T>(int order = 0) where T : IOnBuildCallbackV2
+        {
+            RegisterTypeInternal(typeof(T), order, true);
+        }
+
+        private static void RegisterTypeInternal(Type type, int order, bool usesV2)
+        {
+            OnBuildCallbackData data;
+            if (typesToLookFor.TryGetValue(type, out data))
             {
-                OnBuildCallbackData data = new OnBuildCallbackData(typeof(T), order);
-                typesToLookFor.Add(typeof(T), data);
-                typesToLookForList.Add(data);
+                if (!data.allOrders.Contains(order))
+                {
+                    data.allOrders.Add(order);
+                    typesToLookForList.Add(new OrderedOnBuildCallbackData(data, order));
+                }
+            }
+            else
+            {
+                data = new OnBuildCallbackData(type, new HashSet<int>() { order }, usesV2);
+                typesToLookFor.Add(type, data);
+                typesToLookForList.Add(new OrderedOnBuildCallbackData(data, order));
             }
         }
 
@@ -49,8 +68,8 @@ namespace JanSharp
             Stopwatch sw = new Stopwatch();
             sw.Start();
 
-            foreach (OnBuildCallbackData data in typesToLookForList)
-                data.behaviours.Clear();
+            foreach (OrderedOnBuildCallbackData orderedData in typesToLookForList)
+                orderedData.data.behaviours.Clear();
 
             foreach (GameObject obj in UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects())
                 foreach (UdonBehaviour udonBehaviour in obj.GetComponentsInChildren<UdonBehaviour>())
@@ -61,27 +80,49 @@ namespace JanSharp
                             data.behaviours.Add(behaviour);
                     }
 
-            foreach (OnBuildCallbackData data in typesToLookForList.OrderBy(d => d.order))
-                foreach (UdonSharpBehaviour behaviour in data.behaviours)
-                    if (!((IOnBuildCallback)behaviour).OnBuild())
-                        return false;
+            foreach (OrderedOnBuildCallbackData orderedData in typesToLookForList.OrderBy(d => d.order))
+                foreach (UdonSharpBehaviour behaviour in orderedData.data.behaviours)
+                    if (orderedData.data.usesV2)
+                    {
+                        if (!((IOnBuildCallbackV2)behaviour).OnBuild(orderedData.order))
+                            return false;
+                    }
+                    else
+                    {
+                        if (!((IOnBuildCallback)behaviour).OnBuild())
+                            return false;
+                    }
 
             sw.Stop();
             UnityEngine.Debug.Log($"OnBuild handlers: {sw.Elapsed}.");
             return true;
         }
 
+        private struct OrderedOnBuildCallbackData
+        {
+            public OnBuildCallbackData data;
+            public int order;
+
+            public OrderedOnBuildCallbackData(OnBuildCallbackData data, int order)
+            {
+                this.data = data;
+                this.order = order;
+            }
+        }
+
         private class OnBuildCallbackData
         {
             public Type type;
             public List<UdonSharpBehaviour> behaviours;
-            public int order;
+            public HashSet<int> allOrders;
+            public bool usesV2;
 
-            public OnBuildCallbackData(Type type, int order)
+            public OnBuildCallbackData(Type type, HashSet<int> allOrders, bool usesV2)
             {
                 this.type = type;
                 this.behaviours = new List<UdonSharpBehaviour>();
-                this.order = order;
+                this.allOrders = allOrders;
+                this.usesV2 = usesV2;
             }
         }
     }
@@ -89,6 +130,11 @@ namespace JanSharp
     public interface IOnBuildCallback
     {
         bool OnBuild();
+    }
+
+    public interface IOnBuildCallbackV2
+    {
+        bool OnBuild(int order);
     }
 
     ///cSpell:ignore IVRCSDK, VRCSDK
