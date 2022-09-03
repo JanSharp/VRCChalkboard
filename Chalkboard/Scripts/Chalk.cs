@@ -63,7 +63,7 @@ namespace JanSharp
         private const int IntSwitchToBoardY = 1; // just y
         private const int IntAxisBits = 0x3ff;
 
-        private const float LateJoinerSyncDelay = 10f; // TODO: set this higher for the real world
+        private const float LateJoinerSyncDelay = 15f;
         private float lastTimeAPlayerJoined;
         private int currentPlayerCount;
         private int CurrentPlayerCount
@@ -236,12 +236,16 @@ namespace JanSharp
             if (changedBoard)
             {
                 lastSyncedChalkboard = chalkboard;
+                #if ChalkboardDebug
                 Debug.Log($"<dlt> adding switch to board id: {chalkboard.boardId}");
+                #endif
                 // y == 1 is an invalid point, so it means "switch to board [x]" instead
                 pointsStage[(pointsStageStartIndex + (pointsStageCount++)) % pointsStage.Length]
                     = chalkboard.boardId | (IntSwitchToBoardY << AxisBitCount);
             }
+            #if ChalkboardDebug
             Debug.Log($"<dlt> adding point x: {x}, y: {y}, hasPrev: {hasPrev}");
+            #endif
             pointsStage[(pointsStageStartIndex + (pointsStageCount++)) % pointsStage.Length]
                 = x | (y << AxisBitCount) | (hasPrev ? IntPointHasPrev : 0);
             Networking.SetOwner(Networking.LocalPlayer, this.gameObject);
@@ -263,7 +267,9 @@ namespace JanSharp
 
         public override void OnPreSerialization()
         {
+            #if ChalkboardDebug
             Debug.Log($"<dlt> sending {System.Math.Min(pointsStageCount, 3)} actions");
+            #endif
             syncedActions = 0UL;
             if (pointsStageCount == 0)
                 return;
@@ -290,7 +296,9 @@ namespace JanSharp
 
         public override void OnPostSerialization(SerializationResult result)
         {
+            #if ChalkboardDebug
             Debug.Log($"<dlt> on post: success: {result.success}, byteCount: {result.byteCount}");
+            #endif
         }
 
         public override void OnDeserialization()
@@ -306,7 +314,9 @@ namespace JanSharp
                 int y = (point >> AxisBitCount) & IntAxisBits;
                 if (y == IntSwitchToBoardY)
                 {
+                    #if ChalkboardDebug
                     Debug.Log($"<dlt> received switch to board id: {x}");
+                    #endif
                     if (i != 0 && lastSyncedChalkboard != null) // update the previous texture before switching
                         lastSyncedChalkboard.UpdateTextureSlow();
                     lastSyncedChalkboard = chalkboardManager.chalkboards[x];
@@ -316,9 +326,11 @@ namespace JanSharp
                 {
                     if ((point & IntPointHasPrev) == 0)
                         hasPrev = false;
+                    #if ChalkboardDebug
                     Debug.Log($"<dlt> received point x: {x}, y: {y} hasPrev: {((point & IntPointHasPrev) != 0)}");
+                    #endif
                     if (lastSyncedChalkboard == null)
-                        Debug.Log($"<dlt> received point before receiving any switch to a board?!");
+                        Debug.LogWarning($"<dlt> received point before receiving any switch to a board?!");
                     else
                         DrawFromPrevTo(x, y);
                 }
