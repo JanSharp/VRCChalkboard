@@ -472,7 +472,7 @@ MonoBehaviour:
       Data: 33|System.RuntimeType, mscorlib
     - Name: 
       Entry: 1
-      Data: UpdateManager, Assembly-CSharp
+      Data: JanSharp.UpdateManager, Assembly-CSharp
     - Name: 
       Entry: 8
       Data: 

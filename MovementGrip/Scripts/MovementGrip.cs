@@ -38,7 +38,7 @@ namespace JanSharp
         private float nextSyncTime;
         private const float SyncInterval = 0.2f;
         private const float LerpDuration = SyncInterval + 0.1f;
-        [UdonSynced] private Vector3 syncedPosition;
+        [UdonSynced] [SerializeField] [HideInInspector] private Vector3 syncedPosition;
         private float lastReceivedTime;
         private Vector3 lerpStartPosition;
         private bool receiving;
@@ -97,6 +97,7 @@ namespace JanSharp
             }
             targetInitialLocalPosition = toMove.localPosition;
             thisInitialLocalPosition = this.transform.localPosition;
+            syncedPosition = thisInitialLocalPosition;
             positionOffsetFromTargetToThis = toMove.InverseTransformVector(this.transform.position - toMove.position);
             rotationOffsetFromTargetToThis = Quaternion.Inverse(toMove.rotation) * this.transform.rotation;
             SnapBack();
