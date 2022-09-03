@@ -27,6 +27,8 @@
 - Support all kinds of rotations of the chalkboard (`1f46ec9`)
 - Make chalk pickup have fixed grip in desktop vs any grip in VR (`a4def30`)
 
+<!-- Chalkboard_v1.0.1 -->
 <!-- Chalkboard_v1.0.0 -->
 
+[1.0.1]: /dev/null
 [1.0.0]: /dev/null
