@@ -97,7 +97,7 @@ namespace JanSharp
             }
             targetInitialLocalPosition = toMove.localPosition;
             thisInitialLocalPosition = this.transform.localPosition;
-            syncedPosition = thisInitialLocalPosition;
+            syncedPosition = targetInitialLocalPosition;
             positionOffsetFromTargetToThis = toMove.InverseTransformVector(this.transform.position - toMove.position);
             rotationOffsetFromTargetToThis = Quaternion.Inverse(toMove.rotation) * this.transform.rotation;
             SnapBack();
