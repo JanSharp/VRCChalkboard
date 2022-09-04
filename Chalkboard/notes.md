@@ -21,7 +21,15 @@
   - [x] think about and test more edge cases involving being the only one in the instance during different stages of syncing
 - [x] drawing a whole bunch with one chalk takes too long to catch up with incremental syncing causing you using another chalk too quickly being potentially overdrawn by the old chalk for all other clients, so in other words it's a de-sync. (fixed by registering fewer points per second)
 - [x] ~~the indicator still disappears behind the plane that's drawn upon.~~ It might still happen sometimes but 99% of the time it seems to be working correctly at this point
+- [x] remove debug log messages from production builds. So basically use preprocessor ifs
+- [ ] maybe do something about the "can't go off the board" clamping in combination with the indicator. either move the indicator or add logic - mostly important for the sponge
+- [x] the optional progressbar for syncing initializes with a value of 1 for the first 10 seconds (the time before it starts syncing). It should be 0
+- [x] the 10 second late joiner sync delay can fail if multiple people join within 10 seconds
 
+
+# Debugging
+
+To get debug log messages (with the `<dlt>` prefix) add `ChalkboardDebug` to `Edit => Project Settings => Player => Other Settings => Scripting Define Symbols` (which is a `;` separated list for the record) and recompile scripts
 
 
 # Notes about drawing curves
