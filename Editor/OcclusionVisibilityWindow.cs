@@ -22,6 +22,18 @@ namespace JanSharp
         //     SceneVisibilityManager.instance.Show(Selection.gameObjects, true);
         // }
 
+        private static void SetFlag(GameObject[] gos, StaticEditorFlags flag)
+        {
+            foreach (GameObject go in gos)
+                GameObjectUtility.SetStaticEditorFlags(go, GameObjectUtility.GetStaticEditorFlags(go) | flag);
+        }
+
+        private static void UnsetFlag(GameObject[] gos, StaticEditorFlags flag)
+        {
+            foreach (GameObject go in gos)
+                GameObjectUtility.SetStaticEditorFlags(go, GameObjectUtility.GetStaticEditorFlags(go) & (~flag));
+        }
+
         public void CreateGUI()
         {
             // rootVisualElement.Add(new Label("Hello"));
@@ -47,10 +59,21 @@ namespace JanSharp
             var nonOccluderToggle = new Toggle("Show non-Occluders");
             var occludeeToggle = new Toggle("Show Occludees");
             var nonOccludeeToggle = new Toggle("Show non-Occludees");
+            var batchingToggle = new Toggle("Show Batchers");
+            var nonBatchingToggle = new Toggle("Show non-Batchers");
             rootVisualElement.Add(occluderToggle);
             rootVisualElement.Add(nonOccluderToggle);
             rootVisualElement.Add(occludeeToggle);
             rootVisualElement.Add(nonOccludeeToggle);
+            rootVisualElement.Add(batchingToggle);
+            rootVisualElement.Add(nonBatchingToggle);
+
+            rootVisualElement.Add(new Button(() => SetFlag(Selection.gameObjects, StaticEditorFlags.OccluderStatic)) { text = "Make Occluder" });
+            rootVisualElement.Add(new Button(() => UnsetFlag(Selection.gameObjects, StaticEditorFlags.OccluderStatic)) { text = "Make non-Occluder" });
+            rootVisualElement.Add(new Button(() => SetFlag(Selection.gameObjects, StaticEditorFlags.OccludeeStatic)) { text = "Make Occludee" });
+            rootVisualElement.Add(new Button(() => UnsetFlag(Selection.gameObjects, StaticEditorFlags.OccludeeStatic)) { text = "Make non-Occludee" });
+            rootVisualElement.Add(new Button(() => SetFlag(Selection.gameObjects, StaticEditorFlags.BatchingStatic)) { text = "Make Batching" });
+            rootVisualElement.Add(new Button(() => UnsetFlag(Selection.gameObjects, StaticEditorFlags.BatchingStatic)) { text = "Make non-Batching" });
 
             var updateButton = new Button() { text = "Update Visibility" };
             updateButton.clicked += () =>
@@ -61,16 +84,16 @@ namespace JanSharp
                     foreach (Transform transform in go.transform)
                         WalkGameObject(transform.gameObject);
                     var flags = GameObjectUtility.GetStaticEditorFlags(go);
-                    if (
-                        (((flags & StaticEditorFlags.OccluderStatic) != 0)
+
+                    if ((flags.HasFlag(StaticEditorFlags.OccluderStatic)
                             ? occluderToggle.value
-                            : nonOccluderToggle.value
-                        )
-                        || (((flags & StaticEditorFlags.OccludeeStatic) != 0)
+                            : nonOccluderToggle.value)
+                        || (flags.HasFlag(StaticEditorFlags.OccludeeStatic)
                             ? occludeeToggle.value
-                            : nonOccludeeToggle.value
-                        )
-                    )
+                            : nonOccludeeToggle.value)
+                        || (flags.HasFlag(StaticEditorFlags.BatchingStatic)
+                            ? batchingToggle.value
+                            : nonBatchingToggle.value))
                     {
                         SceneVisibilityManager.instance.Show(go, false);
                     }
