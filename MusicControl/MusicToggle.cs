@@ -13,12 +13,14 @@ namespace JanSharp
 
         public override void OnPlayerTriggerEnter(VRCPlayerApi player)
         {
-            id = musicForThisArea.AddThisMusic();
+            if (player.isLocal)
+                id = musicForThisArea.AddThisMusic();
         }
 
         public override void OnPlayerTriggerExit(VRCPlayerApi player)
         {
-            musicForThisArea.Manager.RemoveMusic(id);
+            if (player.isLocal)
+                musicForThisArea.Manager.RemoveMusic(id);
         }
     }
 }
