@@ -62,6 +62,7 @@ namespace JanSharp
         private const int IntUnusedAction = 0; // x + y
         private const int IntSwitchToBoardY = 1; // just y
         private const int IntAxisBits = 0x3ff;
+        private bool ignoreNextSync = true;
 
         private const float LateJoinerSyncDelay = 15f;
         private float lastTimeAPlayerJoined;
@@ -270,7 +271,7 @@ namespace JanSharp
             Debug.Log($"<dlt> sending {System.Math.Min(pointsStageCount, 3)} actions");
             #endif
             syncedActions = 0UL;
-            if (pointsStageCount == 0)
+            if (pointsStageCount == 0 || ignoreNextSync)
                 return;
             for (int i = 0; i < System.Math.Min(pointsStageCount, 3); i++)
             {
@@ -298,10 +299,24 @@ namespace JanSharp
             #if ChalkboardDebug
             Debug.Log($"<dlt> on post: success: {result.success}, byteCount: {result.byteCount}");
             #endif
+            if (!result.success || ignoreNextSync)
+            {
+                // If it wasn't successful, retry.
+                // If it was successful, and we're ignoring the next sync, unset the ignore flag and retry.
+                if (result.success)
+                    ignoreNextSync = false;
+                SendCustomEventDelayedSeconds(nameof(RequestSerializationDelayed), 10f);
+            }
         }
 
         public override void OnDeserialization()
         {
+            if (ignoreNextSync)
+            {
+                ignoreNextSync = false;
+                return;
+            }
+
             bool doUpdateTexture = false;
             for (int i = 0; i < 3; i++)
             {

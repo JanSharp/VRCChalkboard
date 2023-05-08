@@ -76,11 +76,12 @@ namespace JanSharp
         private int receivedPrevY;
         private const float SyncFrequency = 0.3f;
         private const float LateJoinerSyncDelay = 15f;
-        private int initSendingCount;
+        private int requestSerializationDelayedCount;
         private ulong[] catchUpQueue;
         private int catchUpQueueCount;
         private int catchUpQueueIndex;
         private bool somebodyIsCatchingUp;
+        private bool ignoreNextSync = true;
 
         private void Start()
         {
@@ -442,7 +443,7 @@ namespace JanSharp
         private void InitSending()
         {
             SendCustomEventDelayedSeconds(nameof(RequestSerializationDelayed), LateJoinerSyncDelay); // honestly... I'm annoyed
-            initSendingCount++;
+            requestSerializationDelayedCount++;
             somebodyIsCatchingUp = false;
             sending = false;
             waitingToStartSending = true;
@@ -450,6 +451,8 @@ namespace JanSharp
 
         public override void OnPreSerialization()
         {
+            if (ignoreNextSync)
+                return;
             syncedActions1 = GetNextActions();
             syncedActions2 = GetNextActions();
             syncedActions3 = GetNextActions();
@@ -491,7 +494,7 @@ namespace JanSharp
 
         public void RequestSerializationDelayed()
         {
-            if ((--initSendingCount) == 0)
+            if ((--requestSerializationDelayedCount) == 0)
                 RequestSerializationLoop();
         }
 
@@ -513,15 +516,32 @@ namespace JanSharp
             RequestSerialization();
         }
 
-        #if ChalkboardDebug
         public override void OnPostSerialization(SerializationResult result)
         {
+            #if ChalkboardDebug
             Debug.Log($"<dlt> on post: success: {result.success}, byteCount: {result.byteCount}");
+            #endif
+            if (!result.success) // If it wasn't successful, retry later.
+            {
+                SendCustomEventDelayedSeconds(nameof(RequestSerializationDelayed), 10f);
+                requestSerializationDelayedCount++;
+            }
+            else if (ignoreNextSync)
+            {
+                // If it was successful, and we're ignoring the next (aka this) sync, unset the ignore flag and sync again as soon as possible.
+                ignoreNextSync = false;
+                SendCustomEventDelayedFrames(nameof(RequestSerializationDelayed), 1);
+                requestSerializationDelayedCount++;
+            }
         }
-        #endif
 
         public override void OnDeserialization()
         {
+            if (ignoreNextSync)
+            {
+                ignoreNextSync = false;
+                return;
+            }
             ProcessSyncedActions(syncedActions1);
             ProcessSyncedActions(syncedActions2);
             ProcessSyncedActions(syncedActions3);
