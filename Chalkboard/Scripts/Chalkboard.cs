@@ -158,7 +158,7 @@ namespace JanSharp
         }
         bool IOnBuildCallback.OnBuild()
         {
-            chalkboardManager = GameObject.Find("/ChalkboardManager")?.GetUdonSharpComponent<ChalkboardManager>();
+            chalkboardManager = GameObject.Find("/ChalkboardManager")?.GetComponent<ChalkboardManager>();
             boardId = chalkboardManager?.GetBoardId(this) ?? -1;
             if (chalkboardManager == null)
                 Debug.LogError("Chalkboard requires a GameObject that must be at the root of the scene"
@@ -203,7 +203,6 @@ namespace JanSharp
                 Debug.LogError($"{nameof(bottomLeft)}, {nameof(topRight)} and {nameof(material)} must all be set.",
                     UdonSharpEditorUtility.GetBackingUdonBehaviour(this));
 
-            this.ApplyProxyModifications();
             // EditorUtility.SetDirty(UdonSharpEditorUtility.GetBackingUdonBehaviour(this));
             return chalkboardManager != null;
         }

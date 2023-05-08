@@ -33,7 +33,6 @@ namespace JanSharp
         {
             Cleanup(ref allBoards, ref chalkboards, (board, id) => board.boardId = id);
             Cleanup(ref allChalks, ref chalks, (chalk, id) => chalk.chalkId = id);
-            this.ApplyProxyModifications();
             // EditorUtility.SetDirty(UdonSharpEditorUtility.GetBackingUdonBehaviour(this));
             return true;
         }
@@ -48,8 +47,7 @@ namespace JanSharp
                 for (int i = 0; i < allValues.Count; i++)
                 {
                     setId(allValues[i], i);
-                    allValues[i].ApplyProxyModifications();
-                    // EditorUtility.SetDirty(UdonSharpEditorUtility.GetBackingUdonBehaviour(allBoards[i]));
+                    // EditorUtility.SetDirty(UdonSharpEditorUtility.GetBackingUdonBehaviour(allValues[i]));
                 }
             }
             allValuesArray = allValues.ToArray();
@@ -73,7 +71,6 @@ namespace JanSharp
                 return index;
             allValues.Add(value);
             allValuesArray = allValues.ToArray();
-            this.ApplyProxyModifications();
             // EditorUtility.SetDirty(UdonSharpEditorUtility.GetBackingUdonBehaviour(this));
             return allValues.Count - 1;
         }
