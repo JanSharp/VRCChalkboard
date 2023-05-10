@@ -13,28 +13,30 @@ namespace JanSharp
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class ChalkboardManager : UdonSharpBehaviour
-    #if UNITY_EDITOR && !COMPILER_UDONSHARP
-        , IOnBuildCallback
-    #endif
     {
         [HideInInspector] public Chalkboard[] chalkboards;
         [HideInInspector] public Chalk[] chalks;
+    }
 
-        #if UNITY_EDITOR && !COMPILER_UDONSHARP
-        [InitializeOnLoad]
-        public static class OnBuildRegister
+    // TODO: make sure this is unique to each scene
+    #if UNITY_EDITOR && !COMPILER_UDONSHARP
+    internal static class ChalkboardManagerOnBuild
+    {
+        public static List<Chalkboard> allBoards;
+        public static List<Chalk> allChalks;
+
+        static ChalkboardManagerOnBuild() => JanSharp.OnBuildUtil.RegisterType<ChalkboardManager>(OnBuild);
+
+        private static bool OnBuild(UdonSharpBehaviour behaviour)
         {
-            static OnBuildRegister() => JanSharp.OnBuildUtil.RegisterType<ChalkboardManager>();
-        }
-        bool IOnBuildCallback.OnBuild()
-        {
-            Cleanup(ref ChalkboardManagerData.allBoards, ref chalkboards, (board, id) => board.boardId = id);
-            Cleanup(ref ChalkboardManagerData.allChalks, ref chalks, (chalk, id) => chalk.chalkId = id);
+            ChalkboardManager manager = (ChalkboardManager)behaviour;
+            Cleanup(ref allBoards, ref manager.chalkboards, (board, id) => board.boardId = id);
+            Cleanup(ref allChalks, ref manager.chalks, (chalk, id) => chalk.chalkId = id);
             // EditorUtility.SetDirty(UdonSharpEditorUtility.GetBackingUdonBehaviour(this));
             return true;
         }
 
-        private void Cleanup<T>(ref List<T> allValues, ref T[] allValuesArray, System.Action<T, int> setId)
+        private static void Cleanup<T>(ref List<T> allValues, ref T[] allValuesArray, System.Action<T, int> setId)
             where T : UdonSharpBehaviour
         {
             allValues = allValues ?? new List<T>();
@@ -50,17 +52,17 @@ namespace JanSharp
             allValuesArray = allValues.ToArray();
         }
 
-        public int GetBoardId(Chalkboard board)
+        public static int GetBoardId(ChalkboardManager manager, Chalkboard board)
         {
-            return GetId(ref ChalkboardManagerData.allBoards, ref chalkboards, board);
+            return GetId(ref allBoards, ref manager.chalkboards, board);
         }
 
-        public int GetChalkId(Chalk chalk)
+        public static int GetChalkId(ChalkboardManager manager, Chalk chalk)
         {
-            return GetId(ref ChalkboardManagerData.allChalks, ref chalks, chalk);
+            return GetId(ref allChalks, ref manager.chalks, chalk);
         }
 
-        private int GetId<T>(ref List<T> allValues, ref T[] allValuesArray, T value)
+        private static int GetId<T>(ref List<T> allValues, ref T[] allValuesArray, T value)
         {
             allValues = allValues ?? new List<T>();
             int index = allValues.FindIndex(b => b.Equals(value));
@@ -71,15 +73,6 @@ namespace JanSharp
             // EditorUtility.SetDirty(UdonSharpEditorUtility.GetBackingUdonBehaviour(this));
             return allValues.Count - 1;
         }
-        #endif
-    }
-
-    // TODO: make sure this is unique to each scene
-    #if UNITY_EDITOR && !COMPILER_UDONSHARP
-    internal static class ChalkboardManagerData
-    {
-        public static List<Chalkboard> allBoards;
-        public static List<Chalk> allChalks;
     }
     #endif
 }
