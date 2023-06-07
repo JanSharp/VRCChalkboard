@@ -273,10 +273,13 @@ namespace JanSharp
             if (!result.success || ignoreNextSync)
             {
                 // If it wasn't successful, retry.
-                // If it was successful, and we're ignoring the next sync, unset the ignore flag and retry.
-                if (result.success)
-                    ignoreNextSync = false;
                 SendCustomEventDelayedSeconds(nameof(RequestSerializationDelayed), 10f);
+            }
+            else if (ignoreNextSync)
+            {
+                // If it was successful, and we're ignoring the next sync, unset the ignore flag and send as soon as possible.
+                ignoreNextSync = false;
+                SendCustomEventDelayedFrames(nameof(RequestSerializationDelayed), 1);
             }
         }
 
