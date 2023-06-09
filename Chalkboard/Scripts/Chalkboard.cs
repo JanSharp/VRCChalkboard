@@ -405,7 +405,7 @@ namespace JanSharp
             if (!sending)
             {
                 #if ChalkboardDebug
-                Debug.Log($"<dlt> Currently not sending and or done with sending, syncing no-op '0'.");
+                Debug.Log($"<dlt> Currently not sending or done with sending, sending no-op '0'.");
                 #endif
                 return 0UL;
             }
