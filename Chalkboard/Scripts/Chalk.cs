@@ -195,20 +195,15 @@ namespace JanSharp
                 lastSyncedChalkboard = chalkboard;
                 return;
             }
-
-            // Determining what needs to be done and growing he queue if necessary.
             bool changedBoard = chalkboard != lastSyncedChalkboard || (lastTimeAPlayerJoined + LateJoinerSyncDelay) > Time.time;
-            bool resendPrev = changedBoard && hasPrev;
-            if (pointsStageCount + (changedBoard ? 1 : 0) + (resendPrev ? 1 : 0) >= pointsStage.Length)
+            if ((changedBoard ? pointsStageCount + 1 : pointsStageCount) >= pointsStage.Length)
             {
                 var newPointsStage = new int[pointsStageCount * 2];
-                // Can't use CopyTo because the start of the queue/stage is not at the start of the array.
                 for (int i = 0; i < pointsStage.Length; i++)
                     newPointsStage[i] = pointsStage[(i + pointsStageStartIndex) % pointsStage.Length];
                 pointsStage = newPointsStage;
                 pointsStageStartIndex = 0;
             }
-
             if (changedBoard)
             {
                 lastSyncedChalkboard = chalkboard;
@@ -219,22 +214,11 @@ namespace JanSharp
                 pointsStage[(pointsStageStartIndex + (pointsStageCount++)) % pointsStage.Length]
                     = chalkboard.boardId | (IntSwitchToBoardY << AxisBitCount);
             }
-
-            if (resendPrev)
-            {
-                #if ChalkboardDebug
-                Debug.Log($"<dlt> resending point x: {prevX}, y: {prevY}, hasPrev: false");
-                #endif
-                pointsStage[(pointsStageStartIndex + (pointsStageCount++)) % pointsStage.Length]
-                    = prevX | (prevY << AxisBitCount) | (hasPrev ? IntPointHasPrev : 0);
-            }
-
             #if ChalkboardDebug
             Debug.Log($"<dlt> adding point x: {x}, y: {y}, hasPrev: {hasPrev}");
             #endif
             pointsStage[(pointsStageStartIndex + (pointsStageCount++)) % pointsStage.Length]
                 = x | (y << AxisBitCount) | (hasPrev ? IntPointHasPrev : 0);
-
             Networking.SetOwner(Networking.LocalPlayer, this.gameObject);
             RequestSerialization();
         }
