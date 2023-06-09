@@ -178,6 +178,10 @@ namespace JanSharp
                 lastSyncedChalkboard.DrawLine(this, prevX, prevY, toX, toY);
             else
                 lastSyncedChalkboard.DrawPoint(this, toX, toY);
+            // Since this is the only time hasPrev gets set to true it is impossible to accidentally attempt to draw a line
+            // from 0 0 to the given coordinates, no matter the circumstances (specifically even when a joining player
+            // receives an action with hasPrev: true, it'll just draw a single point the first time.)
+            // This is important because not only would it look bad if that line was drawn, I think it would actually throw an exception.
             hasPrev = true;
             prevX = toX;
             prevY = toY;
@@ -195,15 +199,18 @@ namespace JanSharp
                 lastSyncedChalkboard = chalkboard;
                 return;
             }
+
             bool changedBoard = chalkboard != lastSyncedChalkboard || (lastTimeAPlayerJoined + LateJoinerSyncDelay) > Time.time;
             if ((changedBoard ? pointsStageCount + 1 : pointsStageCount) >= pointsStage.Length)
             {
                 var newPointsStage = new int[pointsStageCount * 2];
+                // Can't use CopyTo because the start of the queue/stage is not at the start of the array.
                 for (int i = 0; i < pointsStage.Length; i++)
                     newPointsStage[i] = pointsStage[(i + pointsStageStartIndex) % pointsStage.Length];
                 pointsStage = newPointsStage;
                 pointsStageStartIndex = 0;
             }
+
             if (changedBoard)
             {
                 lastSyncedChalkboard = chalkboard;
@@ -214,6 +221,7 @@ namespace JanSharp
                 pointsStage[(pointsStageStartIndex + (pointsStageCount++)) % pointsStage.Length]
                     = chalkboard.boardId | (IntSwitchToBoardY << AxisBitCount);
             }
+
             #if ChalkboardDebug
             Debug.Log($"<dlt> adding point x: {x}, y: {y}, hasPrev: {hasPrev}");
             #endif
@@ -270,7 +278,7 @@ namespace JanSharp
             #if ChalkboardDebug
             Debug.Log($"<dlt> on post: success: {result.success}, byteCount: {result.byteCount}");
             #endif
-            if (!result.success || ignoreNextSync)
+            if (!result.success)
             {
                 // If it wasn't successful, retry.
                 SendCustomEventDelayedSeconds(nameof(RequestSerializationDelayed), 10f);

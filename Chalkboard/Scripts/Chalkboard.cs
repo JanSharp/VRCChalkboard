@@ -405,7 +405,7 @@ namespace JanSharp
             if (!sending)
             {
                 #if ChalkboardDebug
-                Debug.Log($"<dlt> ICU VRC trying to screw me, no I'm not syncing data right now. Ok at this point the logic actually uses this intentionally.");
+                Debug.Log($"<dlt> Currently not sending or done with sending, sending no-op '0'.");
                 #endif
                 return 0UL;
             }
