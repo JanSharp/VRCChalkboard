@@ -178,6 +178,10 @@ namespace JanSharp
                 lastSyncedChalkboard.DrawLine(this, prevX, prevY, toX, toY);
             else
                 lastSyncedChalkboard.DrawPoint(this, toX, toY);
+            // Since this is the only time hasPrev gets set to true it is impossible to accidentally attempt to draw a line
+            // from 0 0 to the given coordinates, no matter the circumstances (specifically even when a joining player
+            // receives an action with hasPrev: true, it'll just draw a single point the first time.)
+            // This is important because not only would it look bad if that line was drawn, I think it would actually throw an exception.
             hasPrev = true;
             prevX = toX;
             prevY = toY;
