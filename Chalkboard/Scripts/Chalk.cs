@@ -195,15 +195,18 @@ namespace JanSharp
                 lastSyncedChalkboard = chalkboard;
                 return;
             }
+
             bool changedBoard = chalkboard != lastSyncedChalkboard || (lastTimeAPlayerJoined + LateJoinerSyncDelay) > Time.time;
             if ((changedBoard ? pointsStageCount + 1 : pointsStageCount) >= pointsStage.Length)
             {
                 var newPointsStage = new int[pointsStageCount * 2];
+                // Can't use CopyTo because the start of the queue/stage is not at the start of the array.
                 for (int i = 0; i < pointsStage.Length; i++)
                     newPointsStage[i] = pointsStage[(i + pointsStageStartIndex) % pointsStage.Length];
                 pointsStage = newPointsStage;
                 pointsStageStartIndex = 0;
             }
+
             if (changedBoard)
             {
                 lastSyncedChalkboard = chalkboard;
@@ -214,6 +217,7 @@ namespace JanSharp
                 pointsStage[(pointsStageStartIndex + (pointsStageCount++)) % pointsStage.Length]
                     = chalkboard.boardId | (IntSwitchToBoardY << AxisBitCount);
             }
+
             #if ChalkboardDebug
             Debug.Log($"<dlt> adding point x: {x}, y: {y}, hasPrev: {hasPrev}");
             #endif
