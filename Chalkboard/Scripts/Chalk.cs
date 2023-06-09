@@ -278,7 +278,7 @@ namespace JanSharp
             #if ChalkboardDebug
             Debug.Log($"<dlt> on post: success: {result.success}, byteCount: {result.byteCount}");
             #endif
-            if (!result.success || ignoreNextSync)
+            if (!result.success)
             {
                 // If it wasn't successful, retry.
                 SendCustomEventDelayedSeconds(nameof(RequestSerializationDelayed), 10f);
