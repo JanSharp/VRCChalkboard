@@ -374,7 +374,7 @@ namespace JanSharp
         {
             RotationGrip rotationGrip = (RotationGrip)behaviour;
             rotationGrip.pickup = rotationGrip.GetComponent<VRC_Pickup>();
-            rotationGrip.updateManager = GameObject.Find("/UpdateManager")?.GetUdonSharpComponent<UpdateManager>();
+            rotationGrip.updateManager = GameObject.Find("/UpdateManager")?.GetComponent<UpdateManager>();
             if (rotationGrip.updateManager == null)
             {
                 Debug.LogError("RotationGrip requires a GameObject that must be at the root of the scene "
@@ -386,7 +386,6 @@ namespace JanSharp
             rotationGrip.dummyTransform = rotationGrip.updateManager.transform;
             rotationGrip.initialDistance = rotationGrip.toRotate.InverseTransformDirection(rotationGrip.transform.position - rotationGrip.toRotate.position).magnitude;
             rotationGrip.SnapBack();
-            rotationGrip.ApplyProxyModifications();
             return true;
         }
     }
