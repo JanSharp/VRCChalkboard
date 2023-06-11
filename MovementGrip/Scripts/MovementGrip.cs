@@ -168,7 +168,7 @@ namespace JanSharp
         {
             MovementGrip movementGrip = (MovementGrip)behaviour;
             movementGrip.pickup = movementGrip.GetComponent<VRC_Pickup>();
-            movementGrip.updateManager = GameObject.Find("/UpdateManager")?.GetUdonSharpComponent<UpdateManager>();
+            movementGrip.updateManager = GameObject.Find("/UpdateManager")?.GetComponent<UpdateManager>();
             if (movementGrip.updateManager == null)
             {
                 Debug.LogError("MovementGrip requires a GameObject that must be at the root of the scene "
@@ -182,7 +182,6 @@ namespace JanSharp
             movementGrip.positionOffsetFromTargetToThis = movementGrip.toMove.InverseTransformVector(movementGrip.transform.position - movementGrip.toMove.position);
             movementGrip.rotationOffsetFromTargetToThis = Quaternion.Inverse(movementGrip.toMove.rotation) * movementGrip.transform.rotation;
             movementGrip.SnapBack();
-            movementGrip.ApplyProxyModifications();
             return true;
         }
     }
