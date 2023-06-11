@@ -27,6 +27,8 @@ namespace JanSharp
         private int itemsCount;
         [UdonSynced] private float[] syncedScales;
         [UdonSynced] private ushort[] syncedItemIds;
+        private int requestedSerializationCount;
+        private bool waitingForOwnerToSendData;
 
         private void Start()
         {
@@ -75,6 +77,34 @@ namespace JanSharp
             itemsCount++;
         }
 
+        public override void OnPlayerJoined(VRCPlayerApi player)
+        {
+            if (Networking.LocalPlayer.IsOwner(this.gameObject) && VRCPlayerApi.GetPlayerCount() != 1)
+            {
+                SendCustomEventDelayedSeconds(nameof(RequestSerializationDelayed), 8f);
+                requestedSerializationCount++;
+            }
+            else
+            {
+                waitingForOwnerToSendData = true;
+            }
+        }
+
+        public override void OnOwnershipTransferred(VRCPlayerApi player)
+        {
+            if (waitingForOwnerToSendData && Networking.LocalPlayer.IsOwner(this.gameObject))
+            {
+                SendCustomEventDelayedSeconds(nameof(RequestSerializationDelayed), 8f);
+                requestedSerializationCount++;
+            }
+        }
+
+        public void RequestSerializationDelayed()
+        {
+            if ((--requestedSerializationCount) == 0)
+                RequestSerialization();
+        }
+
         public override void OnPreSerialization()
         {
             if (syncedItemIds == null || syncedItemIds.Length != itemsCount)
@@ -91,6 +121,7 @@ namespace JanSharp
 
         public override void OnDeserialization()
         {
+            waitingForOwnerToSendData = false;
             if (syncedItemIds == null) // just in case
                 return;
             int count = 16;
@@ -136,7 +167,6 @@ namespace JanSharp
                 }
                 target.items = itemsList.ToArray();
                 target.initialScales = itemsList.Select(go => go.transform.localScale).ToArray();
-                target.ApplyProxyModifications();
                 EditorUtility.SetDirty(target);
             }
         }
