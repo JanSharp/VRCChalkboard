@@ -3,7 +3,7 @@
 
 ## [1.1.0] - 2023-06-11
 
-### Updated
+### Changed
 
 - **Breaking:** Remove and change use of deprecated UdonSharp editor functions (`8d198de`)
 - **Breaking:** Use refactored OnBuildUtil (`17dbab8`)
