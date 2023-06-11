@@ -14,9 +14,6 @@ namespace JanSharp
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class VFXTargetGun : UdonSharpBehaviour
-    #if UNITY_EDITOR && !COMPILER_UDONSHARP
-        , IOnBuildCallback
-    #endif
     {
         [Header("Configuration")]
         [SerializeField] private float maxDistance = 250f;
@@ -46,7 +43,7 @@ namespace JanSharp
         [SerializeField] private ScrollRect scrollRect;
         [SerializeField] private GameObject uiToggle;
         [SerializeField] private UdonBehaviour placeDeleteModeToggle;
-        [SerializeField] private GameObject gunMesh;
+        public GameObject gunMesh;
         [SerializeField] private VRC_Pickup pickup;
         public VRC_Pickup Pickup => pickup;
         [SerializeField] private Transform aimPoint;
@@ -62,34 +59,14 @@ namespace JanSharp
         [SerializeField] private TextMeshPro selectedEffectNameTextLeftHand;
         [SerializeField] private TextMeshPro selectedEffectNameTextRightHand;
         [SerializeField] private TextMeshProUGUI legendText;
-        [SerializeField] private Button placeModeButton;
+        public Button placeModeButton;
         [SerializeField] private Button deleteModeButton;
         [SerializeField] private Button editModeButton;
         [SerializeField] private Sprite selectedSprite;
 
         // set OnBuild
-        [SerializeField] [HideInInspector] private MeshRenderer[] gunMeshRenderers;
-        [SerializeField] [HideInInspector] private Sprite normalSprite;
-
-        #if UNITY_EDITOR && !COMPILER_UDONSHARP
-        [InitializeOnLoad]
-        public static class OnBuildRegister
-        {
-            static OnBuildRegister() => JanSharp.OnBuildUtil.RegisterType<VFXTargetGun>();
-        }
-        bool IOnBuildCallback.OnBuild()
-        {
-            if (gunMesh == null || placeModeButton == null)
-            {
-                Debug.LogError("VFX Target gun requires all internal references to be set in the inspector.");
-                return false;
-            }
-            gunMeshRenderers = gunMesh.GetComponentsInChildren<MeshRenderer>();
-            normalSprite = placeModeButton.image.sprite;
-            this.ApplyProxyModifications();
-            return true;
-        }
-        #endif
+        [HideInInspector] public MeshRenderer[] gunMeshRenderers;
+        [HideInInspector] public Sprite normalSprite;
 
         private const int UnknownMode = 0;
         private const int PlaceMode = 1;
@@ -765,4 +742,26 @@ namespace JanSharp
             isReceiving = false;
         }
     }
+
+    #if UNITY_EDITOR && !COMPILER_UDONSHARP
+    [InitializeOnLoad]
+    public static class VFXTargetGunOnBuild
+    {
+        static VFXTargetGunOnBuild() => JanSharp.OnBuildUtil.RegisterType<VFXTargetGun>(OnBuild);
+
+        private static bool OnBuild(UdonSharpBehaviour behaviour)
+        {
+            VFXTargetGun vfxTargetGun = (VFXTargetGun)behaviour;
+            if (vfxTargetGun.gunMesh == null || vfxTargetGun.placeModeButton == null)
+            {
+                Debug.LogError("VFX Target gun requires all internal references to be set in the inspector.");
+                return false;
+            }
+            vfxTargetGun.gunMeshRenderers = vfxTargetGun.gunMesh.GetComponentsInChildren<MeshRenderer>();
+            vfxTargetGun.normalSprite = vfxTargetGun.placeModeButton.image.sprite;
+            vfxTargetGun.ApplyProxyModifications();
+            return true;
+        }
+    }
+    #endif
 }
