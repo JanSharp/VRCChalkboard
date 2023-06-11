@@ -1,4 +1,4 @@
-﻿using UdonSharp;
+using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
@@ -136,7 +136,6 @@ namespace JanSharp
                 }
                 target.items = itemsList.ToArray();
                 target.initialScales = itemsList.Select(go => go.transform.localScale).ToArray();
-                target.ApplyProxyModifications();
                 EditorUtility.SetDirty(target);
             }
         }
