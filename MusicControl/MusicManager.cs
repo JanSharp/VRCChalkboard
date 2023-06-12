@@ -18,8 +18,6 @@ namespace JanSharp
             {
                 if (defaultMusic == value)
                     return;
-                defaultMusic.isCurrentDefaultMusic = false;
-                value.isCurrentDefaultMusic = true;
                 ReplaceMusic(0, value);
                 defaultMusic = value;
                 defaultMusicIndex = value.Index;
@@ -89,7 +87,6 @@ namespace JanSharp
                 descriptors[i].Init(this, i);
             musicList = new MusicDescriptor[8];
             musicListIds = new uint[8];
-            DefaultMusic.isCurrentDefaultMusic = true;
             musicListCount++;
             SetMusic(0, nextMusicId++, DefaultMusic);
             defaultMusicIndex = DefaultMusic.Index;
@@ -136,7 +133,8 @@ namespace JanSharp
             {
                 var descriptor = musicList[i];
                 // on priority collision the last one added "wins"
-                if (toAdd.Priority >= descriptor.Priority)
+                // 0 is always the default music, so upon reaching index 0, set the music to be at index 1.
+                if (toAdd.Priority >= descriptor.Priority || i == 0)
                 {
                     SetMusic(i + 1, nextMusicId, toAdd);
                     break;
