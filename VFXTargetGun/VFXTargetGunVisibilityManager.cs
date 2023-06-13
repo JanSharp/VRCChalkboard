@@ -73,7 +73,7 @@ namespace JanSharp
                     var copy = Instantiate(original, d.position, d.rotation, d.parent);
                     copy.name = d.name;
                     copy.transform.localScale = d.localScale;
-                    target.guns[d.i] = copy.GetUdonSharpComponent<VFXTargetGun>();
+                    target.guns[d.i] = copy.GetComponent<VFXTargetGun>();
                     Undo.RegisterCreatedObjectUndo(copy, "Updated Duplicate");
                 }
             }

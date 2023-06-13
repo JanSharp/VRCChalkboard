@@ -53,7 +53,7 @@ When this is true said second rotation is random."
         {
             if (placePreview == null)
             {
-                var obj = VRCInstantiate(originalEffectObject);
+                var obj = Instantiate(originalEffectObject);
                 placePreview = obj.transform;
                 placePreview.parent = this.transform;
                 // replace all materials
@@ -76,7 +76,7 @@ When this is true said second rotation is random."
         {
             if (deletePreview == null)
             {
-                var obj = VRCInstantiate(originalEffectObject);
+                var obj = Instantiate(originalEffectObject);
                 deletePreview = obj.transform;
                 deletePreview.parent = this.transform;
                 // replace all materials
@@ -212,7 +212,7 @@ When this is true said second rotation is random."
 
         private void MakeButton()
         {
-            var button = VRCInstantiate(gun.ButtonPrefab);
+            var button = Instantiate(gun.ButtonPrefab);
             button.transform.SetParent(gun.ButtonGrid, false);
             buttonData = (EffectButtonData)button.GetComponent(typeof(UdonBehaviour));
             buttonData.descriptor = this;
@@ -293,7 +293,7 @@ When this is true said second rotation is random."
             // which ultimately just makes me believe it is VRCInstantiate not behaving. So, my solution is to simply not use the original object
             // except for creating copies of it and then modifying the copies. It's a waste of memory and performance
             // and an unused game object in the world but what am I supposed to do
-            var obj = VRCInstantiate(originalEffectObject);
+            var obj = Instantiate(originalEffectObject);
             effectTransform = obj.transform;
             effectTransform.parent = effectClonesParent;
             EffectParents[index] = effectTransform;
@@ -653,7 +653,6 @@ When this is true said second rotation is random."
             descriptor.gun = gun;
             descriptor.orderSync = gun.OrderSync;
             descriptor.index = index;
-            descriptor.ApplyProxyModifications();
         }
 
         static EffectDescriptorOnBuild() => JanSharp.OnBuildUtil.RegisterType<EffectDescriptor>(OnBuild);
@@ -755,7 +754,6 @@ When this is true said second rotation is random."
                 descriptor.doLimitDistance = false;
             }
 
-            descriptor.ApplyProxyModifications();
             return true;
         }
     }

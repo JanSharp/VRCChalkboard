@@ -879,7 +879,7 @@ namespace JanSharp
             bool result = true;
             for (int i = 0; i < effectsParent.childCount; i++)
             {
-                var descriptor = effectsParent.GetChild(i).GetUdonSharpComponent<EffectDescriptor>();
+                var descriptor = effectsParent.GetChild(i).GetComponent<EffectDescriptor>();
                 vfxTargetGun.descriptors[i] = descriptor;
                 if (descriptor == null)
                 {
@@ -890,7 +890,6 @@ namespace JanSharp
                 else
                     EffectDescriptorOnBuild.InitAtBuildTime(descriptor, vfxTargetGun, i);
             }
-            vfxTargetGun.ApplyProxyModifications();
             return result;
         }
     }
