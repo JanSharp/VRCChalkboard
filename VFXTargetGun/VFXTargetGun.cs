@@ -14,9 +14,6 @@ namespace JanSharp
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class VFXTargetGun : UdonSharpBehaviour
-    #if UNITY_EDITOR && !COMPILER_UDONSHARP
-        , IOnBuildCallback
-    #endif
     {
         [Header("Configuration")]
         [SerializeField] private float maxDistance = 250f;
@@ -36,7 +33,7 @@ namespace JanSharp
         [SerializeField] private GameObject buttonPrefab;
         public GameObject ButtonPrefab => buttonPrefab;
         [SerializeField] private float buttonHeight = 90f;
-        [SerializeField] private Transform effectsParent;
+        public Transform effectsParent;
         [SerializeField] private BoxCollider uiCanvasCollider;
         [SerializeField] private RectTransform itemUIContainer;
         [SerializeField] private RectTransform screenUIContainer;
@@ -46,7 +43,7 @@ namespace JanSharp
         [SerializeField] private ScrollRect scrollRect;
         [SerializeField] private GameObject uiToggle;
         [SerializeField] private UdonBehaviour placeDeleteModeToggle;
-        [SerializeField] private GameObject gunMesh;
+        public GameObject gunMesh;
         [SerializeField] private VRC_Pickup pickup;
         public VRC_Pickup Pickup => pickup;
         [SerializeField] private Transform aimPoint;
@@ -62,58 +59,23 @@ namespace JanSharp
         [SerializeField] private TextMeshPro selectedEffectNameTextLeftHand;
         [SerializeField] private TextMeshPro selectedEffectNameTextRightHand;
         [SerializeField] private TextMeshProUGUI legendText;
-        [SerializeField] private Button placeModeButton;
+        public Button placeModeButton;
         [SerializeField] private Button deleteModeButton;
         [SerializeField] private Button editModeButton;
         [SerializeField] private Toggle placePreviewToggle;
         [SerializeField] private Toggle deletePreviewToggle;
         [SerializeField] private Toggle editPreviewToggle;
         [SerializeField] private Sprite selectedSprite;
-        [SerializeField] private EffectOrderSync orderSync;
+        public EffectOrderSync orderSync;
         public EffectOrderSync OrderSync => orderSync;
         [SerializeField] private VFXTargetGunEffectsFullSync fullSync;
         [SerializeField] public Material placePreviewMaterial;
         [SerializeField] public Material deletePreviewMaterial;
 
         // set OnBuild
-        [SerializeField] [HideInInspector] private MeshRenderer[] gunMeshRenderers;
-        [SerializeField] [HideInInspector] private Sprite normalSprite;
+        [HideInInspector] public MeshRenderer[] gunMeshRenderers;
+        [HideInInspector] public Sprite normalSprite;
         [SerializeField] [HideInInspector] public EffectDescriptor[] descriptors;
-
-        #if UNITY_EDITOR && !COMPILER_UDONSHARP
-        [InitializeOnLoad]
-        public static class OnBuildRegister
-        {
-            static OnBuildRegister() => JanSharp.OnBuildUtil.RegisterType<VFXTargetGun>();
-        }
-        bool IOnBuildCallback.OnBuild()
-        {
-            if (gunMesh == null || placeModeButton == null || effectsParent == null || orderSync == null)
-            {
-                Debug.LogError("VFX Target gun requires all internal references to be set in the inspector.");
-                return false;
-            }
-            gunMeshRenderers = gunMesh.GetComponentsInChildren<MeshRenderer>();
-            normalSprite = placeModeButton.image.sprite;
-            descriptors = new EffectDescriptor[effectsParent.childCount];
-            bool result = true;
-            for (int i = 0; i < effectsParent.childCount; i++)
-            {
-                var descriptor = effectsParent.GetChild(i).GetUdonSharpComponent<EffectDescriptor>();
-                descriptors[i] = descriptor;
-                if (descriptor == null)
-                {
-                    Debug.LogError($"The child #{i + 1} ({effectsParent.GetChild(i).name}) "
-                        + $"of the effects descriptor parent does not have an {nameof(EffectDescriptor)}.");
-                    result = false;
-                }
-                else
-                    descriptor.InitAtBuildTime(this, i);
-            }
-            this.ApplyProxyModifications();
-            return result;
-        }
-        #endif
 
         private const int UnknownMode = 0;
         private const int PlaceMode = 1;
@@ -892,4 +854,45 @@ namespace JanSharp
             isReceiving = false;
         }
     }
+
+    #if UNITY_EDITOR && !COMPILER_UDONSHARP
+    [InitializeOnLoad]
+    public static class VFXTargetGunOnBuild
+    {
+        static VFXTargetGunOnBuild() => JanSharp.OnBuildUtil.RegisterType<VFXTargetGun>(OnBuild);
+
+        private static bool OnBuild(UdonSharpBehaviour behaviour)
+        {
+            VFXTargetGun vfxTargetGun = (VFXTargetGun)behaviour;
+            if (vfxTargetGun.gunMesh == null
+                || vfxTargetGun.placeModeButton == null
+                || vfxTargetGun.effectsParent == null
+                || vfxTargetGun.orderSync == null)
+            {
+                Debug.LogError("VFX Target gun requires all internal references to be set in the inspector.");
+                return false;
+            }
+            vfxTargetGun.gunMeshRenderers = vfxTargetGun.gunMesh.GetComponentsInChildren<MeshRenderer>();
+            vfxTargetGun.normalSprite = vfxTargetGun.placeModeButton.image.sprite;
+            Transform effectsParent = vfxTargetGun.effectsParent;
+            vfxTargetGun.descriptors = new EffectDescriptor[effectsParent.childCount];
+            bool result = true;
+            for (int i = 0; i < effectsParent.childCount; i++)
+            {
+                var descriptor = effectsParent.GetChild(i).GetUdonSharpComponent<EffectDescriptor>();
+                vfxTargetGun.descriptors[i] = descriptor;
+                if (descriptor == null)
+                {
+                    Debug.LogError($"The child #{i + 1} ({effectsParent.GetChild(i).name}) "
+                        + $"of the effects descriptor parent does not have an {nameof(EffectDescriptor)}.");
+                    result = false;
+                }
+                else
+                    EffectDescriptorOnBuild.InitAtBuildTime(descriptor, vfxTargetGun, i);
+            }
+            vfxTargetGun.ApplyProxyModifications();
+            return result;
+        }
+    }
+    #endif
 }
