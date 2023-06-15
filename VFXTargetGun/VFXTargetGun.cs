@@ -33,7 +33,7 @@ namespace JanSharp
         [SerializeField] private GameObject buttonPrefab;
         public GameObject ButtonPrefab => buttonPrefab;
         [SerializeField] private float buttonHeight = 90f;
-        [SerializeField] private Transform effectsParent;
+        public Transform effectsParent;
         [SerializeField] private BoxCollider uiCanvasCollider;
         [SerializeField] private RectTransform itemUIContainer;
         [SerializeField] private RectTransform screenUIContainer;
@@ -62,11 +62,20 @@ namespace JanSharp
         public Button placeModeButton;
         [SerializeField] private Button deleteModeButton;
         [SerializeField] private Button editModeButton;
+        [SerializeField] private Toggle placePreviewToggle;
+        [SerializeField] private Toggle deletePreviewToggle;
+        [SerializeField] private Toggle editPreviewToggle;
         [SerializeField] private Sprite selectedSprite;
+        public EffectOrderSync orderSync;
+        public EffectOrderSync OrderSync => orderSync;
+        [SerializeField] private VFXTargetGunEffectsFullSync fullSync;
+        [SerializeField] public Material placePreviewMaterial;
+        [SerializeField] public Material deletePreviewMaterial;
 
         // set OnBuild
         [HideInInspector] public MeshRenderer[] gunMeshRenderers;
         [HideInInspector] public Sprite normalSprite;
+        [SerializeField] [HideInInspector] public EffectDescriptor[] descriptors;
 
         private const int UnknownMode = 0;
         private const int PlaceMode = 1;
@@ -163,7 +172,6 @@ namespace JanSharp
             }
         }
         private bool initialized;
-        private EffectDescriptor[] descriptors;
         private EffectDescriptor selectedEffect;
         public EffectDescriptor SelectedEffect
         {
@@ -172,9 +180,15 @@ namespace JanSharp
             {
                 if (value == selectedEffect)
                     return;
+                DeleteTargetIndex = -1; // set before changing selected effect
+                IsPlacePreviewActive = false; // disable before changing selected effect so the current preview gets disabled
+                selectedDeletePreview = null; // this can be anywhere but I put it here for organization
+                selectedPlacePreview = null; // this however has to be here, after `IsPlacePreviewActive = false` but before `UpdateIsPlacePreviewActiveBasedOnToggle`
                 if (selectedEffect != null)
                     selectedEffect.Selected = false;
                 selectedEffect = value; // update `selectedEffect` before setting `Selected` to true on an effect descriptor
+                UpdateIsPlacePreviewActiveBasedOnToggle();
+                UpdateIsDeletePreviewActiveBasedOnToggle();
                 if (value == null)
                 {
                     UpdateColors();
@@ -183,6 +197,7 @@ namespace JanSharp
                     IsPlaceIndicatorActive = false;
                     IsDeleteIndicatorActive = false;
                     laser.gameObject.SetActive(false);
+                    IsDeletePreviewActive = false;
                 }
                 else
                 {
@@ -193,6 +208,7 @@ namespace JanSharp
                         laser.gameObject.SetActive(true);
                     deleteIndicator.localScale = value.effectScale;
                     placeIndicatorForwardsArrow.SetActive(!value.randomizeRotation);
+                    IsDeletePreviewActive = value.IsObject && deletePreviewToggle.isOn;
                 }
                 UpdateUseText();
                 if (!isReceiving)
@@ -272,7 +288,20 @@ namespace JanSharp
             RequestSerialization();
         }
 
-        private int deleteTargetIndex;
+        private int deleteTargetIndex = -1;
+        private int DeleteTargetIndex
+        {
+            get => deleteTargetIndex;
+            set
+            {
+                if (deleteTargetIndex == value)
+                    return;
+                if (SelectedEffect != null && SelectedEffect.IsObject && deleteTargetIndex != -1)
+                    SelectedEffect.EffectParents[deleteTargetIndex].gameObject.SetActive(SelectedEffect.ActiveEffects[deleteTargetIndex]);
+                deleteTargetIndex = value;
+                UpdateDeletePreview();
+            }
+        }
         private bool isDeleteIndicatorActive;
         private bool IsDeleteIndicatorActive
         {
@@ -282,11 +311,50 @@ namespace JanSharp
                 if (isDeleteIndicatorActive == value)
                     return;
                 isDeleteIndicatorActive = value;
-                deleteIndicator.gameObject.SetActive(value);
                 secondLaser.gameObject.SetActive(value);
+                UpdateDeletePreview();
                 UpdateUseText();
+                if (!value)
+                    DeleteTargetIndex = -1;
             }
         }
+        private bool isDeletePreviewActive;
+        private bool IsDeletePreviewActive
+        {
+            get => isDeletePreviewActive;
+            set
+            {
+                if (isDeletePreviewActive == value)
+                    return;
+                isDeletePreviewActive = value;
+                UpdateDeletePreview();
+            }
+        }
+        public void UpdateIsDeletePreviewActiveBasedOnToggle()
+            => IsDeletePreviewActive = deletePreviewToggle.isOn && SelectedEffect != null && SelectedEffect.IsObject;
+        private Transform selectedDeletePreview;
+        private void UpdateDeletePreview()
+        {
+            if (IsDeleteIndicatorActive && IsDeletePreviewActive && DeleteTargetIndex != -1)
+            {
+                if (selectedDeletePreview == null)
+                    selectedDeletePreview = SelectedEffect.GetDeletePreview();
+                selectedDeletePreview.gameObject.SetActive(true);
+                var effectParent = SelectedEffect.EffectParents[DeleteTargetIndex];
+                selectedDeletePreview.SetPositionAndRotation(effectParent.position, effectParent.rotation);
+                effectParent.gameObject.SetActive(false);
+                deleteIndicator.gameObject.SetActive(false);
+            }
+            else
+            {
+                if (selectedDeletePreview != null)
+                    selectedDeletePreview.gameObject.SetActive(false);
+                if (DeleteTargetIndex != -1)
+                    SelectedEffect.EffectParents[DeleteTargetIndex].gameObject.SetActive(true);
+                deleteIndicator.gameObject.SetActive(IsDeleteIndicatorActive);
+            }
+        }
+
         private bool isPlaceIndicatorActive;
         private bool IsPlaceIndicatorActive
         {
@@ -297,8 +365,40 @@ namespace JanSharp
                     return;
                 isPlaceIndicatorActive = value;
                 placeIndicator.gameObject.SetActive(value);
+                UpdatePlacePreview();
             }
         }
+        private bool isPlacePreviewActive;
+        private bool IsPlacePreviewActive
+        {
+            get => isPlacePreviewActive;
+            set
+            {
+                if (isPlacePreviewActive == value)
+                    return;
+                isPlacePreviewActive = value;
+                UpdatePlacePreview();
+            }
+        }
+        public void UpdateIsPlacePreviewActiveBasedOnToggle()
+            => IsPlacePreviewActive = placePreviewToggle.isOn && SelectedEffect != null && SelectedEffect.IsObject;
+        private Transform selectedPlacePreview;
+        private void UpdatePlacePreview()
+        {
+            if (IsPlaceIndicatorActive && IsPlacePreviewActive)
+            {
+                if (selectedPlacePreview == null)
+                    selectedPlacePreview = SelectedEffect.GetPlacePreview();
+                selectedPlacePreview.gameObject.SetActive(true);
+                selectedPlacePreview.SetPositionAndRotation(placeIndicator.position, placeIndicator.rotation);
+            }
+            else
+            {
+                if (selectedPlacePreview != null)
+                    selectedPlacePreview.gameObject.SetActive(false);
+            }
+        }
+
         private bool isVisible;
         public bool IsVisible
         {
@@ -351,17 +451,11 @@ namespace JanSharp
             legendText.text = $"[<b><color=#{ToHex(activeColor, false):X6}>once</color>: <color=#{ToHex(activeColor, false):X6}>on</color>/<color=#{ToHex(inactiveColor, false):X6}>off</color></b>] "
                 + $"[<b><color=#{ToHex(activeLoopColor, false):X6}>loop</color>: <color=#{ToHex(activeLoopColor, false):X6}>on</color>/<color=#{ToHex(inactiveLoopColor, false):X6}>off</color></b>] "
                 + $"[<b><color=#{ToHex(activeObjectColor, false):X6}>object</color>: <color=#{ToHex(activeObjectColor, false):X6}>on</color>/<color=#{ToHex(inactiveObjectColor, false):X6}>off</color></b>]";
-            int count = effectsParent.childCount;
-            descriptors = new EffectDescriptor[count];
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < descriptors.Length; i++)
             {
-                var descriptor = (EffectDescriptor)effectsParent.GetChild(i).GetComponent(typeof(UdonBehaviour));
-                descriptors[i] = descriptor;
-                if (descriptors[i] == null)
-                    Debug.LogError($"The child #{i + 1} ({effectsParent.GetChild(i).name}) "
-                        + "of the effects descriptor parent does not have an EffectDescriptor.");
-                else
-                    descriptor.Init(this, i);
+                var descriptor = descriptors[i];
+                if (descriptor != null)
+                    descriptor.Init();
             }
             if (selectedEffectIndex != -1)
                 SelectedEffect = descriptors[selectedEffectIndex];
@@ -456,6 +550,7 @@ namespace JanSharp
         {
             var localPlayer = Networking.LocalPlayer;
             Networking.SetOwner(localPlayer, this.gameObject);
+            Networking.SetOwner(localPlayer, fullSync.gameObject);
             if (initialized)
                 foreach (var descriptor in descriptors)
                     Networking.SetOwner(localPlayer, descriptor.gameObject);
@@ -477,7 +572,7 @@ namespace JanSharp
             {
                 if (IsDeleteIndicatorActive)
                 {
-                    SelectedEffect.StopToggleEffect(deleteTargetIndex);
+                    SelectedEffect.StopToggleEffect(DeleteTargetIndex);
                     IsDeleteIndicatorActive = false;
                 }
             }
@@ -665,7 +760,15 @@ namespace JanSharp
                 laser.localScale = new Vector3(1f, 1f, (aimPoint.position - hit.point).magnitude * laserBaseScale);
                 if (IsPlaceMode)
                 {
-                    placeIndicator.SetPositionAndRotation(hit.point, Quaternion.LookRotation(hit.normal, aimPoint.forward));
+                    var position = hit.point;
+                    var rotation = Quaternion.LookRotation(hit.normal, aimPoint.forward);
+                    placeIndicator.SetPositionAndRotation(position, rotation);
+                    if (IsPlacePreviewActive && selectedPlacePreview != null)
+                    {
+                        if (SelectedEffect.randomizeRotation)
+                            rotation = rotation * SelectedEffect.nextRandomRotation;
+                        selectedPlacePreview.SetPositionAndRotation(position, rotation);
+                    }
                     IsPlaceIndicatorActive = true;
                 }
                 else if (IsDeleteMode)
@@ -677,23 +780,32 @@ namespace JanSharp
                         return;
                     }
                     Transform effectParent;
-                    Transform mainEffectTransform = ((Component)SelectedEffect).transform; // UdonSharp being picky
-                    if (hit.transform.IsChildOf(mainEffectTransform))
+                    Transform effectClonesParent = SelectedEffect.effectClonesParent;
+                    // the `hit.transform` can be null when pointing at VRChat's internal things such as the VRChat menu
+                    // or VRChat players. I'm assuming it is an udon specific thing where they null out any transform/component you're
+                    // trying to get if it is one of their internal ones
+                    if (hit.transform != null && hit.transform.IsChildOf(effectClonesParent))
                     {
                         effectParent = hit.transform;
                         while (true)
                         {
                             var parent = effectParent.parent;
-                            if (parent == mainEffectTransform)
+                            if (parent == effectClonesParent)
                                 break;
                             effectParent = parent;
                         }
-                        deleteTargetIndex = effectParent.GetSiblingIndex() - 2;
+                        DeleteTargetIndex = effectParent.GetSiblingIndex();
+                    }
+                    else if (IsDeleteIndicatorActive && IsDeletePreviewActive && hit.transform != null && selectedDeletePreview != null
+                        && hit.transform.IsChildOf(selectedDeletePreview))
+                    {
+                        // do nothing :)
+                        effectParent = SelectedEffect.EffectParents[DeleteTargetIndex];
                     }
                     else
                     {
-                        deleteTargetIndex = SelectedEffect.GetNearestActiveEffect(hit.point);
-                        effectParent = SelectedEffect.EffectParents[deleteTargetIndex];
+                        DeleteTargetIndex = SelectedEffect.GetNearestActiveEffect(hit.point);
+                        effectParent = SelectedEffect.EffectParents[DeleteTargetIndex];
                     }
                     Vector3 position = effectParent.position + effectParent.TransformDirection(SelectedEffect.effectLocalCenter);
                     if (SelectedEffect.doLimitDistance && (position - hit.point).magnitude > Mathf.Max(1f, SelectedEffect.effectScale.x * 0.65f))
@@ -741,6 +853,37 @@ namespace JanSharp
             lastHeldTime = lastHeldTimeOffset + Time.time;
             isReceiving = false;
         }
+
+        private int requestSerializationCount = 0;
+        private bool waitingForOwnerToSendData = false;
+
+        public override void OnPlayerJoined(VRCPlayerApi player)
+        {
+            if (Networking.IsOwner(this.gameObject))
+            {
+                requestSerializationCount++;
+                SendCustomEventDelayedSeconds(nameof(RequestSerializationDelayed), 9f);
+            }
+            else
+            {
+                waitingForOwnerToSendData = true;
+            }
+        }
+
+        public override void OnOwnershipTransferred(VRCPlayerApi player)
+        {
+            if (waitingForOwnerToSendData && Networking.IsOwner(this.gameObject))
+            {
+                requestSerializationCount++;
+                SendCustomEventDelayedSeconds(nameof(RequestSerializationDelayed), 9f);
+            }
+        }
+
+        public void RequestSerializationDelayed()
+        {
+            if ((--requestSerializationCount) == 0)
+                RequestSerialization();
+        }
     }
 
     #if UNITY_EDITOR && !COMPILER_UDONSHARP
@@ -752,15 +895,33 @@ namespace JanSharp
         private static bool OnBuild(UdonSharpBehaviour behaviour)
         {
             VFXTargetGun vfxTargetGun = (VFXTargetGun)behaviour;
-            if (vfxTargetGun.gunMesh == null || vfxTargetGun.placeModeButton == null)
+            if (vfxTargetGun.gunMesh == null
+                || vfxTargetGun.placeModeButton == null
+                || vfxTargetGun.effectsParent == null
+                || vfxTargetGun.orderSync == null)
             {
                 Debug.LogError("VFX Target gun requires all internal references to be set in the inspector.");
                 return false;
             }
             vfxTargetGun.gunMeshRenderers = vfxTargetGun.gunMesh.GetComponentsInChildren<MeshRenderer>();
             vfxTargetGun.normalSprite = vfxTargetGun.placeModeButton.image.sprite;
-            vfxTargetGun.ApplyProxyModifications();
-            return true;
+            Transform effectsParent = vfxTargetGun.effectsParent;
+            vfxTargetGun.descriptors = new EffectDescriptor[effectsParent.childCount];
+            bool result = true;
+            for (int i = 0; i < effectsParent.childCount; i++)
+            {
+                var descriptor = effectsParent.GetChild(i).GetComponent<EffectDescriptor>();
+                vfxTargetGun.descriptors[i] = descriptor;
+                if (descriptor == null)
+                {
+                    Debug.LogError($"The child #{i + 1} ({effectsParent.GetChild(i).name}) "
+                        + $"of the effects descriptor parent does not have an {nameof(EffectDescriptor)}.");
+                    result = false;
+                }
+                else
+                    EffectDescriptorOnBuild.InitAtBuildTime(descriptor, vfxTargetGun, i);
+            }
+            return result;
         }
     }
     #endif

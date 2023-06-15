@@ -96,7 +96,7 @@ completely unrelated, what about a laser to assist with aiming. useful when tryi
 
 pretty much a must for v2:
 
-- [x] info button for keybinds
+- [x] info button for keybindings
 - [x] workaround the local player not existing during the upload process to prevent that annoying error
 - [x] better styling to fit the theme, kind of
 - [x] outline for selected effect
@@ -104,7 +104,22 @@ pretty much a must for v2:
 
 after that:
 
+<!-- cSpell:ignore Factorio -->
+
 - refactor effects for combined pooling and performance
 - Q picking like Factorio (requires effect refactor)
 - preview
 - edit mode
+
+
+
+# Version 0.2.4
+
+preview mode
+unify effects into one pool instead of per gun (test network racing somehow)
+toggle between just modifying stuff placed by this gun or literally everything
+deleting any effect in delete mode, not just the selected one. Nice point and click (maybe there is something smart to be done about loop effects so we don't have to iterate all active ones)
+
+# Version 0.3.0
+
+edit mode

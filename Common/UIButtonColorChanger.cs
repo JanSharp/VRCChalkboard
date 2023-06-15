@@ -23,16 +23,16 @@ namespace JanSharp
             if (GUILayout.Button(new GUIContent("Update Colors", "Sets all colors on the button using the Normal Color of the button.")))
             {
                 var target = (UIButtonColorChanger)this.target;
-                Button button = target.GetComponent<Button>();
-                var color = button.colors.normalColor;
-                Undo.RecordObject(button, "Set UI Button colors");
-                var colors = button.colors;
+                Selectable selectable = target.GetComponent<Selectable>();
+                var color = selectable.colors.normalColor;
+                Undo.RecordObject(selectable, "Set UI Button colors");
+                var colors = selectable.colors;
                 colors.normalColor = color;
                 colors.highlightedColor = color * new Color(0.95f, 0.95f, 0.95f);
                 colors.pressedColor = color * new Color(0.75f, 0.75f, 0.75f);
                 colors.selectedColor = color * new Color(0.95f, 0.95f, 0.95f);
                 colors.disabledColor = color * new Color(0.75f, 0.75f, 0.75f, 0.5f);
-                button.colors = colors;
+                selectable.colors = colors;
             }
         }
     }
