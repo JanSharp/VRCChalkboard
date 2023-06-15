@@ -488,11 +488,16 @@ When this is true said second rotation is random."
 
         private void RequestSync(int index)
         {
+            // Full sync relies on this too, so update it even if we are alone.
+            if (localPlayerIsAlone)
+                EffectOrder[index] = ++orderSync.currentTopOrder;
+
             if (requestedSyncs[index])
                 return;
+            // Otherwise only set the order if it's not already been requested.
+            EffectOrder[index] = ++orderSync.currentTopOrder;
             requestedSyncs[index] = true;
             requestedIndexes[requestedCount++] = index;
-            EffectOrder[index] = ++orderSync.currentTopOrder;
             var localPlayer = Networking.LocalPlayer;
             Networking.SetOwner(localPlayer, orderSync.gameObject);
             Networking.SetOwner(localPlayer, this.gameObject);
@@ -641,6 +646,54 @@ When this is true said second rotation is random."
                 delayedRotations[i - 1] = delayedRotations[i];
             }
             delayedCount--;
+        }
+
+        private int currentPlayerCount;
+        private int CurrentPlayerCount
+        {
+            get => currentPlayerCount;
+            set
+            {
+                currentPlayerCount = value;
+                localPlayerIsAlone = value <= 1;
+            }
+        }
+        private bool localPlayerIsAlone = true;
+        private int requestSerializationCount = 0;
+        private bool waitingForOwnerToSendData = false;
+
+        public override void OnPlayerJoined(VRCPlayerApi player)
+        {
+            CurrentPlayerCount++;
+            if (Networking.IsOwner(this.gameObject))
+            {
+                requestSerializationCount++;
+                SendCustomEventDelayedSeconds(nameof(RequestSerializationDelayed), 9f);
+            }
+            else
+            {
+                waitingForOwnerToSendData = true;
+            }
+        }
+
+        public override void OnPlayerLeft(VRCPlayerApi player)
+        {
+            CurrentPlayerCount--;
+        }
+
+        public override void OnOwnershipTransferred(VRCPlayerApi player)
+        {
+            if (waitingForOwnerToSendData && Networking.IsOwner(this.gameObject))
+            {
+                requestSerializationCount++;
+                SendCustomEventDelayedSeconds(nameof(RequestSerializationDelayed), 9f);
+            }
+        }
+
+        public void RequestSerializationDelayed()
+        {
+            if ((--requestSerializationCount) == 0)
+                RequestSerialization();
         }
     }
 

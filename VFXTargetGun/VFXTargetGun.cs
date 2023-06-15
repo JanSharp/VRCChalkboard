@@ -853,6 +853,37 @@ namespace JanSharp
             lastHeldTime = lastHeldTimeOffset + Time.time;
             isReceiving = false;
         }
+
+        private int requestSerializationCount = 0;
+        private bool waitingForOwnerToSendData = false;
+
+        public override void OnPlayerJoined(VRCPlayerApi player)
+        {
+            if (Networking.IsOwner(this.gameObject))
+            {
+                requestSerializationCount++;
+                SendCustomEventDelayedSeconds(nameof(RequestSerializationDelayed), 9f);
+            }
+            else
+            {
+                waitingForOwnerToSendData = true;
+            }
+        }
+
+        public override void OnOwnershipTransferred(VRCPlayerApi player)
+        {
+            if (waitingForOwnerToSendData && Networking.IsOwner(this.gameObject))
+            {
+                requestSerializationCount++;
+                SendCustomEventDelayedSeconds(nameof(RequestSerializationDelayed), 9f);
+            }
+        }
+
+        public void RequestSerializationDelayed()
+        {
+            if ((--requestSerializationCount) == 0)
+                RequestSerialization();
+        }
     }
 
     #if UNITY_EDITOR && !COMPILER_UDONSHARP
