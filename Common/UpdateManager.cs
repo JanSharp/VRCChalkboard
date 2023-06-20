@@ -54,8 +54,7 @@ namespace JanSharp
         private void GrowListeners()
         {
             Component[] grownListeners = new Component[listeners.Length * 2];
-            for (int i = 0; i < listeners.Length; i++)
-                grownListeners[i] = listeners[i];
+            listeners.CopyTo(grownListeners, 0);
             listeners = grownListeners;
         }
     }
