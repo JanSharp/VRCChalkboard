@@ -25,7 +25,7 @@ namespace JanSharp
             Transform transform;
             if (activeCount == totalCount)
             {
-                var obj = VRCInstantiate(original);
+                var obj = Instantiate(original);
                 obj.SetActive(true);
                 obj.name = original.name + totalCount;
                 transform = obj.transform;
@@ -105,7 +105,6 @@ namespace JanSharp
             instObjectPool.originalLocalPosition = instObjectPool.original.transform.localPosition;
             instObjectPool.originalLocalRotation = instObjectPool.original.transform.localRotation;
             instObjectPool.activeCount = instObjectPool.original.activeSelf ? 1 : 0;
-            instObjectPool.ApplyProxyModifications();
             return instObjectPool.original != null;
         }
     }

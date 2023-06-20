@@ -566,17 +566,16 @@ namespace JanSharp
             itemSync.pickup = itemSync.GetComponent<VRC_Pickup>();
             Debug.Assert(itemSync.pickup != null, "ItemSync must be on a GameObject with a VRC_Pickup component.");
             var updateManagerObj = GameObject.Find("/UpdateManager");
-            itemSync.updateManager = updateManagerObj?.GetUdonSharpComponent<UpdateManager>();
+            itemSync.updateManager = updateManagerObj?.GetComponent<UpdateManager>();
             itemSync.dummyTransform = updateManagerObj?.transform;
             Debug.Assert(itemSync.updateManager != null, "ItemSync requires a GameObject that must be at the root of the scene"
                 + " with the exact name 'UpdateManager' which has the 'UpdateManager' UdonBehaviour."
             );
 
             #if ItemSyncDebug
-            debugController = GameObject.Find("/DebugController")?.GetUdonSharpComponent<ItemSyncDebugController>();
+            debugController = GameObject.Find("/DebugController")?.GetComponent<ItemSyncDebugController>();
             #endif
 
-            itemSync.ApplyProxyModifications();
             return itemSync != null && itemSync != null;
         }
     }

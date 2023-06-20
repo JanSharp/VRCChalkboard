@@ -17,8 +17,8 @@ namespace JanSharp
         [UdonSynced]
         private Vector3 syncScale;
         public float Percentage = .1f;
-        private bool isAdd;
-        private bool isSubtract;
+        // private bool isAdd;
+        // private bool isSubtract;
         public void OnTriggerEnter(Collider other)
         {
             if (other.name.Contains("Item") || other.name.Contains("Alchemy") || other.name.Contains("Ingredient") || other.name.Contains("Coin"))
@@ -43,7 +43,7 @@ namespace JanSharp
         {
             if (Target != null) // NOTE: can use early return
             {
-                isAdd = true;
+                // isAdd = true;
                 syncScale = Target.localScale * (1f + Percentage);
                 Target.localScale = syncScale;
                 Sync();
@@ -56,7 +56,7 @@ namespace JanSharp
             {
                 if (Target.localScale.x > 0) // NOTE: allows actually reaching 0, even if it would take forever
                 {
-                    isSubtract = true;
+                    // isSubtract = true;
                     syncScale = Target.localScale * (1f - Percentage);
                     Target.localScale = syncScale;
                     Sync();
