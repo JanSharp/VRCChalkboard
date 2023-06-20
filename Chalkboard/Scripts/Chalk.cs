@@ -342,9 +342,8 @@ namespace JanSharp
     {
         static ChalkOnBuild() => JanSharp.OnBuildUtil.RegisterType<Chalk>(OnBuild);
 
-        private static bool OnBuild(UdonSharpBehaviour behaviour)
+        private static bool OnBuild(Chalk chalk)
         {
-            Chalk chalk = (Chalk)behaviour;
             chalk.updateManager = GameObject.Find("/UpdateManager")?.GetComponent<UpdateManager>();
             if (chalk.updateManager == null)
                 Debug.LogError("Chalk requires a GameObject that must be at the root of the scene"

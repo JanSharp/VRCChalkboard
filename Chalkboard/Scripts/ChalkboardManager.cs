@@ -27,9 +27,8 @@ namespace JanSharp
 
         static ChalkboardManagerOnBuild() => JanSharp.OnBuildUtil.RegisterType<ChalkboardManager>(OnBuild);
 
-        private static bool OnBuild(UdonSharpBehaviour behaviour)
+        private static bool OnBuild(ChalkboardManager manager)
         {
-            ChalkboardManager manager = (ChalkboardManager)behaviour;
             Cleanup(ref allBoards, ref manager.chalkboards, (board, id) => board.boardId = id);
             Cleanup(ref allChalks, ref manager.chalks, (chalk, id) => chalk.chalkId = id);
             // EditorUtility.SetDirty(UdonSharpEditorUtility.GetBackingUdonBehaviour(this));

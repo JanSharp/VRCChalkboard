@@ -69,9 +69,8 @@ namespace JanSharp
     {
         static InstObjectPoolOnBuild() => JanSharp.OnBuildUtil.RegisterType<InstObjectPool>(OnBuild);
 
-        private static bool OnBuild(UdonSharpBehaviour behaviour)
+        private static bool OnBuild(InstObjectPool instObjectPool)
         {
-            InstObjectPool instObjectPool = (InstObjectPool)behaviour;
             if (instObjectPool.transform.childCount == 2)
             {
                 instObjectPool.activeParent = instObjectPool.transform.GetChild(0);

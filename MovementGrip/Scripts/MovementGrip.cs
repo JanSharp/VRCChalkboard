@@ -164,9 +164,8 @@ namespace JanSharp
     {
         static MovementGripOnBuild() => JanSharp.OnBuildUtil.RegisterType<MovementGrip>(OnBuild);
 
-        internal static bool OnBuild(UdonSharpBehaviour behaviour)
+        internal static bool OnBuild(MovementGrip movementGrip)
         {
-            MovementGrip movementGrip = (MovementGrip)behaviour;
             movementGrip.pickup = movementGrip.GetComponent<VRC_Pickup>();
             movementGrip.updateManager = GameObject.Find("/UpdateManager")?.GetComponent<UpdateManager>();
             if (movementGrip.updateManager == null)

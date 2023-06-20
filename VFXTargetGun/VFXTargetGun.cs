@@ -892,9 +892,8 @@ namespace JanSharp
     {
         static VFXTargetGunOnBuild() => JanSharp.OnBuildUtil.RegisterType<VFXTargetGun>(OnBuild);
 
-        private static bool OnBuild(UdonSharpBehaviour behaviour)
+        private static bool OnBuild(VFXTargetGun vfxTargetGun)
         {
-            VFXTargetGun vfxTargetGun = (VFXTargetGun)behaviour;
             if (vfxTargetGun.gunMesh == null
                 || vfxTargetGun.placeModeButton == null
                 || vfxTargetGun.effectsParent == null

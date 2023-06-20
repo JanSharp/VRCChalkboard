@@ -370,9 +370,8 @@ namespace JanSharp
     {
         static RotationGripOnBuild() => JanSharp.OnBuildUtil.RegisterType<RotationGrip>(OnBuild);
 
-        private static bool OnBuild(UdonSharpBehaviour behaviour)
+        private static bool OnBuild(RotationGrip rotationGrip)
         {
-            RotationGrip rotationGrip = (RotationGrip)behaviour;
             rotationGrip.pickup = rotationGrip.GetComponent<VRC_Pickup>();
             rotationGrip.updateManager = GameObject.Find("/UpdateManager")?.GetComponent<UpdateManager>();
             if (rotationGrip.updateManager == null)

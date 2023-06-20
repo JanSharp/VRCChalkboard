@@ -11,6 +11,7 @@ using UdonSharp;
 using UdonSharpEditor;
 using VRC.Udon;
 using System.Diagnostics;
+using System.Reflection;
 
 namespace JanSharp
 {
@@ -34,7 +35,7 @@ namespace JanSharp
                 RunOnBuild();
         }
 
-        public static void RegisterType<T>(Func<UdonSharpBehaviour, bool> callback, int order = 0) where T : UdonSharpBehaviour
+        public static void RegisterType<T>(Func<T, bool> callback, int order = 0) where T : UdonSharpBehaviour
         {
             Type type = typeof(T);
             OnBuildCallbackData data;
@@ -53,9 +54,10 @@ namespace JanSharp
                 data = new OnBuildCallbackData(type, new HashSet<int>() { order });
                 typesToLookFor.Add(type, data);
             }
-            typesToLookForList.Add(new OrderedOnBuildCallbackData(data, order, callback));
+            typesToLookForList.Add(new OrderedOnBuildCallbackData(data, order, callback.Method, callback.Target));
         }
 
+        [MenuItem("Tools/Run all OnBuild handlers")]
         public static bool RunOnBuild()
         {
             Stopwatch sw = new Stopwatch();
@@ -75,7 +77,7 @@ namespace JanSharp
 
             foreach (OrderedOnBuildCallbackData orderedData in typesToLookForList.OrderBy(d => d.order))
                 foreach (UdonSharpBehaviour behaviour in orderedData.data.behaviours)
-                    if (!orderedData.callback(behaviour))
+                    if (!(bool)orderedData.callbackInfo.Invoke(orderedData.callbackInstance, new[] { behaviour }))
                     {
                         UnityEngine.Debug.LogError($"OnBuild handlers aborted when running the handler for '{behaviour.GetType().Name}' on '{behaviour.name}'.", behaviour);
                         return false;
@@ -90,13 +92,15 @@ namespace JanSharp
         {
             public OnBuildCallbackData data;
             public int order;
-            public Func<UdonSharpBehaviour, bool> callback;
+            public MethodInfo callbackInfo;
+            public object callbackInstance;
 
-            public OrderedOnBuildCallbackData(OnBuildCallbackData data, int order, Func<UdonSharpBehaviour, bool> callback)
+            public OrderedOnBuildCallbackData(OnBuildCallbackData data, int order, MethodInfo callbackInfo, object callbackInstance)
             {
                 this.data = data;
                 this.order = order;
-                this.callback = callback;
+                this.callbackInfo = callbackInfo;
+                this.callbackInstance = callbackInstance;
             }
         }
 

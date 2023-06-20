@@ -599,9 +599,8 @@ namespace JanSharp
     {
         static ChalkboardOnBuildRegister() => JanSharp.OnBuildUtil.RegisterType<Chalkboard>(OnBuild);
 
-        private static bool OnBuild(UdonSharpBehaviour behaviour)
+        private static bool OnBuild(Chalkboard chalkboard)
         {
-            Chalkboard chalkboard = (Chalkboard)behaviour;
             chalkboard.chalkboardManager = GameObject.Find("/ChalkboardManager")?.GetComponent<ChalkboardManager>();
             if (chalkboard.chalkboardManager != null)
                 chalkboard.boardId = ChalkboardManagerOnBuild.GetBoardId(chalkboard.chalkboardManager, chalkboard);

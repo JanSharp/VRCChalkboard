@@ -561,9 +561,8 @@ namespace JanSharp
     {
         static ItemSyncOnBuild() => JanSharp.OnBuildUtil.RegisterType<ItemSync>(OnBuild);
 
-        private static bool OnBuild(UdonSharpBehaviour behaviour)
+        private static bool OnBuild(ItemSync itemSync)
         {
-            ItemSync itemSync = (ItemSync)behaviour;
             itemSync.pickup = itemSync.GetComponent<VRC_Pickup>();
             Debug.Assert(itemSync.pickup != null, "ItemSync must be on a GameObject with a VRC_Pickup component.");
             var updateManagerObj = GameObject.Find("/UpdateManager");

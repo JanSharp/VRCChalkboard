@@ -710,9 +710,8 @@ When this is true said second rotation is random."
 
         static EffectDescriptorOnBuild() => JanSharp.OnBuildUtil.RegisterType<EffectDescriptor>(OnBuild);
 
-        private static bool OnBuild(UdonSharpBehaviour behaviour)
+        private static bool OnBuild(EffectDescriptor descriptor)
         {
-            EffectDescriptor descriptor = (EffectDescriptor)behaviour;
             if (descriptor.transform.childCount == 1)
                 Object.Instantiate(new GameObject(), descriptor.transform.position, descriptor.transform.rotation, descriptor.transform).name = "EffectClones";
             else if (descriptor.transform.childCount != 2)
