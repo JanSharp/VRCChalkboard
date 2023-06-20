@@ -76,7 +76,10 @@ namespace JanSharp
             foreach (OrderedOnBuildCallbackData orderedData in typesToLookForList.OrderBy(d => d.order))
                 foreach (UdonSharpBehaviour behaviour in orderedData.data.behaviours)
                     if (!orderedData.callback(behaviour))
+                    {
+                        UnityEngine.Debug.LogError($"OnBuild handlers aborted when running the handler for '{behaviour.GetType().Name}' on '{behaviour.name}'.", behaviour);
                         return false;
+                    }
 
             sw.Stop();
             UnityEngine.Debug.Log($"OnBuild handlers: {sw.Elapsed}.");
