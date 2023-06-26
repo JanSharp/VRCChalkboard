@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0, g: 0, b: 0, a: 1}
+  m_IndirectSpecularColor: {r: 0.18028378, g: 0.22571412, b: 0.30692285, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -2419,19 +2419,6 @@ GameObject:
     type: 3}
   m_PrefabInstance: {fileID: 1450708142}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1785433143
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1785433138}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 229740497, guid: 4ecd63eff847044b68db9453ce219299, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  contentType: 1
 --- !u!1 &1844848514
 GameObject:
   m_ObjectHideFlags: 0
@@ -2526,7 +2513,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1970158330}
-  m_LocalRotation: {x: 0.098327845, y: -0.049826782, z: -0.004929446, w: 0.9938937}
+  m_LocalRotation: {x: 0.098327845, y: -0.04982679, z: -0.0049294746, w: 0.99389374}
   m_LocalPosition: {x: -1.0082489, y: 0.78862196, z: -0.41394943}
   m_LocalScale: {x: 0.12435416, y: 0.12621146, z: 0.08256253}
   m_Children: []
@@ -2535,7 +2522,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1970158332
 MonoBehaviour:
-  m_ObjectHideFlags: 0
+  m_ObjectHideFlags: 2
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
@@ -2702,9 +2689,9 @@ MonoBehaviour:
   updateManager: {fileID: 52405444}
   pickup: {fileID: 1970158333}
   targetInitialLocalPosition: {x: 0, y: 0, z: 0}
-  thisInitialLocalPosition: {x: -1.0082489, y: 0.78862196, z: -0.41394943}
-  rotationOffsetFromTargetToThis: {x: 0, y: 0, z: 0, w: 1}
-  positionOffsetFromTargetToThis: {x: -0.0000019669533, y: 0.0000019073486, z: -1.6250001}
+  thisInitialLocalPosition: {x: -1.137, y: 0.8835, z: -0.3517}
+  rotationOffsetFromTargetToThis: {x: -0.1776236, y: -0.34762785, z: 0.06724796, w: 0.91819555}
+  positionOffsetFromTargetToThis: {x: -0.24533498, y: 0.4087497, z: -1.4910271}
   syncedPosition: {x: 0, y: 0, z: 0}
 --- !u!1 &2064389656
 GameObject:

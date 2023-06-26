@@ -2,9 +2,11 @@
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
+using VRC.SDK3.Components;
 #if UNITY_EDITOR && !COMPILER_UDONSHARP
 using UnityEditor;
 using UdonSharpEditor;
+using System.Linq;
 #endif
 
 // TODO: interpolate to hand in VR
@@ -14,6 +16,7 @@ using UdonSharpEditor;
 
 namespace JanSharp
 {
+    [RequireComponent(typeof(VRCPickup))]
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class RotationGrip : UdonSharpBehaviour
     {
@@ -91,13 +94,20 @@ namespace JanSharp
         // for UpdateManager
         private int customUpdateInternalIndex;
 
-        public void Snap(float distance)
+        public Vector3 GetSnappedPosition(float distance)
         {
-            this.transform.position = toRotate.position + toRotate.TransformDirection(Vector3.back * distance);
-            this.transform.rotation = toRotate.rotation;
+            return toRotate.position + toRotate.TransformDirection(Vector3.back * distance);
         }
 
-        public void SnapBack() => Snap(initialDistance);
+        public Quaternion GetSnappedRotation() => toRotate.rotation;
+
+        private void Snap(float distance)
+        {
+            this.transform.position = GetSnappedPosition(distance);
+            this.transform.rotation = GetSnappedRotation();
+        }
+
+        private void SnapBack() => Snap(initialDistance);
 
         public override void OnPickup()
         {
@@ -372,30 +382,44 @@ namespace JanSharp
 
         private static bool OnBuild(RotationGrip rotationGrip)
         {
-            rotationGrip.pickup = rotationGrip.GetComponent<VRC_Pickup>();
-            rotationGrip.updateManager = GameObject.Find("/UpdateManager")?.GetComponent<UpdateManager>();
-            if (rotationGrip.updateManager == null)
+            var updateManager = GameObject.Find("/UpdateManager")?.GetComponent<UpdateManager>();
+            if (updateManager == null)
             {
                 Debug.LogError("RotationGrip requires a GameObject that must be at the root of the scene "
-                    + "with the exact name 'UpdateManager' which has the 'UpdateManager' UdonBehaviour.");
+                    + "with the exact name 'UpdateManager' which has the 'UpdateManager' UdonBehaviour.",
+                    rotationGrip);
                 return false;
             }
-            rotationGrip.initialLocalRotation = rotationGrip.toRotate.localRotation;
-            rotationGrip.maximumRotationDeviation = Mathf.Abs(rotationGrip.maximumRotationDeviation);
-            rotationGrip.dummyTransform = rotationGrip.updateManager.transform;
-            rotationGrip.initialDistance = rotationGrip.toRotate.InverseTransformDirection(rotationGrip.transform.position - rotationGrip.toRotate.position).magnitude;
-            rotationGrip.SnapBack();
+
+            float initialDistance = rotationGrip.toRotate.InverseTransformDirection(rotationGrip.transform.position - rotationGrip.toRotate.position).magnitude;
+
+            SerializedObject rotationGripProxy = new SerializedObject(rotationGrip);
+            rotationGripProxy.FindProperty(nameof(RotationGrip.pickup)).objectReferenceValue = rotationGrip.GetComponent<VRC_Pickup>();
+            rotationGripProxy.FindProperty(nameof(RotationGrip.updateManager)).objectReferenceValue = updateManager;
+            rotationGripProxy.FindProperty(nameof(RotationGrip.initialLocalRotation)).quaternionValue = rotationGrip.toRotate.localRotation;
+            rotationGripProxy.FindProperty(nameof(RotationGrip.maximumRotationDeviation)).floatValue = Mathf.Abs(rotationGrip.maximumRotationDeviation);
+            rotationGripProxy.FindProperty(nameof(RotationGrip.dummyTransform)).objectReferenceValue = rotationGrip.updateManager.transform;
+            rotationGripProxy.FindProperty(nameof(RotationGrip.initialDistance)).floatValue = initialDistance;
+            rotationGripProxy.ApplyModifiedProperties();
+
+            SerializedObject transformProxy = new SerializedObject(rotationGrip.transform);
+            transformProxy.FindProperty("m_LocalPosition").vector3Value
+                = EditorUtil.WorldToLocalPosition(rotationGrip.transform, rotationGrip.GetSnappedPosition(initialDistance));
+            transformProxy.FindProperty("m_LocalRotation").quaternionValue
+                = EditorUtil.WorldToLocalRotation(rotationGrip.transform, rotationGrip.GetSnappedRotation());
+            transformProxy.ApplyModifiedProperties();
+
             return true;
         }
     }
 
+    [CanEditMultipleObjects]
     [CustomEditor(typeof(RotationGrip))]
     public class RotationGripEditor : Editor
     {
         public override void OnInspectorGUI()
         {
-            RotationGrip target = this.target as RotationGrip;
-            if (UdonSharpGUI.DrawDefaultUdonSharpBehaviourHeader(target))
+            if (UdonSharpGUI.DrawDefaultUdonSharpBehaviourHeader(targets))
                 return;
             EditorGUILayout.Space();
             base.OnInspectorGUI(); // draws public/serializable fields
@@ -405,67 +429,49 @@ namespace JanSharp
                 + "This script relies on this pickup object being perfectly in line with the Transform it is rotating, "
                 + "so this button allows you to snap it in place before entering play mode.")))
             {
-                target.Snap(target.toRotate.TransformDirection(target.transform.position - target.toRotate.position).magnitude);
-            }
-
-            var pickup = target.GetComponent<VRC.SDK3.Components.VRCPickup>();
-            if (pickup == null)
-            {
-                if (GUILayout.Button(new GUIContent("Add VRC Pickup", "Adds VRC Pickup component and configures it "
-                    + "and the necessary Rigidbody. Sets: useGravity = false; isKinematic = true; ExactGrip = null; orientation = Grip;\n"
-                    + "Setting orientation to grip and ExactGrip to null makes the pickup stay where it is while being picked up => "
-                    + "it doesn't move to the hand.\n"
-                    + "Unlike configuring it afterwards, this also initializes interactionText to 'Rotate' and sets AutoHold to 'no'.")))
+                foreach (var rotationGrip in targets.Cast<RotationGrip>())
                 {
-                    AddAndConfigureComponents(target);
+                    float distance = rotationGrip.toRotate.TransformDirection(
+                        rotationGrip.transform.position - rotationGrip.toRotate.position
+                    ).magnitude;
+                    SerializedObject transformProxy = new SerializedObject(rotationGrip.transform);
+                    transformProxy.FindProperty("m_LocalPosition").vector3Value
+                        = EditorUtil.WorldToLocalPosition(rotationGrip.transform, rotationGrip.GetSnappedPosition(distance));
+                    transformProxy.FindProperty("m_LocalRotation").quaternionValue
+                        = EditorUtil.WorldToLocalRotation(rotationGrip.transform, rotationGrip.GetSnappedRotation());
+                    transformProxy.ApplyModifiedProperties();
                 }
             }
-            else
-            {
-                if (GUILayout.Button(new GUIContent("Configure VRC Pickup", "Configures the attached VRC Pickup "
-                    + "and Rigidbody components. Sets: useGravity = false; isKinematic = true; ExactGrip = null; orientation = Grip;\n"
-                    + "Setting orientation to grip and ExactGrip to null makes the pickup stay where it is while being picked up => "
-                    + "it doesn't move to the hand.")))
-                {
-                    ConfigureComponents(target, pickup, target.GetComponent<Rigidbody>());
+
+            EditorUtil.ConditionalButton(new GUIContent("Configure VRC Pickup", "Configures the attached VRC Pickup "
+                + "and Rigidbody components. Sets: useGravity = false; isKinematic = true; ExactGrip = null; orientation = Grip;\n"
+                + "Setting orientation to grip and ExactGrip to null makes the pickup stay where it is while being picked up => "
+                + "it doesn't move to the hand."),
+                targets.Cast<RotationGrip>()
+                    .Select(rotationGrip => (
+                        rotationGrip,
+                        pickup: rotationGrip.GetComponent<VRCPickup>(),
+                        rigidbody: rotationGrip.GetComponent<Rigidbody>()
+                    ))
+                    .Where(data => {
+                        return data.pickup.ExactGrip != null
+                            || data.pickup.orientation != VRC_Pickup.PickupOrientation.Grip
+                            || data.rigidbody.useGravity
+                            || !data.rigidbody.isKinematic;
+                    }),
+                allData => {
+                    SerializedObject rigidbodiesProxy = new SerializedObject(allData.Select(d => d.rigidbody).ToArray());
+                    rigidbodiesProxy.FindProperty("m_UseGravity").boolValue = false;
+                    rigidbodiesProxy.FindProperty("m_IsKinematic").boolValue = true;
+                    rigidbodiesProxy.ApplyModifiedProperties();
+
+                    SerializedObject pickupsProxy = new SerializedObject(allData.Select(d => d.pickup).ToArray());
+                    pickupsProxy.FindProperty("ExactGrip").objectReferenceValue = null;
+                    pickupsProxy.FindProperty("orientation").intValue = (int)VRC_Pickup.PickupOrientation.Grip;
+                    pickupsProxy.ApplyModifiedProperties();
                 }
-            }
-        }
-
-        public static void AddAndConfigureComponents(RotationGrip target)
-        {
-            var rigidbody = target.GetComponent<Rigidbody>();
-            rigidbody = rigidbody != null ? rigidbody : target.gameObject.AddComponent<Rigidbody>();
-            var pickup = target.GetComponent<VRC.SDK3.Components.VRCPickup>();
-            if (pickup == null)
-            {
-                pickup = target.gameObject.AddComponent<VRC.SDK3.Components.VRCPickup>();
-                pickup.InteractionText = "Rotate";
-                pickup.AutoHold = VRC_Pickup.AutoHoldMode.No;
-            }
-            ConfigureComponents(target, pickup, rigidbody);
-        }
-
-        public static void ConfigureComponents(RotationGrip target, VRC.SDK3.Components.VRCPickup pickup, Rigidbody rigidbody)
-        {
-            rigidbody.useGravity = false;
-            rigidbody.isKinematic = true;
-            pickup.ExactGrip = null;
-            pickup.orientation = VRC_Pickup.PickupOrientation.Grip;
+            );
         }
     }
-
-    // didn't work for vrc builds unfortunately
-    // nor does it do anything on play, but that was expected
-    // public class RotationGripOnBuild : UnityEditor.Build.IPreprocessBuildWithReport
-    // {
-    //     public int callbackOrder => 0;
-    //     public void OnPreprocessBuild(BuildReport report)
-    //     {
-    //         foreach (var obj in GameObject.FindObjectsOfType<UdonBehaviour>())
-    //             foreach (var RotationGrip in obj.GetUdonSharpComponents<RotationGrip>())
-    //                 RotationGripEditor.AddAndConfigureComponents(RotationGrip);
-    //     }
-    // }
     #endif
 }

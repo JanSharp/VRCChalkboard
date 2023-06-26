@@ -60,12 +60,12 @@ namespace JanSharp
         //     var item = (SimpleObjectPoolItem)obj.GetComponent(typeof(SimpleObjectPoolItem));
         //     if (item == null)
         //     {
-        //         Debug.LogWarning($"Attempt to spawn the item '{obj.name}' that is not apart of any object pool.");
+        //         Debug.LogWarning($"Attempt to spawn the item '{obj.name}' that is not apart of any object pool.", this);
         //         return null;
         //     }
         //     if (item.objectPool != this)
         //     {
-        //         Debug.LogWarning($"Attempt to de-spawn object '{obj.name}' which is not part of the object pool '{this.name}'.");
+        //         Debug.LogWarning($"Attempt to de-spawn object '{obj.name}' which is not part of the object pool '{this.name}'.", this);
         //         return null;
         //     }
         //     return item;

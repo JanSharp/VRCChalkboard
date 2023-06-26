@@ -30,7 +30,7 @@ namespace JanSharp
                         float newHeight = heights[y, x] + target.heightDiff / terrainData.size.y;
                         if (newHeight < 0f || 1f < newHeight)
                         {
-                            Debug.LogError($"Unable to apply heightDiff {target.heightDiff} because it would move some point out of range, cutting it off and loosing terrain data.");
+                            Debug.LogError($"Unable to apply heightDiff {target.heightDiff} because it would move some point out of range, cutting it off and loosing terrain data.", target);
                             return;
                         }
                         heights[y, x] = newHeight;

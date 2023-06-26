@@ -71,6 +71,7 @@ namespace JanSharp
 
         private static bool OnBuild(InstObjectPool instObjectPool)
         {
+            // NOTE: If this script ever gets revived or reused, note that this should use SerializedObjects.
             if (instObjectPool.transform.childCount == 2)
             {
                 instObjectPool.activeParent = instObjectPool.transform.GetChild(0);
@@ -98,7 +99,7 @@ namespace JanSharp
             }
             else
             {
-                Debug.LogError("Expected single child for Inst Object Pool which would be the item to be pooled.");
+                Debug.LogError("Expected single child for Inst Object Pool which would be the item to be pooled.", instObjectPool);
                 return false;
             }
             instObjectPool.original.transform.parent = instObjectPool.original.activeSelf ? instObjectPool.activeParent : instObjectPool.inactiveParent;

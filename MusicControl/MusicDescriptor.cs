@@ -40,7 +40,7 @@ namespace JanSharp
             audioSource = GetComponent<AudioSource>();
             if (audioSource == null)
             {
-                Debug.LogError($"Music Descriptor {name} is missing an AudioSource component.");
+                Debug.LogError($"Music Descriptor {name} is missing an AudioSource component.", this);
                 return;
             }
             maxVolume = audioSource.volume;

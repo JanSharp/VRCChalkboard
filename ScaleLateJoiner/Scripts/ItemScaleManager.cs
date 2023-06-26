@@ -142,32 +142,46 @@ namespace JanSharp
     }
 
     #if UNITY_EDITOR && !COMPILER_UDONSHARP
+    [CanEditMultipleObjects]
     [CustomEditor(typeof(ItemScaleManager))]
     public class ItemScaleManagerEditor : Editor
     {
         public override void OnInspectorGUI()
         {
-            ItemScaleManager target = this.target as ItemScaleManager;
-            if (UdonSharpGUI.DrawDefaultUdonSharpBehaviourHeader(target))
+            if (UdonSharpGUI.DrawDefaultUdonSharpBehaviourHeader(targets))
                 return;
             EditorGUILayout.Space();
             base.OnInspectorGUI(); // draws public/serializable fields
+            EditorGUILayout.Space();
+
             if (GUILayout.Button(new GUIContent("Find all Items", $"Populates {nameof(ItemScaleManager.items)} and"
                 + $" {nameof(ItemScaleManager.initialScales)} with all objects in all the Pools of all the"
                 + $" {nameof(VRCObjectPool)}s it finds in all {nameof(ItemScaleManager.parentsForObjectPools)}"
                 + $" objects and their children.")))
             {
-                List<GameObject> itemsList = new List<GameObject>();
-                foreach (GameObject obj in target.parentsForObjectPools)
+                foreach (var manager in targets.Cast<ItemScaleManager>())
                 {
-                    foreach (VRCObjectPool op in obj.GetComponentsInChildren<VRCObjectPool>())
+                    List<GameObject> itemsList = new List<GameObject>();
+                    foreach (GameObject obj in manager.parentsForObjectPools)
                     {
-                        itemsList.AddRange(op.Pool);
+                        foreach (VRCObjectPool op in obj.GetComponentsInChildren<VRCObjectPool>())
+                        {
+                            itemsList.AddRange(op.Pool);
+                        }
                     }
+                    SerializedObject managerProxy = new SerializedObject(manager);
+                    EditorUtil.SetArrayProperty(
+                        managerProxy.FindProperty(nameof(ItemScaleManager.items)),
+                        itemsList.ToArray(),
+                        (p, v) => p.objectReferenceValue = v
+                    );
+                    EditorUtil.SetArrayProperty(
+                        managerProxy.FindProperty(nameof(ItemScaleManager.initialScales)),
+                        itemsList.Select(go => go.transform.localScale).ToArray(),
+                        (p, v) => p.vector3Value = v
+                    );
+                    managerProxy.ApplyModifiedProperties();
                 }
-                target.items = itemsList.ToArray();
-                target.initialScales = itemsList.Select(go => go.transform.localScale).ToArray();
-                EditorUtility.SetDirty(target);
             }
         }
     }

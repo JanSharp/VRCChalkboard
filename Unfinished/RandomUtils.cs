@@ -58,7 +58,8 @@ namespace JanSharp
                     || target.newMaterial == null)
                 {
                     Debug.LogError("In order to change materials you must provide 'Main Parents' (at least 1 and no nulls), "
-                        + "the 'Old Material' and the 'New Material' which should replace said old material."
+                        + "the 'Old Material' and the 'New Material' which should replace said old material.",
+                        target
                     );
                 }
                 else

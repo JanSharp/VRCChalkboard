@@ -326,7 +326,7 @@ namespace JanSharp
                     Debug.Log($"<dlt> received point x: {x}, y: {y} hasPrev: {((point & IntPointHasPrev) != 0)}");
                     #endif
                     if (lastSyncedChalkboard == null)
-                        Debug.LogWarning($"<dlt> received point before receiving any switch to a board?!");
+                        Debug.LogWarning($"<dlt> received point before receiving any switch to a board?!", this);
                     else
                         DrawFromPrevTo(x, y);
                 }
@@ -344,25 +344,24 @@ namespace JanSharp
 
         private static bool OnBuild(Chalk chalk)
         {
-            chalk.updateManager = GameObject.Find("/UpdateManager")?.GetComponent<UpdateManager>();
-            if (chalk.updateManager == null)
-                Debug.LogError("Chalk requires a GameObject that must be at the root of the scene"
-                        + " with the exact name 'UpdateManager' which has the 'UpdateManager' UdonBehaviour.",
-                    UdonSharpEditorUtility.GetBackingUdonBehaviour(chalk));
+            UpdateManager updateManager = GameObject.Find("/UpdateManager")?.GetComponent<UpdateManager>();
+            ChalkboardManager chalkboardManager = GameObject.Find("/ChalkboardManager")?.GetComponent<ChalkboardManager>();
 
-            chalk.chalkboardManager = GameObject.Find("/ChalkboardManager")?.GetComponent<ChalkboardManager>();
-            if (chalk.chalkboardManager != null)
-                chalk.chalkId = ChalkboardManagerOnBuild.GetChalkId(chalk.chalkboardManager, chalk);
-            else
-                chalk.chalkId = -1;
+            if (updateManager == null)
+                Debug.LogError("Chalk requires a GameObject that must be at the root of the scene with "
+                    + "the exact name 'UpdateManager' which has the 'UpdateManager' UdonBehaviour.", chalk);
 
-            if (chalk.chalkboardManager == null)
-                Debug.LogError("Chalk requires a GameObject that must be at the root of the scene"
-                        + " with the exact name 'ChalkboardManager' which has the 'ChalkboardManager' UdonBehaviour.",
-                    UdonSharpEditorUtility.GetBackingUdonBehaviour(chalk));
+            if (chalkboardManager == null)
+                Debug.LogError("Chalk requires a GameObject that must be at the root of the scene with the "
+                    + "exact name 'ChalkboardManager' which has the 'ChalkboardManager' UdonBehaviour.", chalk);
 
-            // EditorUtility.SetDirty(UdonSharpEditorUtility.GetBackingUdonBehaviour(this));
-            return chalk.updateManager != null && chalk.chalkboardManager != null;
+            SerializedObject chalkProxy = new SerializedObject(chalk);
+            chalkProxy.FindProperty(nameof(Chalk.updateManager)).objectReferenceValue = updateManager;
+            chalkProxy.FindProperty(nameof(Chalk.chalkboardManager)).objectReferenceValue = chalkboardManager;
+            chalkProxy.FindProperty(nameof(Chalk.chalkId)).intValue = chalkboardManager == null ? -1 : ChalkboardManagerOnBuild.GetChalkId(chalkboardManager, chalk);
+            chalkProxy.ApplyModifiedProperties();
+
+            return updateManager != null && chalkboardManager != null;
         }
     }
     #endif

@@ -29,13 +29,21 @@ namespace JanSharp
 
         private static bool OnBuild(ChalkboardManager manager)
         {
-            Cleanup(ref allBoards, ref manager.chalkboards, (board, id) => board.boardId = id);
-            Cleanup(ref allChalks, ref manager.chalks, (chalk, id) => chalk.chalkId = id);
-            // EditorUtility.SetDirty(UdonSharpEditorUtility.GetBackingUdonBehaviour(this));
+            SerializedObject managerProxy = new SerializedObject(manager);
+            Cleanup(ref allBoards, managerProxy.FindProperty(nameof(ChalkboardManager.chalkboards)), (board, id) => {
+                SerializedObject boardProxy = new SerializedObject(board);
+                boardProxy.FindProperty(nameof(Chalkboard.boardId)).intValue = id;
+                boardProxy.ApplyModifiedProperties();
+            });
+            Cleanup(ref allChalks, managerProxy.FindProperty(nameof(ChalkboardManager.chalks)), (chalk, id) => {
+                SerializedObject chalkProxy = new SerializedObject(chalk);
+                chalkProxy.FindProperty(nameof(Chalk.chalkId)).intValue = id;
+                chalkProxy.ApplyModifiedProperties();
+            });
             return true;
         }
 
-        private static void Cleanup<T>(ref List<T> allValues, ref T[] allValuesArray, System.Action<T, int> setId)
+        private static void Cleanup<T>(ref List<T> allValues, SerializedProperty allValuesProperty, System.Action<T, int> setId)
             where T : UdonSharpBehaviour
         {
             allValues = allValues ?? new List<T>();
@@ -43,33 +51,31 @@ namespace JanSharp
             {
                 allValues.RemoveAll(b => b == null);
                 for (int i = 0; i < allValues.Count; i++)
-                {
                     setId(allValues[i], i);
-                    // EditorUtility.SetDirty(UdonSharpEditorUtility.GetBackingUdonBehaviour(allValues[i]));
-                }
             }
-            allValuesArray = allValues.ToArray();
+            EditorUtil.SetArrayProperty(allValuesProperty, allValues, (p, v) => p.objectReferenceValue = v);
         }
 
         public static int GetBoardId(ChalkboardManager manager, Chalkboard board)
         {
-            return GetId(ref allBoards, ref manager.chalkboards, board);
+            return GetId(ref allBoards, manager, nameof(ChalkboardManager.chalkboards), board);
         }
 
         public static int GetChalkId(ChalkboardManager manager, Chalk chalk)
         {
-            return GetId(ref allChalks, ref manager.chalks, chalk);
+            return GetId(ref allChalks, manager, nameof(ChalkboardManager.chalks), chalk);
         }
 
-        private static int GetId<T>(ref List<T> allValues, ref T[] allValuesArray, T value)
+        private static int GetId<T>(ref List<T> allValues, ChalkboardManager manager, string propertyName, T value) where T : Object
         {
             allValues = allValues ?? new List<T>();
             int index = allValues.FindIndex(b => b.Equals(value));
             if (index != -1)
                 return index;
             allValues.Add(value);
-            allValuesArray = allValues.ToArray();
-            // EditorUtility.SetDirty(UdonSharpEditorUtility.GetBackingUdonBehaviour(this));
+            SerializedObject managerProxy = new SerializedObject(manager);
+            EditorUtil.AppendProperty(managerProxy.FindProperty(propertyName), p => p.objectReferenceValue = value);
+            managerProxy.ApplyModifiedProperties();
             return allValues.Count - 1;
         }
     }

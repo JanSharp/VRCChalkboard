@@ -556,7 +556,7 @@ namespace JanSharp
                     Debug.Log($"<dlt> processing point x: {x}, y: {y} hasPrev: {((point & IntPointHasPrev) != 0)}");
                     #endif
                     if (receivedChalk == null)
-                        Debug.LogWarning($"<dlt> processing point before receiving any switch to a chalk?!");
+                        Debug.LogWarning($"<dlt> processing point before receiving any switch to a chalk?!", this);
                     else if ((point & IntPointHasPrev) != 0)
                         DrawLineInternal(receivedChalk, receivedPrevX, receivedPrevY, x, y);
                     else
@@ -601,16 +601,17 @@ namespace JanSharp
 
         private static bool OnBuild(Chalkboard chalkboard)
         {
-            chalkboard.chalkboardManager = GameObject.Find("/ChalkboardManager")?.GetComponent<ChalkboardManager>();
-            if (chalkboard.chalkboardManager != null)
-                chalkboard.boardId = ChalkboardManagerOnBuild.GetBoardId(chalkboard.chalkboardManager, chalkboard);
-            else
-                chalkboard.boardId = -1;
+            ChalkboardManager chalkboardManager = GameObject.Find("/ChalkboardManager")?.GetComponent<ChalkboardManager>();
 
-            if (chalkboard.chalkboardManager == null)
-                Debug.LogError("Chalkboard requires a GameObject that must be at the root of the scene"
-                        + " with the exact name 'ChalkboardManager' which has the 'ChalkboardManager' UdonBehaviour.",
-                    UdonSharpEditorUtility.GetBackingUdonBehaviour(chalkboard));
+            if (chalkboardManager == null)
+                Debug.LogError("Chalkboard requires a GameObject that must be at the root of the scene with the "
+                    + "exact name 'ChalkboardManager' which has the 'ChalkboardManager' UdonBehaviour.", chalkboard);
+
+            SerializedObject chalkboardProxy = new SerializedObject(chalkboard);
+
+            chalkboardProxy.FindProperty(nameof(Chalkboard.chalkboardManager)).objectReferenceValue = chalkboardManager;
+            chalkboardProxy.FindProperty(nameof(Chalkboard.boardId)).intValue
+                = chalkboardManager == null ? -1 : ChalkboardManagerOnBuild.GetBoardId(chalkboard.chalkboardManager, chalkboard);
 
             if (chalkboard.bottomLeft != null && chalkboard.topRight != null && chalkboard.material != null)
             {
@@ -628,30 +629,31 @@ namespace JanSharp
                 // blPos.y + X * horizontal.y + Y * vertical.y - trPos.y = 0
                 // blPos.z + X * horizontal.z + Y * vertical.z - trPos.z = 0
 
-                chalkboard.boardParent = chalkboard.bottomLeft.parent;
-                if (chalkboard.topRight.parent != chalkboard.boardParent)
-                    Debug.LogError($"{nameof(chalkboard.bottomLeft)} and {nameof(chalkboard.topRight)} must share the same parent",
-                        UdonSharpEditorUtility.GetBackingUdonBehaviour(chalkboard));
+                Transform boardParent = chalkboard.bottomLeft.parent;
+                chalkboardProxy.FindProperty(nameof(Chalkboard.boardParent)).objectReferenceValue = boardParent;
+                if (chalkboard.topRight.parent != boardParent)
+                    Debug.LogError($"{nameof(Chalkboard.bottomLeft)} and {nameof(Chalkboard.topRight)} must share the same parent", chalkboard);
 
                 var texture = (Texture2D)chalkboard.material.mainTexture;
                 var pixelsPerUnit = new Vector3(
                     ((chalkboard.topRight.localPosition.x - chalkboard.bottomLeft.localPosition.x) / texture.width),
                     ((chalkboard.topRight.localPosition.y - chalkboard.bottomLeft.localPosition.y) / texture.height)
                 );
-                var lossyScale = chalkboard.boardParent.lossyScale;
 
-                chalkboard.chalkScale = pixelsPerUnit * 5.75f;
-                chalkboard.chalkScale = new Vector3(lossyScale.x * chalkboard.chalkScale.x, lossyScale.y * chalkboard.chalkScale.y, 0.01f);
-                chalkboard.spongeScale = pixelsPerUnit * 41f;
-                chalkboard.spongeScale = new Vector3(lossyScale.x * chalkboard.spongeScale.x, lossyScale.y * chalkboard.spongeScale.y, 0.01f);
+                var lossyScale = boardParent.lossyScale;
+
+                Vector3 chalkScale = pixelsPerUnit * 5.75f;
+                chalkboardProxy.FindProperty(nameof(Chalkboard.chalkScale)).vector3Value = new Vector3(lossyScale.x * chalkScale.x, lossyScale.y * chalkScale.y, 0.01f);
+                Vector3 spongeScale = pixelsPerUnit * 41f;
+                chalkboardProxy.FindProperty(nameof(Chalkboard.spongeScale)).vector3Value = new Vector3(lossyScale.x * spongeScale.x, lossyScale.y * spongeScale.y, 0.01f);
             }
 
             if (chalkboard.bottomLeft == null || chalkboard.topRight == null || chalkboard.material == null)
-                Debug.LogError($"{nameof(chalkboard.bottomLeft)}, {nameof(chalkboard.topRight)} and {nameof(chalkboard.material)} must all be set.",
-                    UdonSharpEditorUtility.GetBackingUdonBehaviour(chalkboard));
+                Debug.LogError($"{nameof(Chalkboard.bottomLeft)}, {nameof(Chalkboard.topRight)} and {nameof(Chalkboard.material)} must all be set.", chalkboard);
 
-            // EditorUtility.SetDirty(UdonSharpEditorUtility.GetBackingUdonBehaviour(this));
-            return chalkboard.chalkboardManager != null;
+            chalkboardProxy.ApplyModifiedProperties();
+
+            return chalkboardManager != null;
         }
     }
     #endif

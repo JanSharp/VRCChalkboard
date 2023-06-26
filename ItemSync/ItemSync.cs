@@ -6,10 +6,13 @@ using VRC.Udon.Common;
 #if UNITY_EDITOR && !COMPILER_UDONSHARP
 using UnityEditor;
 using UdonSharpEditor;
+using System.Linq;
+using System.Collections.Generic;
 #endif
 
 namespace JanSharp
 {
+    [RequireComponent(typeof(VRC.SDK3.Components.VRCPickup))]
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class ItemSync : UdonSharpBehaviour
     {
@@ -221,9 +224,15 @@ namespace JanSharp
         public override void OnPickup()
         {
             if (!pickup.IsHeld)
-                Debug.LogError("Picked up but not held?!");
+            {
+                Debug.LogError("Picked up but not held?!", this);
+                return;
+            }
             if (pickup.currentHand == VRC_Pickup.PickupHand.None)
-                Debug.LogError("Held but not in either hand?!");
+            {
+                Debug.LogError("Held but not in either hand?!", this);
+                return;
+            }
 
             attachedPlayer = pickup.currentPlayer;
             attachedBone = pickup.currentHand == VRC_Pickup.PickupHand.Left ? HumanBodyBones.LeftHand : HumanBodyBones.RightHand;
@@ -292,7 +301,7 @@ namespace JanSharp
         {
             if (State == IdleState)
             {
-                Debug.LogError($"It should truly be impossible for CustomUpdate to run when an item is in IdleState. Item name: ${this.name}.");
+                Debug.LogError($"It should truly be impossible for CustomUpdate to run when an item is in IdleState. Item name: ${this.name}.", this);
                 return;
             }
             if (IsReceivingState())
@@ -481,7 +490,7 @@ namespace JanSharp
         {
             if (IsReceivingState())
             {
-                Debug.LogWarning("// TODO: uh idk what to do, shouldn't this be impossible?");
+                Debug.LogWarning("// TODO: uh idk what to do, shouldn't this be impossible?", this);
             }
             syncedFlags = 0;
             if (IsAttachedSendingState())
@@ -504,7 +513,7 @@ namespace JanSharp
         {
             if (!result.success)
             {
-                Debug.LogWarning($"Syncing request was dropped for {this.name}, trying again.");
+                Debug.LogWarning($"Syncing request was dropped for {this.name}, trying again.", this);
                 SendChanges(); // TODO: somehow test if this kind of retry even works or if the serialization request got reset right afterwards
             }
             else
@@ -580,69 +589,46 @@ namespace JanSharp
         }
     }
 
+    [CanEditMultipleObjects]
     [CustomEditor(typeof(ItemSync))]
     public class ItemSyncEditor : Editor
     {
         public override void OnInspectorGUI()
         {
-            ItemSync target = this.target as ItemSync;
-            if (UdonSharpGUI.DrawDefaultUdonSharpBehaviourHeader(target))
+            if (UdonSharpGUI.DrawDefaultUdonSharpBehaviourHeader(targets))
                 return;
             EditorGUILayout.Space();
             base.OnInspectorGUI(); // draws public/serializable fields
             EditorGUILayout.Space();
 
-            var rigidbody = target.GetComponent<Rigidbody>();
-            if (rigidbody != null)
+            var rigidbodies = targets.Cast<ItemSync>()
+                .Select(i => i.GetComponent<Rigidbody>())
+                .Where(r => r != null)
+                .ToArray();
+
+            bool showButton = false;
+            if (rigidbodies.Any(r => r.useGravity))
             {
-                bool showButton = false;
-                if (rigidbody.useGravity)
-                {
-                    EditorGUILayout.LabelField("Rigidbodies using Gravity are not supported by the Item Sync script. They don't break it, "
-                        + "but gravity related movement will not sync.", EditorStyles.wordWrappedLabel);
-                    showButton = true;
-                }
-                if (!rigidbody.isKinematic)
-                {
-                    EditorGUILayout.LabelField("Non Kinematic Rigidbodies are not supported by the Item Sync script. They don't break it, "
-                        + "but collision related movement will not sync.", EditorStyles.wordWrappedLabel);
-                    showButton = true;
-                }
-                if (showButton && GUILayout.Button(new GUIContent("Configure Rigidbody", "Sets: useGravity = false; isKinematic = true;")))
-                    ConfigureRigidbody(target, target.GetComponent<Rigidbody>());
+                EditorGUILayout.LabelField("Rigidbodies using Gravity are not supported by the Item Sync script. They don't break it, "
+                    + "but gravity related movement will not sync.", EditorStyles.wordWrappedLabel);
+                showButton = true;
             }
-            var pickup = target.GetComponent<VRC.SDK3.Components.VRCPickup>();
-            if (pickup == null)
+            if (rigidbodies.Any(r => !r.isKinematic))
             {
-                if (GUILayout.Button(new GUIContent("Add VRC Pickup" + (rigidbody == null ? " and Rigidbody" : ""),
-                    "Adds VRC Pickup component and the necessary Rigidbody. Sets: useGravity = false; isKinematic = true; "
-                    + "only if the Rigidbody didn't exist already.")))
-                {
-                    AddAndConfigureComponents(target);
-                }
+                EditorGUILayout.LabelField("Non Kinematic Rigidbodies are not supported by the Item Sync script. They don't break it, "
+                    + "but collision related movement will not sync.", EditorStyles.wordWrappedLabel);
+                showButton = true;
             }
+            if (showButton && GUILayout.Button(new GUIContent("Configure Rigidbody", "Sets: useGravity = false; isKinematic = true;")))
+                ConfigureRigidbodies(rigidbodies);
         }
 
-        public static void AddAndConfigureComponents(ItemSync target)
+        public static void ConfigureRigidbodies(Rigidbody[] rigidbodies)
         {
-            // the ?? operator doesn't work because unity doesn't actually return `null` when GetComponent doesn't find the component,
-            // it returns an instance of the component that pretends to be null and throws custom error messages when trying to use it
-            // all in all annoying
-            var rigidbody = target.GetComponent<Rigidbody>();
-            if (rigidbody == null)
-            {
-                rigidbody = target.gameObject.AddComponent<Rigidbody>();
-                ConfigureRigidbody(target, rigidbody);
-            }
-            var pickup = target.GetComponent<VRC.SDK3.Components.VRCPickup>();
-            if (pickup == null)
-                pickup = target.gameObject.AddComponent<VRC.SDK3.Components.VRCPickup>();
-        }
-
-        public static void ConfigureRigidbody(ItemSync target, Rigidbody rigidbody)
-        {
-            rigidbody.useGravity = false;
-            rigidbody.isKinematic = true;
+            SerializedObject rigidbodiesProxy = new SerializedObject(rigidbodies);
+            rigidbodiesProxy.FindProperty("m_UseGravity").boolValue = false;
+            rigidbodiesProxy.FindProperty("m_IsKinematic").boolValue = true;
+            rigidbodiesProxy.ApplyModifiedProperties();
         }
     }
     #endif

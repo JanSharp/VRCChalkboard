@@ -899,27 +899,35 @@ namespace JanSharp
                 || vfxTargetGun.effectsParent == null
                 || vfxTargetGun.orderSync == null)
             {
-                Debug.LogError("VFX Target gun requires all internal references to be set in the inspector.");
+                Debug.LogError("VFX Target gun requires all internal references to be set in the inspector.", vfxTargetGun);
                 return false;
             }
-            vfxTargetGun.gunMeshRenderers = vfxTargetGun.gunMesh.GetComponentsInChildren<MeshRenderer>();
-            vfxTargetGun.normalSprite = vfxTargetGun.placeModeButton.image.sprite;
+            SerializedObject vfxTargetGunProxy = new SerializedObject(vfxTargetGun);
+            EditorUtil.SetArrayProperty(
+                vfxTargetGunProxy.FindProperty(nameof(VFXTargetGun.gunMeshRenderers)),
+                vfxTargetGun.gunMesh.GetComponentsInChildren<MeshRenderer>(),
+                (p, v) => p.objectReferenceValue = v
+            );
+            vfxTargetGunProxy.FindProperty(nameof(VFXTargetGun.normalSprite)).objectReferenceValue = vfxTargetGun.placeModeButton.image.sprite;
             Transform effectsParent = vfxTargetGun.effectsParent;
-            vfxTargetGun.descriptors = new EffectDescriptor[effectsParent.childCount];
+            SerializedProperty descriptorsProperty = vfxTargetGunProxy.FindProperty(nameof(VFXTargetGun.descriptors));
+            descriptorsProperty.arraySize = effectsParent.childCount;
             bool result = true;
             for (int i = 0; i < effectsParent.childCount; i++)
             {
                 var descriptor = effectsParent.GetChild(i).GetComponent<EffectDescriptor>();
-                vfxTargetGun.descriptors[i] = descriptor;
+                descriptorsProperty.GetArrayElementAtIndex(i).objectReferenceValue = descriptor;
                 if (descriptor == null)
                 {
-                    Debug.LogError($"The child #{i + 1} ({effectsParent.GetChild(i).name}) "
-                        + $"of the effects descriptor parent does not have an {nameof(EffectDescriptor)}.");
+                    Debug.LogError($"The child #{i + 1} ({effectsParent.GetChild(i).name}) of the effects descriptor parent "
+                        + $"does not have an {nameof(EffectDescriptor)}.", effectsParent.GetChild(i));
                     result = false;
                 }
                 else
                     EffectDescriptorOnBuild.InitAtBuildTime(descriptor, vfxTargetGun, i);
             }
+            vfxTargetGunProxy.ApplyModifiedProperties();
+
             return result;
         }
     }

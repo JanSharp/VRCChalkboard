@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using UnityEngine.UIElements;
+using System.Linq;
 
 namespace JanSharp
 {
@@ -24,14 +25,22 @@ namespace JanSharp
 
         private static void SetFlag(GameObject[] gos, StaticEditorFlags flag)
         {
-            foreach (GameObject go in gos)
-                GameObjectUtility.SetStaticEditorFlags(go, GameObjectUtility.GetStaticEditorFlags(go) | flag);
+            foreach (GameObject go in gos.Where(go => (GameObjectUtility.GetStaticEditorFlags(go) & flag) == 0))
+            {
+                SerializedObject goProxy = new SerializedObject(go);
+                goProxy.FindProperty("m_StaticEditorFlags").intValue = (int)(GameObjectUtility.GetStaticEditorFlags(go) | flag);
+                goProxy.ApplyModifiedProperties();
+            }
         }
 
         private static void UnsetFlag(GameObject[] gos, StaticEditorFlags flag)
         {
-            foreach (GameObject go in gos)
-                GameObjectUtility.SetStaticEditorFlags(go, GameObjectUtility.GetStaticEditorFlags(go) & (~flag));
+            foreach (GameObject go in gos.Where(go => (GameObjectUtility.GetStaticEditorFlags(go) & flag) != 0))
+            {
+                SerializedObject goProxy = new SerializedObject(go);
+                goProxy.FindProperty("m_StaticEditorFlags").intValue = (int)(GameObjectUtility.GetStaticEditorFlags(go) & (~flag));
+                goProxy.ApplyModifiedProperties();
+            }
         }
 
         public void CreateGUI()

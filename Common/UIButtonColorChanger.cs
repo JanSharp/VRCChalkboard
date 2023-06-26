@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 #if UNITY_EDITOR
 using UnityEditor;
+using System.Linq;
 #endif
 
 // NOTE: this should probably be a menu item instead of a component, but for now this works
@@ -13,6 +14,7 @@ namespace JanSharp
     public class UIButtonColorChanger : MonoBehaviour { }
 
     #if UNITY_EDITOR
+    [CanEditMultipleObjects]
     [CustomEditor(typeof(UIButtonColorChanger))]
     public class UIButtonColorChangerEditor : Editor
     {
@@ -22,17 +24,18 @@ namespace JanSharp
             EditorGUILayout.Space();
             if (GUILayout.Button(new GUIContent("Update Colors", "Sets all colors on the button using the Normal Color of the button.")))
             {
-                var target = (UIButtonColorChanger)this.target;
-                Selectable selectable = target.GetComponent<Selectable>();
-                var color = selectable.colors.normalColor;
-                Undo.RecordObject(selectable, "Set UI Button colors");
-                var colors = selectable.colors;
-                colors.normalColor = color;
-                colors.highlightedColor = color * new Color(0.95f, 0.95f, 0.95f);
-                colors.pressedColor = color * new Color(0.75f, 0.75f, 0.75f);
-                colors.selectedColor = color * new Color(0.95f, 0.95f, 0.95f);
-                colors.disabledColor = color * new Color(0.75f, 0.75f, 0.75f, 0.5f);
-                selectable.colors = colors;
+                foreach (var changer in targets.Cast<UIButtonColorChanger>())
+                {
+                    Selectable selectable = changer.GetComponent<Selectable>();
+                    var color = selectable.colors.normalColor;
+                    SerializedObject selectableProxy = new SerializedObject(selectable);
+                    selectableProxy.FindProperty("m_Colors.m_NormalColor").colorValue = color;
+                    selectableProxy.FindProperty("m_Colors.m_HighlightedColor").colorValue = color * new Color(0.95f, 0.95f, 0.95f);
+                    selectableProxy.FindProperty("m_Colors.m_PressedColor").colorValue = color * new Color(0.75f, 0.75f, 0.75f);
+                    selectableProxy.FindProperty("m_Colors.m_SelectedColor").colorValue = color * new Color(0.95f, 0.95f, 0.95f);
+                    selectableProxy.FindProperty("m_Colors.m_DisabledColor").colorValue = color * new Color(0.75f, 0.75f, 0.75f, 0.5f);
+                    selectableProxy.ApplyModifiedProperties();
+                }
             }
         }
     }

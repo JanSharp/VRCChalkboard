@@ -75,12 +75,12 @@ namespace JanSharp
         {
             if (descriptors == null || descriptors.Length == 0)
             {
-                Debug.LogWarning($"<dlt> {nameof(MusicManager)} {name} is missing {nameof(MusicDescriptor)}s.");
+                Debug.LogWarning($"<dlt> {nameof(MusicManager)} {name} is missing {nameof(MusicDescriptor)}s.", this);
                 return;
             }
             if (DefaultMusic == null)
             {
-                Debug.LogError($"<dlt> {nameof(MusicManager)} {name}'s default music is null. Use a {nameof(MusicDescriptor)} with the silence flag instead.");
+                Debug.LogError($"<dlt> {nameof(MusicManager)} {name}'s default music is null. Use a {nameof(MusicDescriptor)} with the silence flag instead.", this);
                 return;
             }
             for (int i = 0; i < descriptors.Length; i++)
@@ -164,7 +164,7 @@ namespace JanSharp
         {
             if (musicListCount == 0)
             {
-                Debug.LogWarning($"<dlt> Attempt to {nameof(RemoveMusic)} the id {id} when the music stack is completely empty.");
+                Debug.LogWarning($"<dlt> Attempt to {nameof(RemoveMusic)} the id {id} when the music stack is completely empty.", this);
                 return;
             }
 
@@ -188,7 +188,7 @@ namespace JanSharp
                 prevId = currentId;
             }
 
-            Debug.LogWarning($"<dlt> Attempt to {nameof(RemoveMusic)} the id {id} that is not in the music stack.");
+            Debug.LogWarning($"<dlt> Attempt to {nameof(RemoveMusic)} the id {id} that is not in the music stack.", this);
 
             // To gracefully handle the error, restore the lists, since the previous loop ultimately removed musicList[0].
             for (int i = musicListCount - 1; i >= 0; i--)

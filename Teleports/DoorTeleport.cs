@@ -37,16 +37,16 @@ namespace JanSharp
     }
 
     #if UNITY_EDITOR && !COMPILER_UDONSHARP
+    [CanEditMultipleObjects]
     [CustomEditor(typeof(DoorTeleport))]
     public class DoorTeleportEditor : Editor
     {
         public override void OnInspectorGUI()
         {
-            var target = this.target as DoorTeleport;
-            if (UdonSharpGUI.DrawDefaultUdonSharpBehaviourHeader(target))
+            if (UdonSharpGUI.DrawDefaultUdonSharpBehaviourHeader(targets))
                 return;
             base.OnInspectorGUI();
-            EditorGUILayout.Space();
+            // EditorGUILayout.Space();
         }
 
         // TODO: somehow make a tool to link teleports without having to tediously scroll through the hierarchy.

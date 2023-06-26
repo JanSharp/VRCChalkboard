@@ -10,6 +10,8 @@ namespace JanSharp
     [EditorTool("Placement Tool")]
     public class PlacementTool : EditorTool
     {
+        // NOTE: This can probably use custom serialized classes and the SerializedObjects to modify them
+
         GUIContent iconContent;
         public override GUIContent toolbarIcon => iconContent;
         private int controlID;
