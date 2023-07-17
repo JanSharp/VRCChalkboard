@@ -1,12 +1,5 @@
-using UdonSharp;
 using UnityEngine;
-using UnityEngine.UI;
-using VRC.SDKBase;
-using VRC.Udon;
-using VRC.Udon.Common;
-using VRC.Udon.Common.Interfaces;
 using UnityEditor;
-using UdonSharpEditor;
 
 namespace JanSharp
 {
