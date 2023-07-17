@@ -1,0 +1,19 @@
+{
+    "name": "JanSharp.Chalkboard.Editor",
+    "references": [
+        "JanSharp.Chalkboard",
+        "JanSharp.Common.Editor",
+        "JanSharp.Common",
+        "UdonSharp.Runtime",
+        "UdonSharp.Editor"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

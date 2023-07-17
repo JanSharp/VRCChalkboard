@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c333ccfdd0cbdbc4ca30cef2dd6e6b9b, type: 3}
   m_Name: ChalkItem
   m_EditorClassIdentifier: 
-  serializedUdonProgramAsset: {fileID: 11400000, guid: 085e22b67986422679128b53806e08b7,
+  serializedUdonProgramAsset: {fileID: 11400000, guid: 72b3f70cb684d7002b46717d9ffe2a95,
     type: 2}
   udonAssembly: 
   assemblyError: 
@@ -62,7 +62,7 @@ MonoBehaviour:
       Data: 3|System.RuntimeType, mscorlib
     - Name: 
       Entry: 1
-      Data: JanSharp.Chalk, Assembly-CSharp
+      Data: JanSharp.Chalk, JanSharp.Chalkboard
     - Name: 
       Entry: 8
       Data: 

@@ -1,25 +1,15 @@
-﻿using UdonSharp;
+using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
-#if UNITY_EDITOR && !COMPILER_UDONSHARP
 using UnityEditor;
 using UdonSharpEditor;
 using System.Collections.Generic;
 using System.Linq;
-#endif
 
 namespace JanSharp
 {
-    [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
-    public class ChalkboardManager : UdonSharpBehaviour
-    {
-        [HideInInspector] public Chalkboard[] chalkboards;
-        [HideInInspector] public Chalk[] chalks;
-    }
-
     // TODO: make sure this is unique to each scene
-    #if UNITY_EDITOR && !COMPILER_UDONSHARP
     internal static class ChalkboardManagerOnBuild
     {
         public static List<Chalkboard> allBoards;
@@ -79,5 +69,4 @@ namespace JanSharp
             return allValues.Count - 1;
         }
     }
-    #endif
 }
