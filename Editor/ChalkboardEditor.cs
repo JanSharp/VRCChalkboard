@@ -27,7 +27,7 @@ namespace JanSharp
 
             chalkboardProxy.FindProperty(nameof(Chalkboard.chalkboardManager)).objectReferenceValue = chalkboardManager;
             chalkboardProxy.FindProperty(nameof(Chalkboard.boardId)).intValue
-                = chalkboardManager == null ? -1 : ChalkboardManagerOnBuild.GetBoardId(chalkboard.chalkboardManager, chalkboard);
+                = chalkboardManager == null ? -1 : ChalkboardManagerOnBuild.GetBoardId(chalkboardManager, chalkboard);
 
             if (chalkboard.bottomLeft != null && chalkboard.topRight != null && chalkboard.material != null)
             {
