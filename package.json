@@ -11,6 +11,7 @@
   },
   "license": "MIT",
   "vpmDependencies": {
+    "com.jansharp.common": ">=0.1.0",
     "com.vrchat.udonsharp": "^1.1.x"
   },
   "url": "https://github.com/JanSharp/VRCChalkboard/releases/download/v1.1.1/com.jansharp.common.zip",
