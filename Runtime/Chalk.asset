@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c333ccfdd0cbdbc4ca30cef2dd6e6b9b, type: 3}
   m_Name: Chalk
   m_EditorClassIdentifier: 
-  serializedUdonProgramAsset: {fileID: 11400000, guid: f3492fb5037e9de6791271a9ef346900,
+  serializedUdonProgramAsset: {fileID: 11400000, guid: 662ac7951ab493109a12981819766ee4,
     type: 2}
   udonAssembly: 
   assemblyError: 
