@@ -1,6 +1,15 @@
 
 # Changelog
 
+## [1.2.0] - 2023-07-18
+
+_Do not use version 1.1.1, it has incorrect GUIDs for UdonSharp asset files, breaking references._
+
+### Fixed
+
+- **Breaking:** Restore old, correct GUIDs for asset meta files, fixing references to them ([`555faef`](https://github.com/JanSharp/VRCChalkboard/commit/555faefebccb1d9a835afff04abbd3327b7db6eb))
+- Fix exception on build when setting up the ChalkboardManager for the first time ([`b6db98b`](https://github.com/JanSharp/VRCChalkboard/commit/b6db98b1e3db86b125a7aa2e17d529f670d888cf))
+
 ## [1.1.1] - 2023-07-17
 
 _First version of this package that is in the VCC listing._
@@ -52,6 +61,7 @@ _First version of this package that is in the VCC listing._
 - Support all kinds of rotations of the chalkboard ([`1f46ec9`](https://github.com/JanSharp/VRCChalkboard/commit/1f46ec9d7a4d1677aa073218c418c532e2666a43))
 - Make chalk pickup have fixed grip in desktop vs any grip in VR ([`a4def30`](https://github.com/JanSharp/VRCChalkboard/commit/a4def306ba351383f5821b835ab5d9f8b71a59ba))
 
+[1.2.0]: https://github.com/JanSharp/VRCChalkboard/releases/tag/v1.2.0
 [1.1.1]: https://github.com/JanSharp/VRCChalkboard/releases/tag/v1.1.1
 [1.1.0]: https://github.com/JanSharp/VRCChalkboard/releases/tag/Chalkboard_v1.1.0
 [1.0.1]: https://github.com/JanSharp/VRCChalkboard/releases/tag/Chalkboard_v1.0.1
