@@ -1,6 +1,20 @@
 
 # Changelog
 
+## [1.2.1] - 2023-08-05
+
+### Changed
+
+- Change LICENSE.txt to LICENSE.md so Unity sees it in the package manager window ([`ee567da`](https://github.com/JanSharp/VRCChalkboard/commit/ee567dabababe277296f167c4281fb1345ecea17))
+
+### Added
+
+- Add vpm dependency on `com.vrchat.worlds` for clarity ([`72ab49f`](https://github.com/JanSharp/VRCChalkboard/commit/72ab49fe6b6ea883b89406df4fdc90e0fb76ce23))
+
+### Fixed
+
+- Fix build error on publish ([`53c11cb`](https://github.com/JanSharp/VRCChalkboard/commit/53c11cbb0b80c1733923363a99516e2444699075))
+
 ## [1.2.0] - 2023-07-18
 
 _Do not use version 1.1.1, it has incorrect GUIDs for UdonSharp asset files, breaking references._
@@ -61,6 +75,7 @@ _First version of this package that is in the VCC listing._
 - Support all kinds of rotations of the chalkboard ([`1f46ec9`](https://github.com/JanSharp/VRCChalkboard/commit/1f46ec9d7a4d1677aa073218c418c532e2666a43))
 - Make chalk pickup have fixed grip in desktop vs any grip in VR ([`a4def30`](https://github.com/JanSharp/VRCChalkboard/commit/a4def306ba351383f5821b835ab5d9f8b71a59ba))
 
+[1.2.1]: https://github.com/JanSharp/VRCChalkboard/releases/tag/v1.2.1
 [1.2.0]: https://github.com/JanSharp/VRCChalkboard/releases/tag/v1.2.0
 [1.1.1]: https://github.com/JanSharp/VRCChalkboard/releases/tag/v1.1.1
 [1.1.0]: https://github.com/JanSharp/VRCChalkboard/releases/tag/Chalkboard_v1.1.0
