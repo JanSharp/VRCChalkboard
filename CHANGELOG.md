@@ -1,6 +1,16 @@
 
 # Changelog
 
+## [1.2.2] - 2023-10-12
+
+### Changed
+
+- Update vrc worlds dependency to 3.4.x ([`1132d2e`](https://github.com/JanSharp/VRCChalkboard/commit/1132d2ea44c25b305278409415814e54641d9e72))
+
+### Removed
+
+- Remove udonsharp dependency as it has been merged into worlds ([`1132d2e`](https://github.com/JanSharp/VRCChalkboard/commit/1132d2ea44c25b305278409415814e54641d9e72))
+
 ## [1.2.1] - 2023-08-05
 
 ### Changed
@@ -75,6 +85,7 @@ _First version of this package that is in the VCC listing._
 - Support all kinds of rotations of the chalkboard ([`1f46ec9`](https://github.com/JanSharp/VRCChalkboard/commit/1f46ec9d7a4d1677aa073218c418c532e2666a43))
 - Make chalk pickup have fixed grip in desktop vs any grip in VR ([`a4def30`](https://github.com/JanSharp/VRCChalkboard/commit/a4def306ba351383f5821b835ab5d9f8b71a59ba))
 
+[1.2.2]: https://github.com/JanSharp/VRCChalkboard/releases/tag/v1.2.2
 [1.2.1]: https://github.com/JanSharp/VRCChalkboard/releases/tag/v1.2.1
 [1.2.0]: https://github.com/JanSharp/VRCChalkboard/releases/tag/v1.2.0
 [1.1.1]: https://github.com/JanSharp/VRCChalkboard/releases/tag/v1.1.1
